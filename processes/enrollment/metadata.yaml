@@ -1,0 +1,24 @@
+# Per-process settings. Data only -- the engine reads this, it is never imported.
+process_name: enrollment
+display_name: Patient Enrollment
+
+# Actors that appear in this process. Given to the extractor so it labels boxes
+# with the organisation's own vocabulary instead of paraphrasing.
+actors:
+  - HCP
+  - CM360
+  - PSM
+  - QRAL
+  - JCRM
+  - SP Biologics
+
+# Domain shorthand the source text uses without expanding. Given to the extractor
+# so it does not mistake an acronym for an actor or invent a meaning for it.
+glossary:
+  PEF: Patient Enrollment Form
+  CRM: Customer Relationship Management system
+  BI: Benefits Investigation
+  SP: Specialty Pharmacy
+
+# Optional override of the model used for this process. Null uses the global default.
+model_id: null

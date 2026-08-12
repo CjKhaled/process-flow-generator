@@ -1,0 +1,160 @@
+"""Prompt construction for the extraction call.
+
+The schema itself is supplied to the model as a tool, so the field descriptions in
+:mod:`ir.models` already carry the per-field contract. What lives here is the
+cross-field reasoning the schema cannot express: which conventions make a graph
+*born valid*, so the structural tier passes on the first attempt.
+"""
+
+from ir.process_config import ProcessConfig
+from ir.skeleton import Skeleton
+from validators.report import ValidationReport
+
+_CONVENTIONS = """\
+## How to build the graph
+
+The graph is flat. Never nest one graph inside another.
+
+**One start.** Emit exactly one node of type `start`, even when the source names
+several ways in for the same request (a portal, a fax, a phone call). Name the
+channels in that node's `label` and `detail`. Separate start nodes for separate
+channels produce a diagram that reads as several unrelated processes.
+
+**Subprocesses are a tag, not a container.** When the source describes a
+subprocess step by step, emit its steps as ordinary `task` and `gateway` nodes and
+set each node's `subprocess` field to the subprocess it belongs to. Reserve the
+`subprocess` node type for a subprocess the source names but does not detail --
+one collapsed box standing in for work described elsewhere.
+
+**Every gateway gets at least two conditioned branches.** Sources routinely give
+only the happy path: "if the prescriber agrees, the patient proceeds", with
+nothing about disagreeing. Do not leave that gateway with one branch, and do not
+invent what happens instead. Emit the other branch, give it the condition implied
+by the text ("prescriber does not agree"), point it at a `terminal` node, and mark
+that terminal `status: needs_clarification` with a `detail` saying the source does
+not state this outcome. A dangling gateway is rejected; a tagged open question is
+exactly what this stage is for.
+
+**Every path reaches a terminal.** No node may be a dead end. Loops back to an
+earlier step are fine as long as some route out of the loop reaches a terminal.
+
+**Keep a combined condition whole.** "patient is 18 or older AND the diagnosis
+code is in the document" is one condition on one branch. Splitting it into two
+gateways invents a decision sequence the source never describes.
+
+**Competing outcomes with no rule go in `alternatives`.** When the source lists
+outcomes without saying which applies -- "they either won't be entered into the
+CRM or will just be archived" -- put both strings in `alternatives` on a single
+node. Do not build a gateway whose conditions you had to make up.
+
+**Business rules and record values are annotations.** A status, a substatus, a
+field value, a policy statement -- these describe a step, they are not a step.
+Emit an `annotation` node holding the rule and join it to the box it describes
+with an `annotates` edge. Never model a record value as a `task`, and never wire
+an annotation into the sequence flow.
+
+**Be honest about status.** Use `stated` only where the source says it. Use
+`inferred` where it follows necessarily from what the source says but is not
+written down. Use `needs_clarification` where the source genuinely leaves the
+answer open. Guessing and marking it `stated` is the one failure this stage
+cannot recover from.
+
+**Ids and ordering.** Node ids are unique and snake_case. On edges leaving the
+same node, set `order` to the sequence you want them read in, starting at 0.
+"""
+
+
+def build_system_prompt(config: ProcessConfig, skeleton: Skeleton) -> str:
+    """Build the system prompt: the extraction conventions plus this process's vocabulary.
+
+    Args:
+        config: Per-process settings supplying actors and domain shorthand.
+        skeleton: The subprocesses this process is expected to contain.
+
+    Returns:
+        The system prompt for the extraction agent.
+    """
+    sections = [
+        (
+            f"You extract a structured process graph from a written description of the "
+            f"'{config.display_name}' business process, part of a patient support program. "
+            f"Return the graph through the supplied schema. Capture what the source says, "
+            f"and mark what it leaves open rather than filling the gap yourself."
+        ),
+        _CONVENTIONS,
+        _subprocess_section(skeleton),
+    ]
+    if config.actors:
+        sections.append(_actor_section(config))
+    if config.glossary:
+        sections.append(_glossary_section(config))
+    return "\n\n".join(sections)
+
+
+def _subprocess_section(skeleton: Skeleton) -> str:
+    listed = "\n".join(f"- `{spec.name}` -- {spec.label}" for spec in skeleton.in_hint_order())
+    return (
+        "## Known subprocesses\n\n"
+        "These are the only values the `subprocess` field may take. Leave it null for a node "
+        "that sits outside all of them.\n\n"
+        f"{listed}\n\n"
+        "This list is what a complete description usually covers, not a checklist to satisfy. "
+        "The source may cover them in a different sequence, and may not mention one at all. "
+        "If a subprocess is absent from the text, leave it absent from the graph -- a later "
+        "check reports it as an open question. Do not invent steps to fill it in."
+    )
+
+
+def _actor_section(config: ProcessConfig) -> str:
+    listed = "\n".join(f"- {actor}" for actor in config.actors)
+    return (
+        "## Actors\n\n"
+        "Use these names verbatim in the `actor` field. If the source attributes a step to "
+        "someone outside this list, use the source's own wording. If it attributes a step to "
+        f"nobody, leave `actor` null.\n\n{listed}"
+    )
+
+
+def _glossary_section(config: ProcessConfig) -> str:
+    listed = "\n".join(f"- **{term}**: {meaning}" for term, meaning in sorted(config.glossary.items()))
+    return f"## Domain shorthand\n\nThe source uses these without expanding them. They are not actors.\n\n{listed}"
+
+
+def build_extraction_prompt(source_text: str) -> str:
+    """Build the opening turn: the source text to extract from."""
+    return f"Extract the process graph from the description below.\n\n<source>\n{source_text.strip()}\n</source>"
+
+
+def build_repair_prompt(report: ValidationReport | None, *, schema_error: str | None = None) -> str:
+    """Build a repair turn naming the specific defect to fix.
+
+    Only structural defects are fed back. Resolution findings -- a missing
+    subprocess, a tagged ambiguity -- are the correct output of this stage, and
+    asking the model to "fix" them would invite it to invent content the source
+    does not support.
+
+    Args:
+        report: The report from the failed attempt, or None if it never parsed.
+        schema_error: The SDK's complaint when the response did not fit the schema.
+
+    Returns:
+        The next user turn.
+    """
+    if schema_error is not None:
+        return (
+            "That response did not fit the schema. The validator reported:\n\n"
+            f"{schema_error}\n\n"
+            "Return the graph again, correcting that. Do not change the content of the "
+            "extraction beyond what the error requires."
+        )
+
+    defects = report.structural if report is not None else ()
+    listed = "\n".join(f"- {finding.code}: {finding.message}" for finding in defects)
+    return (
+        "That graph is not structurally valid. These defects must be fixed:\n\n"
+        f"{listed}\n\n"
+        "Return the corrected graph. Fix only these defects -- keep every other node and edge "
+        "as it was. Where a defect exists because the source never states an outcome, close it "
+        "with a terminal node marked `status: needs_clarification` rather than inventing what "
+        "happens."
+    )

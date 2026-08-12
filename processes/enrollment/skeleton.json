@@ -1,0 +1,10 @@
+{
+  "process_name": "enrollment",
+  "subprocesses": [
+    { "name": "intake", "label": "Intake", "order_hint": 1 },
+    { "name": "off_label", "label": "Off-Label Review", "order_hint": 2 },
+    { "name": "duplicate", "label": "Duplicate Handling", "order_hint": 3 },
+    { "name": "missing_info", "label": "Missing Information", "order_hint": 4 },
+    { "name": "onboarding", "label": "Onboarding", "order_hint": 5 }
+  ]
+}

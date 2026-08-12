@@ -9,28 +9,34 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "pydantic>=2.13.4",
+    "pydantic-settings>=2.7.0",
     "pyyaml>=6.0.3",
     "strands-agents[anthropic]>=1.51.0",
 ]
 
-[project.scripts]
-process-flow-generator = "process_flow_generator:main"
-
-[build-system]
-requires = ["uv_build>=0.12.3,<0.13.0"]
-build-backend = "uv_build"
+# Not a distributable library: the stages are top-level packages run from the repo
+# root (`uv run python -m pipelines.stage1`), so there is nothing for uv to build.
+[tool.uv]
+package = false
 
 [dependency-groups]
 dev = [
     "mypy>=2.3.0",
     "pytest>=9.1.1",
     "ruff>=0.16.2",
+    "types-pyyaml>=6.0.12",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
 
 # pyproject.toml
 [tool.ruff]
 line-length = 120
 target-version = "py312"
+# Vendored skill documentation, not project source.
+extend-exclude = [".claude"]
 
 [tool.ruff.lint]
 select = [
