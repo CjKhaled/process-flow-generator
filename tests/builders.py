@@ -14,12 +14,14 @@ def node(
     *,
     label: str | None = None,
     status: NodeStatus = NodeStatus.STATED,
-    actor: str | None = None,
+    # Every box sits in a swimlane, so the default has to be a real one or every
+    # fixture would trip check_swimlane. Pass actor=None to build that defect.
+    actor: str | None = "CM360",
     subprocess: str | None = None,
     detail: str | None = None,
     alternatives: tuple[str, ...] = (),
 ) -> Node:
-    """Build a node, defaulting to a plain stated task."""
+    """Build a node, defaulting to a plain stated task in the CM360 lane."""
     return Node(
         id=node_id,
         type=node_type,

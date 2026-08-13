@@ -9,17 +9,17 @@
     {
       "code": "needs_clarification",
       "severity": "resolution",
-      "message": "node 'term_prescriber_disagrees' (Outcome when prescriber does not agree not stated) needs human confirmation: The source states what happens if the prescriber agrees but does not state the outcome if the prescriber does not agree.",
+      "message": "node 'gw_test_result' (Did free test disprove on-label diagnosis?) needs human confirmation: Source describes the branch where the free test disproved the on-label diagnosis but does not state the outcome path if the test confirmed the diagnosis, nor whether the test occurs on the agreement path.",
       "node_ids": [
-        "term_prescriber_disagrees"
+        "gw_test_result"
       ]
     },
     {
       "code": "needs_clarification",
       "severity": "resolution",
-      "message": "node 'term_duplicate_handled' (Duplicate patient handling outcome not stated) needs human confirmation: The source does not state what happens after CM360 determines the type of duplicate (re-enrollment, restart, or update).",
+      "message": "node 'term_existing_handled' (Existing patient handling determined) needs human confirmation: Source does not state what happens after CM360 determines the type of existing-patient case (re-enrollment, restart, or update).",
       "node_ids": [
-        "term_duplicate_handled"
+        "term_existing_handled"
       ]
     }
   ]

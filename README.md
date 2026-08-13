@@ -8,9 +8,13 @@ The hard part is not drawing boxes. It is that real process descriptions are inc
 they give the happy path, name three intake channels for one request, and stop before
 saying what happens when someone disagrees. So the graph this produces is explicit about
 what the source actually supports. Every node is either `stated` or `needs_clarification`,
-and every open question is reported for a human rather than quietly invented. Actors work
-the same way: a step carries the lane that performs it, an end state carries none, and a
-step nobody is named for falls to the process's declared default rather than to a blank.
+and every open question is reported for a human rather than quietly invented.
+
+Actors are swimlanes. Every box sits in one — a step in the lane that performs it, a
+gateway in the lane that decides, a terminal in the lane that owns the outcome, an
+annotation in the lane of the box it describes. A box with no lane is one the renderer
+cannot place, so it fails the structural tier; where the source names nobody, the box
+falls to the process's declared default lane rather than to a blank.
 
 ## Stage 1
 
@@ -72,13 +76,14 @@ Read from the environment or a `.env` file.
 
 Copy `processes/enrollment/`, then swap the data — no code changes:
 
-- `metadata.yaml` — machine name (must match the folder), display name, the actors and
+- `metadata.yaml` — machine name (must match the folder), display name, the swimlanes and
   what each one *is*, the default lane, domain shorthand, optional model override.
-  Descriptions are not decoration: a model told only "JCRM" cannot know it is the platform
-  that runs the automations, so it cannot attribute an automated step to it. `default_actor`
-  is where a step falls when the source never says who performs it — source text routinely
-  describes automation in the passive voice ("the PSM is assigned via zip to territory
-  mapping"). It must name one of the declared actors.
+  `actors` is the complete set of lanes the diagram may use. Descriptions are not
+  decoration: a model told only "JCRM" cannot know it is the platform that runs the
+  automations, so it cannot place an automated step in that lane. `default_actor` is where
+  a box falls when the source never says who — source text routinely describes automation
+  in the passive voice ("the PSM is assigned via zip to territory mapping"). It must name
+  one of the declared actors.
 - `skeleton.json` — the subprocesses a complete description is expected to cover. Drives
   the "is a part missing?" check. `order_hint` is a layout hint only and is never
   enforced; real sources routinely run the subprocesses out of order.

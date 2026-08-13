@@ -60,11 +60,12 @@ def test_system_prompt_names_the_default_lane(enrollment_skeleton: Skeleton) -> 
     assert "`JCRM`" in prompt
 
 
-def test_system_prompt_falls_back_to_null_without_a_default_lane(enrollment_skeleton: Skeleton) -> None:
-    """A process that declares no default lane must not be told to invent one."""
+def test_a_process_without_a_default_lane_still_never_leaves_one_blank(enrollment_skeleton: Skeleton) -> None:
+    """Every box sits in a lane, so the fallback is a judgement, never null."""
     prompt = build_system_prompt(config(default_actor=None), enrollment_skeleton)
 
-    assert "leave `actor` null" in prompt
+    assert "the lane that owns the work it does" in prompt
+    assert "null" not in prompt.split("## Swimlanes")[1]
 
 
 def test_system_prompt_encodes_the_extraction_conventions(enrollment_skeleton: Skeleton) -> None:

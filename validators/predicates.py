@@ -252,35 +252,24 @@ def check_known_subprocesses(graph: ProcessGraph, skeleton: Skeleton) -> Iterato
             )
 
 
-ACTORLESS_NODE_TYPES = frozenset({NodeType.TERMINAL, NodeType.ANNOTATION})
-ATTRIBUTED_NODE_TYPES = frozenset({NodeType.TASK, NodeType.GATEWAY})
+def check_swimlane(graph: ProcessGraph) -> Iterator[Finding]:
+    """Every box sits in a swimlane, whatever its type.
 
+    ``actor`` is the lane the box is drawn in, not merely who does the typing, so
+    "nobody performs an end state" is not a reason to leave one blank. A terminal
+    belongs to the lane that owns the outcome -- which need not be the lane of the
+    box pointing at it -- and an annotation to the lane of the box it describes.
 
-def check_actor_placement(graph: ProcessGraph) -> Iterator[Finding]:
-    """An actor performs work; an end state and a note are not work.
-
-    Two directions of one rule. Putting an actor on a terminal or an annotation is
-    structural: it would give the renderer a lane for something nobody performs.
-    Leaving a task or gateway unattributed is a resolution finding instead -- the
-    process config may not declare a default lane to fall back to, and an
-    unattributed step is a question for a human, not a malformed graph.
-
-    ``start`` and ``subprocess`` nodes are exempt in both directions: an entry point
-    need not be performed by anyone, and a collapsed subprocess may span several
-    actors.
+    Structural, because a null lane leaves the renderer with a box it cannot place.
+    Which lane is correct is beyond a deterministic check: the validator has no
+    ``ProcessConfig``, so it cannot even see the declared vocabulary. That much
+    stays a prompt-level guarantee; this check only holds the floor.
     """
     for node in graph.nodes:
-        if node.type in ACTORLESS_NODE_TYPES and node.actor is not None:
+        if node.actor is None or not node.actor.strip():
             yield Finding.of(
-                FindingCode.MISPLACED_ACTOR,
-                f"{node.type} node '{node.id}' carries the actor '{node.actor}'; "
-                f"a {node.type} is not work anyone performs",
-                node.id,
-            )
-        elif node.type in ATTRIBUTED_NODE_TYPES and node.actor is None:
-            yield Finding.of(
-                FindingCode.UNATTRIBUTED_STEP,
-                f"{node.type} node '{node.id}' ({node.label}) names nobody; a human should confirm who performs it",
+                FindingCode.MISSING_SWIMLANE,
+                f"{node.type} node '{node.id}' ({node.label}) has no actor; every box sits in a swimlane",
                 node.id,
             )
 

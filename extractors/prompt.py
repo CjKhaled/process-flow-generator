@@ -53,13 +53,19 @@ Emit an `annotation` node holding the rule and join it to the box it describes
 with an `annotates` edge. Never model a record value as a `task`, and never wire
 an annotation into the sequence flow.
 
-**Actors sit on work, not on outcomes.** Every `start`, `task` and `gateway` names who
-performs it, and a gateway takes the lane of whoever makes the decision. Work the source
-attributes to someone goes to that someone. Where the source names nobody -- usually
-the passive voice, "is assigned", "automatically creates" -- the step is automatic and
-goes to the default lane named below. A `terminal` or an `annotation` never carries an
-actor: an end state is not performed by anyone, and a note describes a box rather than
-doing work.
+**Every box sits in a swimlane.** `actor` is the lane the box is drawn in, and no node
+may be left without one -- not a terminal, not an annotation. Choose it like this:
+
+- A `start`, `task` or `gateway` takes the lane of whoever performs it; for a gateway,
+  whoever makes the decision.
+- A `terminal` takes the lane that **owns the outcome**, which is often not the lane of
+  the box pointing at it. "HCP works directly with SP Biologics" is the HCP lane even
+  when the preceding step was someone else's, and an enrolment that ends unresolved sits
+  with whoever owns enrolment, not with whoever happened to ask the last question.
+- An `annotation` takes the lane of the box it describes.
+- Where the source names nobody -- usually the passive voice, "is assigned",
+  "automatically creates" -- the step is automatic and goes to the default lane named
+  below.
 
 **Be honest about status.** There are two labels and no middle ground. `stated`
 is for what the source supports: what it says outright, and the plain sequencing
@@ -117,7 +123,7 @@ def _subprocess_section(skeleton: Skeleton) -> str:
 
 
 def _actor_section(config: ProcessConfig) -> str:
-    """The actor vocabulary, with what each one is and where unattributed work goes.
+    """The lane vocabulary, with what each one is and where unattributed work goes.
 
     Rendered in declaration order rather than sorted: ``metadata.yaml`` lists actors in
     roughly the order the process reaches them, which reads better than alphabetical.
@@ -126,13 +132,14 @@ def _actor_section(config: ProcessConfig) -> str:
     default = (
         f"\n\nWhere the source does not say who performs a step, it is automatic: use `{config.default_actor}`."
         if config.default_actor
-        else "\n\nWhere the source does not say who performs a step, leave `actor` null."
+        else "\n\nWhere the source does not say who performs a step, use the lane that owns the work it does."
     )
     return (
-        "## Actors\n\n"
-        "Use these names verbatim in the `actor` field. What each one is matters: it is how "
-        "you tell which of them a step belongs to. If the source attributes a step to someone "
-        f"outside this list, use the source's own wording.\n\n{listed}{default}"
+        "## Swimlanes\n\n"
+        "These are the lanes of the diagram, and the only values the `actor` field may take. "
+        "Use the names verbatim. What each one is matters: it is how you tell which lane a box "
+        "belongs in. If the source attributes a step to someone outside this list, use the "
+        f"source's own wording.\n\n{listed}{default}"
     )
 
 

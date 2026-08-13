@@ -86,10 +86,12 @@ class Node(BaseModel):
     actor: str | None = Field(
         default=None,
         description=(
-            "Who performs this step, named from the actor list supplied in the prompt -- for a "
-            "gateway, whoever makes the decision. Where the source does not say who, use the "
-            "default lane the prompt names. Null only on a terminal or an annotation, which are "
-            "not work anyone performs. Never invent an actor outside the supplied list."
+            "The swimlane this box is drawn in, named from the actor list supplied in the "
+            "prompt. Required on every node, whatever its type. Work takes the lane of whoever "
+            "performs it, and a gateway the lane of whoever decides. A terminal takes the lane "
+            "that owns the outcome, which is often not the lane of the box pointing at it. An "
+            "annotation takes the lane of the box it describes. Where the source names nobody, "
+            "use the default lane the prompt gives. Never invent one outside the supplied list."
         ),
     )
     subprocess: str | None = Field(

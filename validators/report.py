@@ -33,10 +33,9 @@ class FindingCode(StrEnum):
     UNREACHABLE_FROM_START = "unreachable_from_start"
     MALFORMED_ANNOTATION = "malformed_annotation"
     MISSING_CLARIFICATION_DETAIL = "missing_clarification_detail"
-    MISPLACED_ACTOR = "misplaced_actor"
+    MISSING_SWIMLANE = "missing_swimlane"
 
     # Resolution tier.
-    UNATTRIBUTED_STEP = "unattributed_step"
     MISSING_REQUIRED_SUBPROCESS = "missing_required_subprocess"
     UNKNOWN_SUBPROCESS = "unknown_subprocess"
     NEEDS_CLARIFICATION = "needs_clarification"
@@ -52,8 +51,7 @@ _SEVERITY_BY_CODE: dict[FindingCode, Severity] = {
     FindingCode.UNREACHABLE_FROM_START: Severity.STRUCTURAL,
     FindingCode.MALFORMED_ANNOTATION: Severity.STRUCTURAL,
     FindingCode.MISSING_CLARIFICATION_DETAIL: Severity.STRUCTURAL,
-    FindingCode.MISPLACED_ACTOR: Severity.STRUCTURAL,
-    FindingCode.UNATTRIBUTED_STEP: Severity.RESOLUTION,
+    FindingCode.MISSING_SWIMLANE: Severity.STRUCTURAL,
     FindingCode.MISSING_REQUIRED_SUBPROCESS: Severity.RESOLUTION,
     FindingCode.UNKNOWN_SUBPROCESS: Severity.RESOLUTION,
     FindingCode.NEEDS_CLARIFICATION: Severity.RESOLUTION,
