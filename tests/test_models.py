@@ -62,6 +62,13 @@ def test_unknown_fields_are_rejected() -> None:
         )
 
 
+def test_there_is_no_middle_status() -> None:
+    """'inferred' was removed deliberately; the schema must not quietly accept it again."""
+    assert [status.value for status in NodeStatus] == ["stated", "needs_clarification"]
+    with pytest.raises(ValidationError):
+        Node.model_validate({"id": "n", "type": "task", "label": "N", "status": "inferred"})
+
+
 def test_empty_identifiers_are_rejected() -> None:
     """Empty ids and labels are shape defects, so Pydantic catches them for a mechanical retry."""
     with pytest.raises(ValidationError):

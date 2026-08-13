@@ -38,10 +38,15 @@ class NodeType(StrEnum):
 
 
 class NodeStatus(StrEnum):
-    """How well the source text supports this node."""
+    """Whether the source settles this node, or a human still must.
+
+    Deliberately binary. A middle value for "follows from what the source says"
+    invites the model to fill gaps from how these processes usually run, and
+    nothing downstream can tell such a node from a stated one. Anything the source
+    does not settle is an open question, which is the output of this stage.
+    """
 
     STATED = "stated"
-    INFERRED = "inferred"
     NEEDS_CLARIFICATION = "needs_clarification"
 
 
@@ -94,16 +99,18 @@ class Node(BaseModel):
     )
     status: NodeStatus = Field(
         description=(
-            "stated: the source text says this explicitly. inferred: it follows necessarily "
-            "from what the source says, but is not written down. needs_clarification: the "
-            "source leaves this genuinely open and a human must resolve it."
+            "stated: the source supports this, whether it says so directly or through plain "
+            "sequencing. needs_clarification: the source does not settle this and a human must, "
+            "in which case 'detail' has to say what is open. If settling the question would need "
+            "knowledge the source does not contain, it is needs_clarification, never stated."
         )
     )
     detail: str | None = Field(
         default=None,
         description=(
             "The supporting source text -- ideally a direct quote. For a node collapsing "
-            "several channels or outcomes, record all of them here."
+            "several channels or outcomes, record all of them here. Required on a "
+            "needs_clarification node, where it must say what the source leaves open."
         ),
     )
     alternatives: tuple[str, ...] = Field(

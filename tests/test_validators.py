@@ -5,9 +5,11 @@ reacts to it. The structural tier must be a hard gate; the resolution tier must
 tag and pass through.
 """
 
+import pytest
+
 from ir.models import EdgeType, NodeStatus, NodeType, ProcessGraph
 from ir.skeleton import Skeleton
-from tests.builders import branch, edge, graph, node
+from tests.builders import branch, codes, edge, graph, node
 from validators.graph import validate
 from validators.report import FindingCode, Severity
 
@@ -37,7 +39,7 @@ def test_dangling_gateway_is_reported(enrollment_skeleton: Skeleton) -> None:
     report = validate(broken, enrollment_skeleton)
 
     assert not report.is_structurally_valid
-    assert FindingCode.GATEWAY_BRANCHES in report.codes
+    assert FindingCode.GATEWAY_BRANCHES in codes(report)
 
 
 def test_branch_without_a_condition_is_reported(enrollment_skeleton: Skeleton) -> None:
@@ -59,7 +61,7 @@ def test_branch_without_a_condition_is_reported(enrollment_skeleton: Skeleton) -
     report = validate(broken, enrollment_skeleton)
 
     assert not report.is_structurally_valid
-    assert FindingCode.GATEWAY_BRANCHES in report.codes
+    assert FindingCode.GATEWAY_BRANCHES in codes(report)
 
 
 def test_broken_edge_reference_is_reported(enrollment_skeleton: Skeleton) -> None:
@@ -72,7 +74,7 @@ def test_broken_edge_reference_is_reported(enrollment_skeleton: Skeleton) -> Non
     report = validate(broken, enrollment_skeleton)
 
     assert not report.is_structurally_valid
-    assert FindingCode.DANGLING_EDGE_REF in report.codes
+    assert FindingCode.DANGLING_EDGE_REF in codes(report)
     assert any("does_not_exist" in finding.message for finding in report.structural)
 
 
@@ -98,7 +100,7 @@ def test_duplicate_node_ids_are_reported(enrollment_skeleton: Skeleton) -> None:
 
     report = validate(broken, enrollment_skeleton)
 
-    assert FindingCode.DUPLICATE_NODE_ID in report.codes
+    assert FindingCode.DUPLICATE_NODE_ID in codes(report)
 
 
 def test_multiple_starts_are_reported(enrollment_skeleton: Skeleton) -> None:
@@ -114,7 +116,7 @@ def test_multiple_starts_are_reported(enrollment_skeleton: Skeleton) -> None:
 
     report = validate(broken, enrollment_skeleton)
 
-    assert FindingCode.START_NODE_COUNT in report.codes
+    assert FindingCode.START_NODE_COUNT in codes(report)
 
 
 def test_dead_end_is_reported(enrollment_skeleton: Skeleton) -> None:
@@ -126,8 +128,8 @@ def test_dead_end_is_reported(enrollment_skeleton: Skeleton) -> None:
 
     report = validate(broken, enrollment_skeleton)
 
-    assert FindingCode.ORPHAN_NODE in report.codes
-    assert FindingCode.TERMINAL_UNREACHABLE in report.codes
+    assert FindingCode.ORPHAN_NODE in codes(report)
+    assert FindingCode.TERMINAL_UNREACHABLE in codes(report)
 
 
 def test_island_unreachable_from_start_is_reported(enrollment_skeleton: Skeleton) -> None:
@@ -155,17 +157,17 @@ def test_island_unreachable_from_start_is_reported(enrollment_skeleton: Skeleton
 
     report = validate(broken, enrollment_skeleton)
 
-    assert FindingCode.UNREACHABLE_FROM_START in report.codes
-    assert FindingCode.ORPHAN_NODE not in report.codes
+    assert FindingCode.UNREACHABLE_FROM_START in codes(report)
+    assert FindingCode.ORPHAN_NODE not in codes(report)
 
 
 def test_annotation_node_is_not_an_orphan(valid_graph: ProcessGraph, enrollment_skeleton: Skeleton) -> None:
     """Annotations hang off the flow by a dashed edge and must be excluded from flow checks."""
     report = validate(valid_graph, enrollment_skeleton)
 
-    assert FindingCode.ORPHAN_NODE not in report.codes
-    assert FindingCode.TERMINAL_UNREACHABLE not in report.codes
-    assert FindingCode.UNREACHABLE_FROM_START not in report.codes
+    assert FindingCode.ORPHAN_NODE not in codes(report)
+    assert FindingCode.TERMINAL_UNREACHABLE not in codes(report)
+    assert FindingCode.UNREACHABLE_FROM_START not in codes(report)
 
 
 def test_annotation_in_the_flow_is_reported(enrollment_skeleton: Skeleton) -> None:
@@ -181,7 +183,7 @@ def test_annotation_in_the_flow_is_reported(enrollment_skeleton: Skeleton) -> No
 
     report = validate(broken, enrollment_skeleton)
 
-    assert FindingCode.MALFORMED_ANNOTATION in report.codes
+    assert FindingCode.MALFORMED_ANNOTATION in codes(report)
 
 
 def test_annotates_edge_must_leave_an_annotation(enrollment_skeleton: Skeleton) -> None:
@@ -197,7 +199,7 @@ def test_annotates_edge_must_leave_an_annotation(enrollment_skeleton: Skeleton) 
 
     report = validate(broken, enrollment_skeleton)
 
-    assert FindingCode.MALFORMED_ANNOTATION in report.codes
+    assert FindingCode.MALFORMED_ANNOTATION in codes(report)
 
 
 def test_rework_loop_still_reaches_a_terminal(enrollment_skeleton: Skeleton) -> None:
@@ -245,7 +247,7 @@ def test_unknown_subprocess_is_a_resolution_finding(enrollment_skeleton: Skeleto
     report = validate(graph_with_unknown, enrollment_skeleton)
 
     assert report.is_structurally_valid
-    assert FindingCode.UNKNOWN_SUBPROCESS in report.codes
+    assert FindingCode.UNKNOWN_SUBPROCESS in codes(report)
     assert any("prior_authorization" in f.message for f in report.resolution)
 
 
@@ -256,7 +258,12 @@ def test_needs_clarification_nodes_are_enumerated(enrollment_skeleton: Skeleton)
             node("start", NodeType.START),
             node("gw_agrees", NodeType.GATEWAY),
             node("end_enrolled", NodeType.TERMINAL),
-            node("end_unknown", NodeType.TERMINAL, status=NodeStatus.NEEDS_CLARIFICATION),
+            node(
+                "end_unknown",
+                NodeType.TERMINAL,
+                status=NodeStatus.NEEDS_CLARIFICATION,
+                detail="the source does not say what happens when the prescriber disagrees",
+            ),
         ),
         edges=(
             edge("start", "gw_agrees"),
@@ -271,6 +278,59 @@ def test_needs_clarification_nodes_are_enumerated(enrollment_skeleton: Skeleton)
     assert report.is_structurally_valid
     assert len(clarifications) == 1
     assert clarifications[0].node_ids == ("end_unknown",)
+
+
+@pytest.mark.parametrize("detail", [None, "   "])
+def test_clarification_without_detail_is_structural(enrollment_skeleton: Skeleton, detail: str | None) -> None:
+    """An open question that does not say what is open is a mechanical omission."""
+    undetailed = graph(
+        nodes=(
+            node("start", NodeType.START),
+            node("end_unknown", NodeType.TERMINAL, status=NodeStatus.NEEDS_CLARIFICATION, detail=detail),
+        ),
+        edges=(edge("start", "end_unknown"),),
+    )
+
+    report = validate(undetailed, enrollment_skeleton)
+
+    assert not report.is_structurally_valid
+    assert FindingCode.MISSING_CLARIFICATION_DETAIL in codes(report)
+    assert all(f.code is not FindingCode.MISSING_CLARIFICATION_DETAIL for f in report.resolution)
+
+
+def test_clarification_with_detail_is_only_a_resolution_finding(enrollment_skeleton: Skeleton) -> None:
+    """A justified open question passes the hard tier and is reported for a human."""
+    detailed = graph(
+        nodes=(
+            node("start", NodeType.START),
+            node(
+                "end_unknown",
+                NodeType.TERMINAL,
+                status=NodeStatus.NEEDS_CLARIFICATION,
+                detail="the source stops before saying how this ends",
+            ),
+        ),
+        edges=(edge("start", "end_unknown"),),
+    )
+
+    report = validate(detailed, enrollment_skeleton)
+
+    assert report.is_structurally_valid
+    assert FindingCode.MISSING_CLARIFICATION_DETAIL not in codes(report)
+    assert FindingCode.NEEDS_CLARIFICATION in codes(report)
+
+
+def test_stated_nodes_need_no_detail(enrollment_skeleton: Skeleton) -> None:
+    """The detail requirement is scoped to open questions, not to every node."""
+    plain = graph(
+        nodes=(node("start", NodeType.START), node("end", NodeType.TERMINAL)),
+        edges=(edge("start", "end"),),
+    )
+
+    report = validate(plain, enrollment_skeleton)
+
+    assert report.is_structurally_valid
+    assert FindingCode.MISSING_CLARIFICATION_DETAIL not in codes(report)
 
 
 def test_report_separates_the_two_tiers(enrollment_skeleton: Skeleton) -> None:

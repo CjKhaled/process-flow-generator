@@ -5,6 +5,7 @@ defaults rather than adding any validation of their own.
 """
 
 from ir.models import Edge, EdgeType, Node, NodeStatus, NodeType, ProcessGraph
+from validators.report import FindingCode, ValidationReport
 
 
 def node(
@@ -51,3 +52,8 @@ def branch(from_id: str, to_id: str, condition: str | None, order: int = 0) -> E
 def graph(nodes: tuple[Node, ...], edges: tuple[Edge, ...], name: str = "enrollment") -> ProcessGraph:
     """Build a process graph from nodes and edges."""
     return ProcessGraph(process_name=name, nodes=nodes, edges=edges)
+
+
+def codes(report: ValidationReport) -> frozenset[FindingCode]:
+    """The distinct finding codes in a report, for terse assertions."""
+    return frozenset(finding.code for finding in report.findings)

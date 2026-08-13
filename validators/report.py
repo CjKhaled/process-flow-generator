@@ -32,6 +32,7 @@ class FindingCode(StrEnum):
     TERMINAL_UNREACHABLE = "terminal_unreachable"
     UNREACHABLE_FROM_START = "unreachable_from_start"
     MALFORMED_ANNOTATION = "malformed_annotation"
+    MISSING_CLARIFICATION_DETAIL = "missing_clarification_detail"
 
     # Resolution tier.
     MISSING_REQUIRED_SUBPROCESS = "missing_required_subprocess"
@@ -48,6 +49,7 @@ _SEVERITY_BY_CODE: dict[FindingCode, Severity] = {
     FindingCode.TERMINAL_UNREACHABLE: Severity.STRUCTURAL,
     FindingCode.UNREACHABLE_FROM_START: Severity.STRUCTURAL,
     FindingCode.MALFORMED_ANNOTATION: Severity.STRUCTURAL,
+    FindingCode.MISSING_CLARIFICATION_DETAIL: Severity.STRUCTURAL,
     FindingCode.MISSING_REQUIRED_SUBPROCESS: Severity.RESOLUTION,
     FindingCode.UNKNOWN_SUBPROCESS: Severity.RESOLUTION,
     FindingCode.NEEDS_CLARIFICATION: Severity.RESOLUTION,
@@ -91,11 +93,6 @@ class ValidationReport(BaseModel):
     def is_structurally_valid(self) -> bool:
         """Whether the graph passes the hard tier and may be emitted."""
         return not self.structural
-
-    @property
-    def codes(self) -> frozenset[FindingCode]:
-        """The distinct codes present, for terse assertions and logging."""
-        return frozenset(f.code for f in self.findings)
 
     def summary(self) -> str:
         """A one-line-per-finding rendering, for CLI output and repair prompts."""

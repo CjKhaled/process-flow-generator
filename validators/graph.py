@@ -1,6 +1,6 @@
 """The born-valid gate.
 
-Deterministic, no LLM. Composes the predicates in :mod:`validators.predicates`
+Composes the predicates in :mod:`validators.predicates`
 into a single report over two tiers:
 
 * **structural** -- hard. The graph is malformed and must not be emitted.
@@ -14,6 +14,7 @@ from ir.models import ProcessGraph
 from ir.skeleton import Skeleton
 from validators.predicates import (
     check_annotation_wiring,
+    check_clarification_detail,
     check_edge_references,
     check_gateway_branches,
     check_known_subprocesses,
@@ -58,6 +59,7 @@ def validate(graph: ProcessGraph, skeleton: Skeleton) -> ValidationReport:
         findings.extend(check_terminal_reachable(view))
         findings.extend(check_reachable_from_start(view))
 
+    findings.extend(check_clarification_detail(graph))
     findings.extend(check_required_subprocesses(graph, skeleton))
     findings.extend(check_known_subprocesses(graph, skeleton))
     findings.extend(check_needs_clarification(graph))

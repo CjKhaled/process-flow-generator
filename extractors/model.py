@@ -5,11 +5,12 @@ the :class:`~extractors.process.ModelCall` protocol instead, which is what lets
 the retry loop be tested without a network.
 """
 
+from anthropic import APIStatusError
 from strands import Agent
 from strands.models.anthropic import AnthropicModel
 from strands.types.exceptions import MaxTokensReachedException, StructuredOutputException
 
-from extractors.errors import SchemaCallError
+from extractors.errors import ModelUnavailableError, SchemaCallError
 from extractors.prompt import build_system_prompt
 from ir.models import ProcessGraph
 from ir.process_config import ProcessConfig
@@ -42,6 +43,8 @@ class StrandsModelCall:
             raise SchemaCallError(str(error)) from error
         except MaxTokensReachedException as error:
             raise SchemaCallError(f"the response was cut off before the graph was complete: {error}") from error
+        except APIStatusError as error:
+            raise ModelUnavailableError(f"the API rejected the request: {error.message}") from error
 
         graph = result.structured_output
         if not isinstance(graph, ProcessGraph):
@@ -49,8 +52,8 @@ class StrandsModelCall:
         return graph
 
 
-def build_agent(settings: Settings, config: ProcessConfig, skeleton: Skeleton) -> Agent:
-    """Construct the extraction agent for one process.
+def build_model_call(settings: Settings, config: ProcessConfig, skeleton: Skeleton) -> StrandsModelCall:
+    """Build the callable the extraction loop drives.
 
     Args:
         settings: Global settings supplying credentials and model defaults.
@@ -58,7 +61,7 @@ def build_agent(settings: Settings, config: ProcessConfig, skeleton: Skeleton) -
         skeleton: The subprocesses this process is expected to contain.
 
     Returns:
-        An agent primed with the extraction system prompt.
+        A model call wrapping an agent primed with the extraction system prompt.
     """
     model = AnthropicModel(
         client_args={"api_key": settings.anthropic_api_key.get_secret_value()},
@@ -66,9 +69,4 @@ def build_agent(settings: Settings, config: ProcessConfig, skeleton: Skeleton) -
         max_tokens=settings.max_tokens,
         # No temperature/top_p/top_k: the current Claude models reject them.
     )
-    return Agent(model=model, system_prompt=build_system_prompt(config, skeleton))
-
-
-def build_model_call(settings: Settings, config: ProcessConfig, skeleton: Skeleton) -> StrandsModelCall:
-    """Build the callable the extraction loop drives."""
-    return StrandsModelCall(build_agent(settings, config, skeleton))
+    return StrandsModelCall(Agent(model=model, system_prompt=build_system_prompt(config, skeleton)))

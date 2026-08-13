@@ -1,0 +1,545 @@
+{
+  "process_name": "Intake & Enrollment",
+  "nodes": [
+    {
+      "id": "start_pef",
+      "type": "start",
+      "label": "HCP completes PEF (portal or fax)",
+      "actor": "HCP",
+      "subprocess": "intake",
+      "status": "stated",
+      "detail": "HCP can complete the PEF online via the portal or manually via fax.",
+      "alternatives": []
+    },
+    {
+      "id": "transcribe_pef",
+      "type": "task",
+      "label": "Transcribe PEF into CRM",
+      "actor": "CM360",
+      "subprocess": "intake",
+      "status": "stated",
+      "detail": "CM360 will transcribe the PEF into the CRM.",
+      "alternatives": []
+    },
+    {
+      "id": "send_pef_confirmation",
+      "type": "task",
+      "label": "Send PEF confirmation of fax to HCP",
+      "actor": "CM360",
+      "subprocess": "intake",
+      "status": "stated",
+      "detail": "CM360 will send PEF confirmation of fax back to the HCP.",
+      "alternatives": []
+    },
+    {
+      "id": "create_enrollment_record",
+      "type": "task",
+      "label": "Create enrollment record",
+      "actor": "CM360",
+      "subprocess": "intake",
+      "status": "stated",
+      "detail": "Enrollment record is then created in CM360.",
+      "alternatives": []
+    },
+    {
+      "id": "check_off_label",
+      "type": "task",
+      "label": "Check if diagnosis code is off-label",
+      "actor": "CM360",
+      "subprocess": "intake",
+      "status": "stated",
+      "detail": "CM360 checks if the diagnosis code on the PEF is off-label. They can also learn that it is off-label via an HCP inbound call.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_is_off_label",
+      "type": "gateway",
+      "label": "Is it off-label?",
+      "actor": "CM360",
+      "subprocess": "off_label",
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    },
+    {
+      "id": "gw_age_and_code",
+      "type": "gateway",
+      "label": "Patient 18 or older AND diagnosis code in document?",
+      "actor": "CM360",
+      "subprocess": "off_label",
+      "status": "stated",
+      "detail": "CM360 will check if the patient is 18 or older, and if the diagnosis code is equal to the ones in their document.",
+      "alternatives": []
+    },
+    {
+      "id": "psm_confirm_code",
+      "type": "task",
+      "label": "Contact prescribing officer to confirm diagnosis code",
+      "actor": "PSM",
+      "subprocess": "off_label",
+      "status": "stated",
+      "detail": "The PSM will contact the prescribing officer and confirm the diagnosis code selected.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_hcp_believes_on_label",
+      "type": "gateway",
+      "label": "HCP believes patient has on-label condition unconfirmed by genetic testing?",
+      "actor": "PSM",
+      "subprocess": "off_label",
+      "status": "stated",
+      "detail": "They will then see if the HCP indicates that they believe the patient has an on-label condition that just hasn't been confirmed through genetic testing.",
+      "alternatives": []
+    },
+    {
+      "id": "psm_tell_prescriber_on_label",
+      "type": "task",
+      "label": "Tell prescriber to select on-label code; offer free post-rx genetic testing",
+      "actor": "PSM",
+      "subprocess": "off_label",
+      "status": "stated",
+      "detail": "The PSM can reactively tell the prescriber to select the on-label diagnosis code, and that free post-rx genetic testing is offered to confirm the diagnosis after the patient starts treatment.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_prescriber_agrees",
+      "type": "gateway",
+      "label": "Does prescriber agree?",
+      "actor": "PSM",
+      "subprocess": "off_label",
+      "status": "stated",
+      "detail": "If the prescriber agrees, the patient will proceed with enrollment.",
+      "alternatives": []
+    },
+    {
+      "id": "term_prescriber_disagrees",
+      "type": "terminal",
+      "label": "Outcome when prescriber does not agree (unspecified)",
+      "actor": null,
+      "subprocess": "off_label",
+      "status": "needs_clarification",
+      "detail": "The source only states what happens if the prescriber agrees; it does not state the outcome when the prescriber does not agree.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_test_disproved",
+      "type": "gateway",
+      "label": "Did free test disprove on-label diagnosis?",
+      "actor": "PSM",
+      "subprocess": "off_label",
+      "status": "stated",
+      "detail": "If the free test disproved the on-label diagnosis, the PSM will contact the HCP and see if the doctor insists on their clinical judgement.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_doctor_insists",
+      "type": "gateway",
+      "label": "Does doctor insist on clinical judgement of on-label diagnosis?",
+      "actor": "PSM",
+      "subprocess": "off_label",
+      "status": "stated",
+      "detail": "The PSM will contact the HCP and see if the doctor insists on their clinical judgement that the patient does have the on-label diagnosis. If they do, the patient will continue as normal. If they don't the patient is officially off-label.",
+      "alternatives": []
+    },
+    {
+      "id": "deemed_off_label",
+      "type": "task",
+      "label": "Patient deemed off-label",
+      "actor": "CM360",
+      "subprocess": "off_label",
+      "status": "stated",
+      "detail": "If the patient is deemed off-label, they either won't be entered into the CRM or just archived.",
+      "alternatives": [
+        "won't be entered into the CRM",
+        "just archived"
+      ]
+    },
+    {
+      "id": "send_off_label_fax",
+      "type": "task",
+      "label": "Send off-label notification fax to HCP office",
+      "actor": "CM360",
+      "subprocess": "off_label",
+      "status": "stated",
+      "detail": "CM360 will send the Off-label notification fax to the HCP office.",
+      "alternatives": []
+    },
+    {
+      "id": "hcp_work_with_sp",
+      "type": "task",
+      "label": "HCP works directly with SP Biologics",
+      "actor": "HCP",
+      "subprocess": "off_label",
+      "status": "stated",
+      "detail": "The HCP will have to work directly with the SP biologics.",
+      "alternatives": []
+    },
+    {
+      "id": "term_off_label",
+      "type": "terminal",
+      "label": "Off-label handling complete",
+      "actor": null,
+      "subprocess": "off_label",
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    },
+    {
+      "id": "duplicate_check",
+      "type": "task",
+      "label": "Duplicate patient check",
+      "actor": "CM360",
+      "subprocess": "duplicate",
+      "status": "stated",
+      "detail": "From there, duplicate patient check will happen.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_patient_exists",
+      "type": "gateway",
+      "label": "Does patient already exist?",
+      "actor": "CM360",
+      "subprocess": "duplicate",
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    },
+    {
+      "id": "determine_existing_type",
+      "type": "task",
+      "label": "Determine re-enrollment, restart, or update to care plan",
+      "actor": "CM360",
+      "subprocess": "duplicate",
+      "status": "stated",
+      "detail": "CM360 system will determine whether this is a re-enrollment, restart, or an update to an existing care plan.",
+      "alternatives": [
+        "re-enrollment",
+        "restart",
+        "update to an existing care plan"
+      ]
+    },
+    {
+      "id": "term_existing_patient",
+      "type": "terminal",
+      "label": "Existing-patient handling complete (downstream unspecified)",
+      "actor": null,
+      "subprocess": "duplicate",
+      "status": "needs_clarification",
+      "detail": "The source does not state what happens after determining re-enrollment, restart, or update for an existing patient.",
+      "alternatives": []
+    },
+    {
+      "id": "create_patient_record",
+      "type": "task",
+      "label": "Create patient record and associate with correct care plan",
+      "actor": "CM360",
+      "subprocess": "onboarding",
+      "status": "stated",
+      "detail": "If it is a new patient, CM360 will create the patient record and associate it with the correct care plan.",
+      "alternatives": []
+    },
+    {
+      "id": "create_bi_case",
+      "type": "task",
+      "label": "Create BI case",
+      "actor": "CM360",
+      "subprocess": "onboarding",
+      "status": "stated",
+      "detail": "They will create the BI case with the status being 'PENDING' and the substatus being 'NEW PATIENT – HUB ENROLLED'.",
+      "alternatives": []
+    },
+    {
+      "id": "ann_bi_status",
+      "type": "annotation",
+      "label": "Status 'PENDING', substatus 'NEW PATIENT – HUB ENROLLED'",
+      "actor": null,
+      "subprocess": "onboarding",
+      "status": "stated",
+      "detail": "the status being 'PENDING' and the substatus being 'NEW PATIENT – HUB ENROLLED'",
+      "alternatives": []
+    },
+    {
+      "id": "send_status_qral",
+      "type": "task",
+      "label": "Send status to QRAL",
+      "actor": "CM360",
+      "subprocess": "onboarding",
+      "status": "stated",
+      "detail": "This status is sent to QRAL.",
+      "alternatives": []
+    },
+    {
+      "id": "qral_send_jcrm",
+      "type": "task",
+      "label": "Send status to JCRM",
+      "actor": "QRAL",
+      "subprocess": "onboarding",
+      "status": "stated",
+      "detail": "QRAL sends it to JCRM.",
+      "alternatives": []
+    },
+    {
+      "id": "create_onboarding_case",
+      "type": "task",
+      "label": "Onboarding case automatically created",
+      "actor": null,
+      "subprocess": "onboarding",
+      "status": "stated",
+      "detail": "This status automatically creates the onboarding case.",
+      "alternatives": []
+    },
+    {
+      "id": "assign_psm",
+      "type": "task",
+      "label": "Assign PSM via zip to territory mapping",
+      "actor": null,
+      "subprocess": "onboarding",
+      "status": "stated",
+      "detail": "The PSM is assigned via zip to territory mapping.",
+      "alternatives": []
+    },
+    {
+      "id": "term_enrolled",
+      "type": "terminal",
+      "label": "Enrollment complete",
+      "actor": null,
+      "subprocess": "onboarding",
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    }
+  ],
+  "edges": [
+    {
+      "from_id": "start_pef",
+      "to_id": "transcribe_pef",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "transcribe_pef",
+      "to_id": "send_pef_confirmation",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "send_pef_confirmation",
+      "to_id": "create_enrollment_record",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "create_enrollment_record",
+      "to_id": "check_off_label",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "check_off_label",
+      "to_id": "gw_is_off_label",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_is_off_label",
+      "to_id": "gw_age_and_code",
+      "type": "branch",
+      "condition": "It is off-label",
+      "order": 0
+    },
+    {
+      "from_id": "gw_is_off_label",
+      "to_id": "duplicate_check",
+      "type": "branch",
+      "condition": "It is not off-label",
+      "order": 1
+    },
+    {
+      "from_id": "gw_age_and_code",
+      "to_id": "psm_confirm_code",
+      "type": "branch",
+      "condition": "Patient is 18 or older AND diagnosis code equals the ones in their document",
+      "order": 0
+    },
+    {
+      "from_id": "gw_age_and_code",
+      "to_id": "deemed_off_label",
+      "type": "branch",
+      "condition": "Otherwise (they are off-label)",
+      "order": 1
+    },
+    {
+      "from_id": "psm_confirm_code",
+      "to_id": "gw_hcp_believes_on_label",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_hcp_believes_on_label",
+      "to_id": "psm_tell_prescriber_on_label",
+      "type": "branch",
+      "condition": "HCP believes patient has on-label condition not yet confirmed by genetic testing",
+      "order": 0
+    },
+    {
+      "from_id": "gw_hcp_believes_on_label",
+      "to_id": "deemed_off_label",
+      "type": "branch",
+      "condition": "HCP does not indicate an unconfirmed on-label condition",
+      "order": 1
+    },
+    {
+      "from_id": "psm_tell_prescriber_on_label",
+      "to_id": "gw_prescriber_agrees",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_prescriber_agrees",
+      "to_id": "gw_test_disproved",
+      "type": "branch",
+      "condition": "Prescriber agrees (patient proceeds with enrollment)",
+      "order": 0
+    },
+    {
+      "from_id": "gw_prescriber_agrees",
+      "to_id": "term_prescriber_disagrees",
+      "type": "branch",
+      "condition": "Prescriber does not agree",
+      "order": 1
+    },
+    {
+      "from_id": "gw_test_disproved",
+      "to_id": "gw_doctor_insists",
+      "type": "branch",
+      "condition": "Free test disproved the on-label diagnosis",
+      "order": 0
+    },
+    {
+      "from_id": "gw_test_disproved",
+      "to_id": "duplicate_check",
+      "type": "branch",
+      "condition": "Free test did not disprove the on-label diagnosis (patient proceeds)",
+      "order": 1
+    },
+    {
+      "from_id": "gw_doctor_insists",
+      "to_id": "duplicate_check",
+      "type": "branch",
+      "condition": "Doctor insists on clinical judgement (patient continues as normal)",
+      "order": 0
+    },
+    {
+      "from_id": "gw_doctor_insists",
+      "to_id": "deemed_off_label",
+      "type": "branch",
+      "condition": "Doctor does not insist (patient officially off-label)",
+      "order": 1
+    },
+    {
+      "from_id": "deemed_off_label",
+      "to_id": "send_off_label_fax",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "send_off_label_fax",
+      "to_id": "hcp_work_with_sp",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "hcp_work_with_sp",
+      "to_id": "term_off_label",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "duplicate_check",
+      "to_id": "gw_patient_exists",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_patient_exists",
+      "to_id": "determine_existing_type",
+      "type": "branch",
+      "condition": "Patient exists already",
+      "order": 0
+    },
+    {
+      "from_id": "gw_patient_exists",
+      "to_id": "create_patient_record",
+      "type": "branch",
+      "condition": "New patient",
+      "order": 1
+    },
+    {
+      "from_id": "determine_existing_type",
+      "to_id": "term_existing_patient",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "create_patient_record",
+      "to_id": "create_bi_case",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "ann_bi_status",
+      "to_id": "create_bi_case",
+      "type": "annotates",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "create_bi_case",
+      "to_id": "send_status_qral",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "send_status_qral",
+      "to_id": "qral_send_jcrm",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "qral_send_jcrm",
+      "to_id": "create_onboarding_case",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "create_onboarding_case",
+      "to_id": "assign_psm",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    },
+    {
+      "from_id": "assign_psm",
+      "to_id": "term_enrolled",
+      "type": "precedes",
+      "condition": null,
+      "order": 0
+    }
+  ]
+}

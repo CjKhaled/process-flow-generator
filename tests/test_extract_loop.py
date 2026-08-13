@@ -10,7 +10,7 @@ from extractors.errors import ExtractionError, SchemaCallError
 from extractors.process import extract
 from ir.models import NodeType, ProcessGraph
 from ir.skeleton import Skeleton
-from tests.builders import branch, edge, graph, node
+from tests.builders import branch, codes, edge, graph, node
 from validators.report import FindingCode
 
 SOURCE = "HCP can complete the PEF online via the portal or manually via fax."
@@ -99,7 +99,7 @@ def test_resolution_findings_never_trigger_a_retry(valid_graph: ProcessGraph, en
     result = extract(SOURCE, enrollment_skeleton, call=fake)
 
     assert fake.call_count == 1
-    assert FindingCode.MISSING_REQUIRED_SUBPROCESS in result.report.codes
+    assert FindingCode.MISSING_REQUIRED_SUBPROCESS in codes(result.report)
     assert result.report.is_structurally_valid
 
 
@@ -113,7 +113,7 @@ def test_exhausting_attempts_raises_with_the_last_report(enrollment_skeleton: Sk
     assert fake.call_count == 3
     assert caught.value.attempts == 3
     assert caught.value.report is not None
-    assert FindingCode.GATEWAY_BRANCHES in caught.value.report.codes
+    assert FindingCode.GATEWAY_BRANCHES in codes(caught.value.report)
 
 
 def test_schema_failure_is_retried(valid_graph: ProcessGraph, enrollment_skeleton: Skeleton) -> None:

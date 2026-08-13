@@ -1,6 +1,6 @@
 # Per-process settings. Data only -- the engine reads this, it is never imported.
 process_name: enrollment
-display_name: Patient Enrollment
+display_name: Intake & Enrollment
 
 # Actors that appear in this process. Given to the extractor so it labels boxes
 # with the organisation's own vocabulary instead of paraphrasing.

@@ -1,0 +1,26 @@
+{
+  "findings": [
+    {
+      "code": "missing_required_subprocess",
+      "severity": "resolution",
+      "message": "the source text does not describe the 'missing_info' subprocess (Missing Information); a human should confirm whether it is genuinely absent",
+      "node_ids": []
+    },
+    {
+      "code": "needs_clarification",
+      "severity": "resolution",
+      "message": "node 'term_prescriber_disagrees' (Outcome when prescriber does not agree (unspecified)) needs human confirmation: The source only states what happens if the prescriber agrees; it does not state the outcome when the prescriber does not agree.",
+      "node_ids": [
+        "term_prescriber_disagrees"
+      ]
+    },
+    {
+      "code": "needs_clarification",
+      "severity": "resolution",
+      "message": "node 'term_existing_patient' (Existing-patient handling complete (downstream unspecified)) needs human confirmation: The source does not state what happens after determining re-enrollment, restart, or update for an existing patient.",
+      "node_ids": [
+        "term_existing_patient"
+      ]
+    }
+  ]
+}

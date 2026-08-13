@@ -20,7 +20,7 @@ class Settings(BaseSettings):
         description="Anthropic API key. Required; there is no default.",
     )
     model_id: str = Field(
-        default="claude-opus-5",
+        default="claude-opus-4-8",
         alias="PFG_MODEL_ID",
         description="Model used for extraction unless a process overrides it.",
     )
@@ -28,13 +28,20 @@ class Settings(BaseSettings):
         default=32000,
         gt=0,
         alias="PFG_MAX_TOKENS",
-        description="Output cap per call. The provider streams, so a generous value is safe.",
+        description=(
+            "Output cap per call. A cap, not a reservation -- you are billed for what is "
+            "generated -- and the provider streams, so a generous value is safe. Too low "
+            "truncates the graph mid-generation: 4096 is not enough for a real process."
+        ),
     )
     max_extraction_attempts: int = Field(
         default=3,
         ge=1,
         alias="PFG_MAX_EXTRACTION_ATTEMPTS",
-        description="How many times to ask the model, including the first attempt.",
+        description=(
+            "How many times to ask the model, including the first attempt. The single source "
+            "of truth for the budget: a pipeline run never falls back to another default."
+        ),
     )
 
 

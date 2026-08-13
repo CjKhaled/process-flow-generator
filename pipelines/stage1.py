@@ -9,18 +9,28 @@ A graph that fails the structural tier is never written. Later stages read
 """
 
 import argparse
+import logging
 import sys
 from pathlib import Path
 
 from pydantic import ValidationError
 
-from extractors.errors import ExtractionError
+from extractors.errors import ExtractionError, ModelUnavailableError
 from extractors.model import build_model_call
 from extractors.process import DEFAULT_MAX_ATTEMPTS, ExtractionResult, ModelCall, extract
-from ir.process_config import INPUTS_DIRNAME, OUTPUTS_DIRNAME, SKELETON_FILENAME, load_process_config
-from ir.skeleton import load_skeleton
+from ir.process_config import (
+    INPUTS_DIRNAME,
+    METADATA_FILENAME,
+    OUTPUTS_DIRNAME,
+    SKELETON_FILENAME,
+    ProcessConfig,
+    load_process_config,
+)
+from ir.skeleton import Skeleton, load_skeleton
 from utils.io import read_source, write_json
 from utils.settings import load_settings
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_PROCESSES_ROOT = Path(__file__).resolve().parent.parent / "processes"
 GRAPH_FILENAME = "graph.json"
@@ -48,6 +58,7 @@ def run(
 
     Raises:
         FileNotFoundError: If the process folder or its inputs are missing.
+        ValueError: If the folder, metadata, and skeleton disagree about the name.
         pydantic.ValidationError: If required settings are missing.
         ExtractionError: If no attempt produced a structurally valid graph. Nothing
             is written in that case.
@@ -58,24 +69,58 @@ def run(
 
     config = load_process_config(process_dir)
     skeleton = load_skeleton(process_dir / SKELETON_FILENAME)
+    _check_names_agree(process_name, config, skeleton)
     source_text = read_source(process_dir / INPUTS_DIRNAME)
 
     if call is None:
         settings = load_settings()
         call = build_model_call(settings, config, skeleton)
-        max_attempts = max_attempts or settings.max_extraction_attempts
+        if max_attempts is None:
+            max_attempts = settings.max_extraction_attempts
 
     result = extract(
         source_text,
         skeleton,
         call=call,
-        max_attempts=max_attempts or DEFAULT_MAX_ATTEMPTS,
+        # `is None` rather than `or`: an explicit 0 must reach the guard in extract().
+        max_attempts=DEFAULT_MAX_ATTEMPTS if max_attempts is None else max_attempts,
     )
+
+    if result.graph.process_name != process_name:
+        # Not fatal: a mislabelled but otherwise sound graph is worth keeping.
+        logger.warning(
+            "the model named the graph '%s', but this is the '%s' process",
+            result.graph.process_name,
+            process_name,
+        )
 
     outputs = process_dir / OUTPUTS_DIRNAME
     write_json(outputs / GRAPH_FILENAME, result.graph)
     write_json(outputs / REPORT_FILENAME, result.report)
     return result
+
+
+def _check_names_agree(process_name: str, config: ProcessConfig, skeleton: Skeleton) -> None:
+    """Fail before spending a model call when the three copies of the name disagree.
+
+    The folder, ``metadata.yaml`` and ``skeleton.json`` each carry the process name
+    and nothing else cross-checks them. Adding a process means copying a folder, so
+    a half-edited copy would otherwise extract one process's vocabulary under
+    another's filename.
+
+    Raises:
+        ValueError: If either file names a different process than the folder.
+    """
+    mismatched = [
+        f"{filename} says '{found}'"
+        for filename, found in (
+            (METADATA_FILENAME, config.process_name),
+            (SKELETON_FILENAME, skeleton.process_name),
+        )
+        if found != process_name
+    ]
+    if mismatched:
+        raise ValueError(f"the process folder is named '{process_name}' but {' and '.join(mismatched)}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -93,6 +138,9 @@ def main(argv: list[str] | None = None) -> int:
         help="Directory holding the process folders.",
     )
     args = parser.parse_args(argv)
+    # Our own progress at INFO; the SDK and HTTP client stay quiet unless something breaks.
+    logging.basicConfig(level=logging.WARNING, format="%(message)s", stream=sys.stderr)
+    logging.getLogger("extractors").setLevel(logging.INFO)
 
     try:
         result = run(args.process, args.processes_root)
@@ -104,10 +152,17 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: configuration is incomplete ({missing})", file=sys.stderr)
         print("set ANTHROPIC_API_KEY in the environment or in a .env file.", file=sys.stderr)
         return 2
+    except ValueError as error:  # After ValidationError, which subclasses it.
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    except ModelUnavailableError as error:
+        print(f"error: {error}", file=sys.stderr)
+        print("check PFG_MODEL_ID and the API key; nothing was written.", file=sys.stderr)
+        return 2
     except ExtractionError as error:
         print(f"error: {error}", file=sys.stderr)
-        if error.report is not None:
-            print(error.report.summary(), file=sys.stderr)
+        print(f"the last of {error.attempts} attempt(s) failed because:", file=sys.stderr)
+        print(error.reason(), file=sys.stderr)
         print("nothing written; the graph did not pass the structural tier.", file=sys.stderr)
         return 1
 

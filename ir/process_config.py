@@ -17,7 +17,7 @@ OUTPUTS_DIRNAME = "outputs"
 
 
 class ProcessConfig(BaseModel):
-    """Settings for one business process."""
+    """Settings for one business process. Takes in name, model, and glossary"""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -50,5 +50,5 @@ def load_process_config(process_dir: Path) -> ProcessConfig:
         FileNotFoundError: If ``metadata.yaml`` does not exist.
         pydantic.ValidationError: If the file does not match the schema.
     """
-    raw: Any = yaml.safe_load((process_dir / METADATA_FILENAME).read_text(encoding="utf-8"))
+    raw: Any = yaml.safe_load((process_dir / METADATA_FILENAME).read_text(encoding="utf-8")) # safe easy to identify failures
     return ProcessConfig.model_validate(raw)

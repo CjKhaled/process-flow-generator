@@ -53,11 +53,13 @@ Emit an `annotation` node holding the rule and join it to the box it describes
 with an `annotates` edge. Never model a record value as a `task`, and never wire
 an annotation into the sequence flow.
 
-**Be honest about status.** Use `stated` only where the source says it. Use
-`inferred` where it follows necessarily from what the source says but is not
-written down. Use `needs_clarification` where the source genuinely leaves the
-answer open. Guessing and marking it `stated` is the one failure this stage
-cannot recover from.
+**Be honest about status.** There are two labels and no middle ground. `stated`
+is for what the source supports: what it says outright, and the plain sequencing
+it implies ("then", "from there"). `needs_clarification` is for everything the
+source leaves open, and its `detail` must say what is missing. The dividing line
+is whether settling the question needs knowledge the source does not contain --
+filling a gap from how these processes usually run is never `stated`. Guessing
+and marking it `stated` is the one failure this stage cannot recover from.
 
 **Ids and ordering.** Node ids are unique and snake_case. On edges leaving the
 same node, set `order` to the sequence you want them read in, starting at 0.

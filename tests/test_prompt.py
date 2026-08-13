@@ -40,7 +40,8 @@ def test_system_prompt_encodes_the_extraction_conventions(enrollment_skeleton: S
     assert "needs_clarification" in prompt
     assert "annotation" in prompt
     assert "alternatives" in prompt
-    assert "stated" in prompt and "inferred" in prompt
+    assert "stated" in prompt
+    assert "inferred" not in prompt, "there is no middle status; offering one invites gap-filling"
 
 
 def test_system_prompt_does_not_name_the_subprocess_order(enrollment_skeleton: Skeleton) -> None:

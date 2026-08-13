@@ -252,6 +252,23 @@ def check_known_subprocesses(graph: ProcessGraph, skeleton: Skeleton) -> Iterato
             )
 
 
+def check_clarification_detail(graph: ProcessGraph) -> Iterator[Finding]:
+    """A node a human must resolve has to say what is open.
+
+    Structural rather than resolution: an open question with no statement of what
+    is open tells the reviewer nothing, and unlike the ambiguity itself this is a
+    mechanical omission the model can fix from its own extraction.
+    """
+    for node in graph.nodes:
+        if node.status is NodeStatus.NEEDS_CLARIFICATION and (node.detail is None or not node.detail.strip()):
+            yield Finding.of(
+                FindingCode.MISSING_CLARIFICATION_DETAIL,
+                f"node '{node.id}' ({node.label}) is marked needs_clarification but its detail does not "
+                f"say what the source leaves open",
+                node.id,
+            )
+
+
 def check_needs_clarification(graph: ProcessGraph) -> Iterator[Finding]:
     """Enumerate the tagged ambiguities so they surface in the report."""
     for node in graph.nodes:
@@ -265,7 +282,10 @@ def check_needs_clarification(graph: ProcessGraph) -> Iterator[Finding]:
 
 
 def _walk(seeds: set[str], adjacency: Mapping[str, list[str]]) -> set[str]:
-    """Breadth-first closure of ``seeds`` over ``adjacency``."""
+    """Depth-first closure of ``seeds`` over ``adjacency``.
+
+    Only the closure is used, so the traversal order is not significant.
+    """
     seen = set(seeds)
     queue = list(seeds)
     while queue:

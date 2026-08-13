@@ -16,6 +16,7 @@ This module imports no SDK. The model is injected as a :class:`ModelCall`, which
 is what lets the loop be tested without a network.
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -26,7 +27,10 @@ from ir.skeleton import Skeleton
 from validators.graph import validate
 from validators.report import ValidationReport
 
+logger = logging.getLogger(__name__)
+
 DEFAULT_MAX_ATTEMPTS = 3
+"""Fallback for direct callers only. A pipeline run passes the configured budget in."""
 
 
 class ModelCall(Protocol):
@@ -82,24 +86,35 @@ def extract(
 
     prompt = build_extraction_prompt(source_text)
     last_report: ValidationReport | None = None
+    last_schema_error: str | None = None
 
     for attempt in range(1, max_attempts + 1):
         try:
             graph = call(prompt)
         except SchemaCallError as error:
-            last_report = None
+            last_report, last_schema_error = None, str(error)
+            logger.warning("attempt %d/%d: response did not fit the schema: %s", attempt, max_attempts, error)
             prompt = build_repair_prompt(None, schema_error=str(error))
             continue
 
         report = validate(graph, skeleton)
         if report.is_structurally_valid:
+            logger.info("attempt %d/%d: accepted", attempt, max_attempts)
             return ExtractionResult(graph=graph, report=report, attempts=attempt)
 
-        last_report = report
+        last_report, last_schema_error = report, None
+        logger.warning(
+            "attempt %d/%d: %d structural defect(s):\n%s",
+            attempt,
+            max_attempts,
+            len(report.structural),
+            "\n".join(f"  - {f.code}: {f.message}" for f in report.structural),
+        )
         prompt = build_repair_prompt(report)
 
     raise ExtractionError(
         f"no structurally valid graph after {max_attempts} attempt(s)",
         attempts=max_attempts,
         report=last_report,
+        schema_error=last_schema_error,
     )
