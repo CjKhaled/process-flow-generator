@@ -280,6 +280,65 @@ def test_needs_clarification_nodes_are_enumerated(enrollment_skeleton: Skeleton)
     assert clarifications[0].node_ids == ("end_unknown",)
 
 
+@pytest.mark.parametrize("node_type", [NodeType.TERMINAL, NodeType.ANNOTATION])
+def test_an_actor_on_a_non_work_node_is_structural(enrollment_skeleton: Skeleton, node_type: NodeType) -> None:
+    """A lane for something nobody performs would mislead the renderer."""
+    misplaced = graph(
+        nodes=(
+            node("start", NodeType.START),
+            node("do_it", actor="CM360"),
+            node("tail", node_type, actor="CM360"),
+        ),
+        edges=(
+            edge("start", "do_it"),
+            edge("do_it", "tail") if node_type is NodeType.TERMINAL else edge("tail", "do_it", EdgeType.ANNOTATES),
+        ),
+    )
+
+    report = validate(misplaced, enrollment_skeleton)
+
+    assert not report.is_structurally_valid
+    assert FindingCode.MISPLACED_ACTOR in codes(report)
+
+
+def test_an_unattributed_step_is_only_a_resolution_finding(enrollment_skeleton: Skeleton) -> None:
+    """Who performs a step is a question for a human, not a malformed graph."""
+    unattributed = graph(
+        nodes=(node("start", NodeType.START), node("do_it"), node("end", NodeType.TERMINAL)),
+        edges=(edge("start", "do_it"), edge("do_it", "end")),
+    )
+
+    report = validate(unattributed, enrollment_skeleton)
+
+    assert report.is_structurally_valid
+    assert FindingCode.UNATTRIBUTED_STEP in codes(report)
+    assert any("do_it" in f.message for f in report.resolution)
+
+
+def test_an_attributed_graph_raises_no_actor_findings(enrollment_skeleton: Skeleton) -> None:
+    """Work named, outcomes left blank: neither direction of the rule fires."""
+    attributed = graph(
+        nodes=(
+            node("start", NodeType.START, actor="HCP"),
+            node("gw", NodeType.GATEWAY, actor="CM360"),
+            node("do_it", actor="JCRM"),
+            node("end", NodeType.TERMINAL),
+        ),
+        edges=(
+            edge("start", "gw"),
+            branch("gw", "do_it", "patient is new", order=0),
+            branch("gw", "end", "patient already exists", order=1),
+            edge("do_it", "end"),
+        ),
+    )
+
+    report = validate(attributed, enrollment_skeleton)
+
+    assert report.is_structurally_valid
+    assert FindingCode.MISPLACED_ACTOR not in codes(report)
+    assert FindingCode.UNATTRIBUTED_STEP not in codes(report)
+
+
 @pytest.mark.parametrize("detail", [None, "   "])
 def test_clarification_without_detail_is_structural(enrollment_skeleton: Skeleton, detail: str | None) -> None:
     """An open question that does not say what is open is a mechanical omission."""

@@ -2,23 +2,31 @@
 process_name: enrollment
 display_name: Intake & Enrollment
 
-# Actors that appear in this process. Given to the extractor so it labels boxes
-# with the organisation's own vocabulary instead of paraphrasing.
+# Who performs work in this process, and what each one is. Given to the extractor so
+# it labels boxes with the organisation's own vocabulary instead of paraphrasing, and
+# so it can tell which actor a step belongs to. A bare name is not enough for that:
+# knowing JCRM runs the automations is what lets an automated step be attributed.
+# Listed in roughly the order they appear; that order is preserved into the prompt.
 actors:
-  - HCP
-  - CM360
-  - PSM
-  - QRAL
-  - JCRM
-  - SP Biologics
+  HCP: the provider who actually gives the patient the prescription
+  CM360: an external hub that performs some enrollment activities
+  PSM: a patient service manager, assigned to patients to help them through the patient journey
+  QRAL: an integration layer used by the hub to transmit information to the Salesforce platform
+  JCRM: the Salesforce platform, which runs automations
+  SP Biologics: a specialty pharmacy that performs some external hub activities
+
+# The lane a step falls to when the source does not say who performs it. Source text
+# routinely describes automated steps in the passive voice ("the PSM is assigned via
+# zip to territory mapping"), which would otherwise leave the box unattributed.
+default_actor: JCRM
 
 # Domain shorthand the source text uses without expanding. Given to the extractor
 # so it does not mistake an acronym for an actor or invent a meaning for it.
+# Anything that performs work belongs in actors above, not here.
 glossary:
   PEF: Patient Enrollment Form
   CRM: Customer Relationship Management system
   BI: Benefits Investigation
-  SP: Specialty Pharmacy
 
 # Optional override of the model used for this process. Null uses the global default.
 model_id: null

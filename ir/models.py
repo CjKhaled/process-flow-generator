@@ -86,8 +86,10 @@ class Node(BaseModel):
     actor: str | None = Field(
         default=None,
         description=(
-            "Who performs this step, e.g. HCP, CM360, PSM, QRAL. Null when the source does "
-            "not say. Never invent an actor."
+            "Who performs this step, named from the actor list supplied in the prompt -- for a "
+            "gateway, whoever makes the decision. Where the source does not say who, use the "
+            "default lane the prompt names. Null only on a terminal or an annotation, which are "
+            "not work anyone performs. Never invent an actor outside the supplied list."
         ),
     )
     subprocess: str | None = Field(

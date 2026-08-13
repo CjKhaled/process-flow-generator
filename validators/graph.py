@@ -13,6 +13,7 @@ into a single report over two tiers:
 from ir.models import ProcessGraph
 from ir.skeleton import Skeleton
 from validators.predicates import (
+    check_actor_placement,
     check_annotation_wiring,
     check_clarification_detail,
     check_edge_references,
@@ -59,6 +60,7 @@ def validate(graph: ProcessGraph, skeleton: Skeleton) -> ValidationReport:
         findings.extend(check_terminal_reachable(view))
         findings.extend(check_reachable_from_start(view))
 
+    findings.extend(check_actor_placement(graph))
     findings.extend(check_clarification_detail(graph))
     findings.extend(check_required_subprocesses(graph, skeleton))
     findings.extend(check_known_subprocesses(graph, skeleton))

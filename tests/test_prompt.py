@@ -6,13 +6,19 @@ from ir.skeleton import Skeleton
 from validators.report import Finding, FindingCode, ValidationReport
 
 
-def config() -> ProcessConfig:
-    return ProcessConfig(
-        process_name="enrollment",
-        display_name="Patient Enrollment",
-        actors=("HCP", "CM360"),
-        glossary={"PEF": "Patient Enrollment Form"},
-    )
+def config(**overrides: object) -> ProcessConfig:
+    defaults: dict[str, object] = {
+        "process_name": "enrollment",
+        "display_name": "Patient Enrollment",
+        "actors": {
+            "HCP": "the provider who gives the patient the prescription",
+            "CM360": "an external hub that performs some enrollment activities",
+            "JCRM": "the Salesforce platform, which runs automations",
+        },
+        "default_actor": "JCRM",
+        "glossary": {"PEF": "Patient Enrollment Form"},
+    }
+    return ProcessConfig.model_validate(defaults | overrides)
 
 
 def test_system_prompt_lists_the_known_subprocesses(enrollment_skeleton: Skeleton) -> None:
@@ -30,6 +36,35 @@ def test_system_prompt_lists_actors_and_glossary(enrollment_skeleton: Skeleton) 
 
     assert "CM360" in prompt
     assert "Patient Enrollment Form" in prompt
+
+
+def test_system_prompt_explains_what_each_actor_is(enrollment_skeleton: Skeleton) -> None:
+    """A bare name cannot tell the model which actor an unattributed step belongs to."""
+    prompt = build_system_prompt(config(), enrollment_skeleton)
+
+    assert "the Salesforce platform, which runs automations" in prompt
+
+
+def test_system_prompt_keeps_the_configured_actor_order(enrollment_skeleton: Skeleton) -> None:
+    """Actors read in process order; sorting them would scramble that."""
+    prompt = build_system_prompt(config(), enrollment_skeleton)
+
+    assert prompt.index("**HCP**") < prompt.index("**CM360**") < prompt.index("**JCRM**")
+
+
+def test_system_prompt_names_the_default_lane(enrollment_skeleton: Skeleton) -> None:
+    """An unattributed step goes somewhere specific, not to null."""
+    prompt = build_system_prompt(config(), enrollment_skeleton)
+
+    assert "does not say who performs a step" in prompt
+    assert "`JCRM`" in prompt
+
+
+def test_system_prompt_falls_back_to_null_without_a_default_lane(enrollment_skeleton: Skeleton) -> None:
+    """A process that declares no default lane must not be told to invent one."""
+    prompt = build_system_prompt(config(default_actor=None), enrollment_skeleton)
+
+    assert "leave `actor` null" in prompt
 
 
 def test_system_prompt_encodes_the_extraction_conventions(enrollment_skeleton: Skeleton) -> None:

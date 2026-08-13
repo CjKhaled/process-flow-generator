@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from ir.models import Edge, EdgeType, Node, NodeStatus, NodeType, ProcessGraph
-from ir.process_config import load_process_config
+from ir.process_config import ProcessConfig, load_process_config
 from ir.skeleton import load_skeleton
 from tests.conftest import ENROLLMENT_DIR
 
@@ -101,10 +101,32 @@ def test_enrollment_skeleton_lists_the_five_required_subprocesses() -> None:
 
 
 def test_enrollment_metadata_loads() -> None:
-    """The process config on disk parses and carries the actor vocabulary."""
+    """The process config on disk parses and carries the described actor vocabulary."""
     config = load_process_config(ENROLLMENT_DIR)
 
     assert config.process_name == "enrollment"
     assert "CM360" in config.actors
+    assert "hub" in config.actors["CM360"]
+    assert config.default_actor == "JCRM"
     assert config.glossary["PEF"] == "Patient Enrollment Form"
     assert config.model_id is None
+
+
+def test_a_default_actor_must_be_a_declared_actor() -> None:
+    """A typo here would silently put a stranger in every automated box."""
+    with pytest.raises(ValidationError, match="default_actor"):
+        ProcessConfig.model_validate(
+            {
+                "process_name": "p",
+                "display_name": "P",
+                "actors": {"CM360": "an external hub"},
+                "default_actor": "JCRM",
+            }
+        )
+
+
+def test_a_default_actor_is_optional() -> None:
+    """A process that has not declared one leaves unattributed steps null."""
+    config = ProcessConfig.model_validate({"process_name": "p", "display_name": "P"})
+
+    assert config.default_actor is None

@@ -9,7 +9,7 @@
     {
       "code": "needs_clarification",
       "severity": "resolution",
-      "message": "node 'term_prescriber_disagrees' (Outcome when prescriber does not agree (unspecified)) needs human confirmation: The source only states what happens if the prescriber agrees; it does not state the outcome when the prescriber does not agree.",
+      "message": "node 'term_prescriber_disagrees' (Outcome when prescriber does not agree not stated) needs human confirmation: The source states what happens if the prescriber agrees but does not state the outcome if the prescriber does not agree.",
       "node_ids": [
         "term_prescriber_disagrees"
       ]
@@ -17,9 +17,9 @@
     {
       "code": "needs_clarification",
       "severity": "resolution",
-      "message": "node 'term_existing_patient' (Existing-patient handling complete (downstream unspecified)) needs human confirmation: The source does not state what happens after determining re-enrollment, restart, or update for an existing patient.",
+      "message": "node 'term_duplicate_handled' (Duplicate patient handling outcome not stated) needs human confirmation: The source does not state what happens after CM360 determines the type of duplicate (re-enrollment, restart, or update).",
       "node_ids": [
-        "term_existing_patient"
+        "term_duplicate_handled"
       ]
     }
   ]

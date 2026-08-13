@@ -53,6 +53,14 @@ Emit an `annotation` node holding the rule and join it to the box it describes
 with an `annotates` edge. Never model a record value as a `task`, and never wire
 an annotation into the sequence flow.
 
+**Actors sit on work, not on outcomes.** Every `start`, `task` and `gateway` names who
+performs it, and a gateway takes the lane of whoever makes the decision. Work the source
+attributes to someone goes to that someone. Where the source names nobody -- usually
+the passive voice, "is assigned", "automatically creates" -- the step is automatic and
+goes to the default lane named below. A `terminal` or an `annotation` never carries an
+actor: an end state is not performed by anyone, and a note describes a box rather than
+doing work.
+
 **Be honest about status.** There are two labels and no middle ground. `stated`
 is for what the source supports: what it says outright, and the plain sequencing
 it implies ("then", "from there"). `needs_clarification` is for everything the
@@ -70,7 +78,8 @@ def build_system_prompt(config: ProcessConfig, skeleton: Skeleton) -> str:
     """Build the system prompt: the extraction conventions plus this process's vocabulary.
 
     Args:
-        config: Per-process settings supplying actors and domain shorthand.
+        config: Per-process settings supplying the actor vocabulary, the default lane,
+            and domain shorthand.
         skeleton: The subprocesses this process is expected to contain.
 
     Returns:
@@ -108,12 +117,22 @@ def _subprocess_section(skeleton: Skeleton) -> str:
 
 
 def _actor_section(config: ProcessConfig) -> str:
-    listed = "\n".join(f"- {actor}" for actor in config.actors)
+    """The actor vocabulary, with what each one is and where unattributed work goes.
+
+    Rendered in declaration order rather than sorted: ``metadata.yaml`` lists actors in
+    roughly the order the process reaches them, which reads better than alphabetical.
+    """
+    listed = "\n".join(f"- **{actor}** -- {description}" for actor, description in config.actors.items())
+    default = (
+        f"\n\nWhere the source does not say who performs a step, it is automatic: use `{config.default_actor}`."
+        if config.default_actor
+        else "\n\nWhere the source does not say who performs a step, leave `actor` null."
+    )
     return (
         "## Actors\n\n"
-        "Use these names verbatim in the `actor` field. If the source attributes a step to "
-        "someone outside this list, use the source's own wording. If it attributes a step to "
-        f"nobody, leave `actor` null.\n\n{listed}"
+        "Use these names verbatim in the `actor` field. What each one is matters: it is how "
+        "you tell which of them a step belongs to. If the source attributes a step to someone "
+        f"outside this list, use the source's own wording.\n\n{listed}{default}"
     )
 
 

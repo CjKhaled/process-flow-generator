@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 METADATA_FILENAME = "metadata.yaml"
 SKELETON_FILENAME = "skeleton.json"
@@ -23,9 +23,22 @@ class ProcessConfig(BaseModel):
 
     process_name: str = Field(min_length=1, description="Machine name; matches the folder under processes/.")
     display_name: str = Field(min_length=1, description="Human-readable name for prompts and reports.")
-    actors: tuple[str, ...] = Field(
-        default=(),
-        description="Actor vocabulary for this process, e.g. HCP, CM360, PSM, QRAL.",
+    actors: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Who performs work in this process, mapped to what each one is, e.g. "
+            "{'CM360': 'an external hub that performs some enrollment activities'}. The "
+            "descriptions are what let the extractor attribute a step to the right actor "
+            "rather than leaving it blank. Declaration order is preserved into the prompt."
+        ),
+    )
+    default_actor: str | None = Field(
+        default=None,
+        description=(
+            "The lane a step falls to when the source does not say who performs it -- "
+            "typically the system that runs the process's automations. Must be one of "
+            "'actors'. None leaves unattributed steps blank."
+        ),
     )
     glossary: dict[str, str] = Field(
         default_factory=dict,
@@ -35,6 +48,14 @@ class ProcessConfig(BaseModel):
         default=None,
         description="Optional per-process model override. None uses the global default.",
     )
+
+    @model_validator(mode="after")
+    def _default_actor_is_known(self) -> "ProcessConfig":
+        """A default lane naming an unlisted actor would put a stranger in every automated box."""
+        if self.default_actor is not None and self.default_actor not in self.actors:
+            known = ", ".join(self.actors) or "none are declared"
+            raise ValueError(f"default_actor '{self.default_actor}' is not one of the actors ({known})")
+        return self
 
 
 def load_process_config(process_dir: Path) -> ProcessConfig:
@@ -50,5 +71,7 @@ def load_process_config(process_dir: Path) -> ProcessConfig:
         FileNotFoundError: If ``metadata.yaml`` does not exist.
         pydantic.ValidationError: If the file does not match the schema.
     """
-    raw: Any = yaml.safe_load((process_dir / METADATA_FILENAME).read_text(encoding="utf-8")) # safe easy to identify failures
+    raw: Any = yaml.safe_load(
+        (process_dir / METADATA_FILENAME).read_text(encoding="utf-8")
+    )  # safe easy to identify failures
     return ProcessConfig.model_validate(raw)

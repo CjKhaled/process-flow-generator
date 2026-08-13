@@ -252,6 +252,39 @@ def check_known_subprocesses(graph: ProcessGraph, skeleton: Skeleton) -> Iterato
             )
 
 
+ACTORLESS_NODE_TYPES = frozenset({NodeType.TERMINAL, NodeType.ANNOTATION})
+ATTRIBUTED_NODE_TYPES = frozenset({NodeType.TASK, NodeType.GATEWAY})
+
+
+def check_actor_placement(graph: ProcessGraph) -> Iterator[Finding]:
+    """An actor performs work; an end state and a note are not work.
+
+    Two directions of one rule. Putting an actor on a terminal or an annotation is
+    structural: it would give the renderer a lane for something nobody performs.
+    Leaving a task or gateway unattributed is a resolution finding instead -- the
+    process config may not declare a default lane to fall back to, and an
+    unattributed step is a question for a human, not a malformed graph.
+
+    ``start`` and ``subprocess`` nodes are exempt in both directions: an entry point
+    need not be performed by anyone, and a collapsed subprocess may span several
+    actors.
+    """
+    for node in graph.nodes:
+        if node.type in ACTORLESS_NODE_TYPES and node.actor is not None:
+            yield Finding.of(
+                FindingCode.MISPLACED_ACTOR,
+                f"{node.type} node '{node.id}' carries the actor '{node.actor}'; "
+                f"a {node.type} is not work anyone performs",
+                node.id,
+            )
+        elif node.type in ATTRIBUTED_NODE_TYPES and node.actor is None:
+            yield Finding.of(
+                FindingCode.UNATTRIBUTED_STEP,
+                f"{node.type} node '{node.id}' ({node.label}) names nobody; a human should confirm who performs it",
+                node.id,
+            )
+
+
 def check_clarification_detail(graph: ProcessGraph) -> Iterator[Finding]:
     """A node a human must resolve has to say what is open.
 
