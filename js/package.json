@@ -1,0 +1,12 @@
+{
+  "name": "pfg-js",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The project's npm dependencies: the BPMN layouter (stage 2) and the viewer bundle inlined into the rendered page (stage 3). No project JavaScript lives here.",
+  "type": "module",
+  "license": "MIT",
+  "dependencies": {
+    "bpmn-auto-layout": "2.0.0-alpha.2",
+    "bpmn-js": "18.24.0"
+  }
+}

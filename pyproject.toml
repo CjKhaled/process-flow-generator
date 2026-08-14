@@ -30,6 +30,9 @@ dev = [
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+markers = [
+    "requires_node: needs Node and an installed js/; skipped when absent.",
+]
 
 # pyproject.toml
 [tool.ruff]

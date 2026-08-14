@@ -1,21 +1,69 @@
 """Shared fixtures."""
 
+import shutil
 from pathlib import Path
 
 import pytest
 
+from bpmn.autolayout import Layouter
 from ir.models import EdgeType, NodeType, ProcessGraph
+from ir.process_config import ProcessConfig, load_process_config
 from ir.skeleton import Skeleton, load_skeleton
+from render.assets import ViewerAssets
 from tests.builders import branch, edge, graph, node
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ENROLLMENT_DIR = REPO_ROOT / "processes" / "enrollment"
 
 
+def has_node() -> bool:
+    """Whether the real layouter can be run here."""
+    return shutil.which("node") is not None and (REPO_ROOT / "js" / "node_modules").is_dir()
+
+
+requires_node = pytest.mark.skipif(not has_node(), reason="needs node and `npm ci --prefix js`")
+
+
+def echo_layouter(xml: str) -> str:
+    """A stand-in for the layouter, so the stage can be tested without Node.
+
+    Returns the document unchanged. That is deliberately not a fake layout: no
+    assertion outside the integration test should depend on geometry, because
+    geometry is the layouter's to produce and inventing a plausible-looking
+    version here would only test the fake. What this does exercise is everything
+    on either side of the subprocess -- the semantic document going in and the
+    file being written out.
+    """
+    return xml
+
+
+@pytest.fixture
+def layouter() -> Layouter:
+    """The pass-through layouter, as the injectable dependency."""
+    return echo_layouter
+
+
+@pytest.fixture
+def viewer_assets() -> ViewerAssets:
+    """Stand-ins for the bpmn-js dist files.
+
+    Short strings rather than the real 300 KB, so the page tests neither need
+    ``npm ci`` nor drown the thing under test in vendor code. What matters to
+    them is that whatever is handed in reaches the page, not what it says.
+    """
+    return ViewerAssets(script="window.BpmnJS = function () {};", styles=".djs-container { outline: none; }")
+
+
 @pytest.fixture
 def enrollment_skeleton() -> Skeleton:
     """The real enrollment skeleton, loaded from disk."""
     return load_skeleton(ENROLLMENT_DIR / "skeleton.json")
+
+
+@pytest.fixture
+def enrollment_config() -> ProcessConfig:
+    """The real enrollment metadata, loaded from disk."""
+    return load_process_config(ENROLLMENT_DIR)
 
 
 @pytest.fixture

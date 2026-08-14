@@ -5,6 +5,8 @@ defaults rather than adding any validation of their own.
 """
 
 from ir.models import Edge, EdgeType, Node, NodeStatus, NodeType, ProcessGraph
+from ir.process_config import ProcessConfig
+from ir.skeleton import Skeleton, SubprocessSpec
 from validators.report import FindingCode, ValidationReport
 
 
@@ -54,6 +56,32 @@ def branch(from_id: str, to_id: str, condition: str | None, order: int = 0) -> E
 def graph(nodes: tuple[Node, ...], edges: tuple[Edge, ...], name: str = "enrollment") -> ProcessGraph:
     """Build a process graph from nodes and edges."""
     return ProcessGraph(process_name=name, nodes=nodes, edges=edges)
+
+
+def config(
+    actors: tuple[str, ...] = ("CM360",),
+    *,
+    name: str = "enrollment",
+    display_name: str = "Intake & Enrollment",
+) -> ProcessConfig:
+    """Build a process config, with descriptions the tests never read."""
+    return ProcessConfig(
+        process_name=name,
+        display_name=display_name,
+        actors={actor: f"the {actor}" for actor in actors},
+        default_actor=actors[0] if actors else None,
+    )
+
+
+def skeleton(*names: str, name: str = "enrollment") -> Skeleton:
+    """Build a skeleton whose subprocesses are in the order given."""
+    return Skeleton(
+        process_name=name,
+        subprocesses=tuple(
+            SubprocessSpec(name=item, label=item.replace("_", " ").title(), order_hint=position)
+            for position, item in enumerate(names)
+        ),
+    )
 
 
 def codes(report: ValidationReport) -> frozenset[FindingCode]:

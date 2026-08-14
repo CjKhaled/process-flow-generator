@@ -4,6 +4,10 @@ Loaded through :func:`load_settings` rather than instantiated at import time.
 A module-level singleton would make importing anything in this package fail when
 ``ANTHROPIC_API_KEY`` is unset -- which is exactly the situation the test suite
 runs in, since no test touches the network.
+
+Stage 2 has its own settings class rather than sharing :class:`Settings`. It
+calls no model and needs no credentials, so requiring an API key to draw a
+diagram from a graph already on disk would be a startup failure for no reason.
 """
 
 from pydantic import Field, SecretStr
@@ -43,6 +47,32 @@ class Settings(BaseSettings):
             "of truth for the budget: a pipeline run never falls back to another default."
         ),
     )
+
+
+class Stage2Settings(BaseSettings):
+    """Settings for the layout stage. Every field has a default, deliberately."""
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    layout_bin: str = Field(
+        default="",
+        alias="PFG_LAYOUT_BIN",
+        description=(
+            "The bpmn-auto-layout executable. Empty uses the version pinned in js/, "
+            "which is what any normal run wants; overriding it is for pointing at a "
+            "different build while checking whether a layouter release changed the output."
+        ),
+    )
+
+
+def load_stage2_settings() -> Stage2Settings:
+    """Read the layout stage's settings from the environment.
+
+    Returns:
+        The validated settings. Never raises for a missing value: stage 2 runs
+        without any configuration at all.
+    """
+    return Stage2Settings()
 
 
 def load_settings() -> Settings:
