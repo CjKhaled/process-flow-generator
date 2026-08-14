@@ -1,10 +1,16 @@
 <!doctype html>
 <!--
-  The stage 3 page shell. Generated pages are written by render/page.py, which
-  fills the PFG comment sentinels below by plain string replacement. It is not
-  str.format or string.Template: this file is full of CSS braces, and either
-  would need every one of them doubled. A sentinel may appear more than once,
-  as the title does, since replacement fills every occurrence.
+  The page shell, used twice. render/page.py fills the PFG comment sentinels
+  below by plain string replacement -- not str.format or string.Template, since
+  this file is full of CSS braces and either would need every one of them
+  doubled. A sentinel may appear more than once, as the title does, since
+  replacement fills every occurrence.
+
+  Two pages come out of it. Stage 3's diagram.html arrives with a diagram
+  already in it and opens on the diagram. The hosted page arrives with none and
+  opens on a form, asks the API to run the pipeline, and is handed the same
+  payload the offline page inlines. From the moment it has data, they are the
+  same page.
 -->
 <html lang="en">
 <head>
@@ -24,9 +30,15 @@
     --flag: #b45309;
     --flag-soft: #fef3c7;
     --flag-tint: #fffbeb;
+    --accent: #1f2937;
+    --danger: #b91c1c;
   }
 
   * { box-sizing: border-box; }
+
+  /* The attribute has to win: any rule setting `display` outranks the browser's
+     own [hidden] rule, and #progress sets display:flex to lay its spinner out. */
+  [hidden] { display: none !important; }
 
   html, body {
     height: 100%;
@@ -61,8 +73,7 @@
 
   .controls { display: flex; gap: 6px; }
 
-  .controls button {
-    min-width: 32px;
+  button {
     height: 28px;
     padding: 0 10px;
     border: 1px solid var(--line);
@@ -74,27 +85,177 @@
     cursor: pointer;
   }
 
-  .controls button:hover { background: var(--page); }
+  button:hover { background: var(--page); }
+  button[disabled] { opacity: 0.5; cursor: default; }
+
+  .controls button { min-width: 32px; }
+
+  .controls .toggle[aria-expanded="true"] {
+    border-color: var(--flag);
+    background: var(--flag-tint);
+    color: var(--flag);
+  }
+
+  /* Which half of the page is on show. The other is display:none, so the
+     viewer's container has no size until the diagram view is up -- which is why
+     the script flips the view before it fits the diagram. */
+  body[data-view="landing"] main,
+  body[data-view="landing"] .controls { display: none; }
+  body[data-view="diagram"] #landing { display: none; }
+
+  /* ---- the landing view ---------------------------------------------- */
+
+  #landing {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px 48px;
+  }
+
+  .sheet {
+    width: 100%;
+    max-width: 720px;
+  }
+
+  .sheet h2 {
+    margin: 0 0 6px;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .sheet .lede {
+    margin: 0 0 24px;
+    color: var(--muted);
+  }
+
+  .field { margin-bottom: 18px; }
+
+  .field > label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+    color: var(--ink);
+    font: inherit;
+  }
+
+  textarea {
+    min-height: 320px;
+    resize: vertical;
+    line-height: 1.6;
+  }
+
+  select:focus, textarea:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+  }
+
+  .generate {
+    height: 38px;
+    padding: 0 20px;
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .generate:hover { background: #111827; }
+
+  #progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+  }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    border: 2px solid var(--line);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spinner { animation-duration: 3s; }
+    aside { transition: none !important; }
+  }
+
+  #progress .stage { flex: 1; }
+  #progress .elapsed { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  #error {
+    margin-top: 20px;
+    padding: 14px 16px;
+    border: 1px solid var(--danger);
+    border-radius: 6px;
+    background: #fef2f2;
+    color: var(--danger);
+    white-space: pre-wrap;
+  }
+
+  /* ---- the diagram view ---------------------------------------------- */
 
   main {
     flex: 1;
-    display: flex;
+    position: relative;
     min-height: 0;
   }
 
+  /* The canvas is the whole of main, always. The panel floats above it, so
+     opening or closing the panel cannot change the canvas's size and the
+     diagram never has to be re-fitted. */
   #canvas {
-    flex: 1;
-    min-width: 0;
+    position: absolute;
+    inset: 0;
     background: var(--panel);
   }
 
   aside {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
     width: 340px;
-    flex: none;
     overflow-y: auto;
     padding: 16px;
     border-left: 1px solid var(--line);
     background: var(--panel);
+    box-shadow: -10px 0 30px rgba(15, 23, 42, 0.08);
+    transform: translateX(calc(100% + 30px));
+    transition: transform 0.18s ease;
+  }
+
+  body[data-panel="open"] aside { transform: none; }
+
+  aside .close {
+    float: right;
+    min-width: 26px;
+    height: 26px;
+    padding: 0;
+    line-height: 1;
+    color: var(--muted);
   }
 
   aside h2 {
@@ -188,20 +349,45 @@
   }
 </style>
 </head>
-<body>
+<body data-view="<!--PFG:VIEW-->" data-panel="open">
 <header>
   <h1><!--PFG:TITLE--></h1>
   <div class="spacer"></div>
   <div class="controls">
+    <button type="button" class="restart" data-action="restart" hidden>New run</button>
+    <button type="button" class="toggle" data-action="panel" aria-expanded="true" aria-controls="panel">Open questions</button>
     <button type="button" data-zoom="out" title="Zoom out">&minus;</button>
     <button type="button" data-zoom="fit">Fit</button>
     <button type="button" data-zoom="in" title="Zoom in">+</button>
   </div>
 </header>
+<section id="landing">
+  <form class="sheet" id="run">
+    <h2>Generate a process flow</h2>
+    <p class="lede">Describe a patient support program process in plain English. It is read, checked for
+      what it does not say, and drawn as BPMN with one swimlane per actor.</p>
+    <div class="field">
+      <label for="process">Process</label>
+      <select id="process" name="process"><!--PFG:PROCESSES--></select>
+    </div>
+    <div class="field">
+      <label for="source">Process description</label>
+      <textarea id="source" name="source" spellcheck="false" placeholder="e.g. The HCP completes a Patient Enrollment Form and faxes it to CM360, who transcribes it into the CRM. If consent is missing, the PSM calls the patient..."></textarea>
+    </div>
+    <button type="submit" class="generate">Generate</button>
+    <div id="progress" hidden>
+      <div class="spinner"></div>
+      <div class="stage">Starting</div>
+      <div class="elapsed">0:00</div>
+    </div>
+    <p id="error" hidden></p>
+  </form>
+</section>
 <main>
   <div id="canvas"></div>
-  <aside>
-    <!--PFG:QUESTIONS-->
+  <aside id="panel">
+    <button type="button" class="close" data-action="panel" title="Hide">&times;</button>
+    <div id="questions"><!--PFG:QUESTIONS--></div>
   </aside>
 </main>
 <pre id="failure" hidden></pre>
@@ -215,95 +401,329 @@
 
   var FLAGGED = 'pfg-flagged';
   var ACTIVE = 'pfg-active';
+  var POLL_MS = 1500;
+  var DEADLINE_MS = 6 * 60 * 1000;
+  var BACKOFF_MS = [1000, 2000, 4000, 8000];
 
   var data = JSON.parse(document.getElementById('pfg-data').textContent);
-  var questions = Array.prototype.slice.call(document.querySelectorAll('.question[data-elements]'));
+  var api = data.api || '';
+  var body = document.body;
+  var heading = document.querySelector('header h1');
+  var panelBody = document.getElementById('questions');
+  var toggle = document.querySelector('.toggle');
+  var restart = document.querySelector('.restart');
+  var form = document.getElementById('run');
+  var progress = document.getElementById('progress');
+  var errorBox = document.getElementById('error');
+
   var viewer = new BpmnJS({ container: '#canvas' });
+  var canvas = viewer.get('canvas');
+  var registry = viewer.get('elementRegistry');
+  var cards = [];
+  var byElement = {};
+  var wired = false;
 
-  viewer.importXML(data.diagram).then(function (result) {
-    if (result.warnings && result.warnings.length) {
-      console.warn('bpmn-js import warnings', result.warnings);
+  document.querySelector('header').addEventListener('click', function (event) {
+    var action = event.target.getAttribute('data-action');
+    var how = event.target.getAttribute('data-zoom');
+    if (action === 'panel') {
+      setPanel(body.getAttribute('data-panel') !== 'open');
+    } else if (action === 'restart') {
+      toLanding();
+    } else if (how === 'fit') {
+      fit();
+    } else if (how === 'in') {
+      canvas.zoom(canvas.zoom() * 1.2);
+    } else if (how === 'out') {
+      canvas.zoom(canvas.zoom() / 1.2);
     }
-    start();
-  }).catch(fail);
+  });
 
-  function start() {
-    var canvas = viewer.get('canvas');
-    var registry = viewer.get('elementRegistry');
+  document.querySelector('aside').addEventListener('click', function (event) {
+    if (event.target.getAttribute('data-action') === 'panel') {
+      setPanel(false);
+    }
+  });
 
-    fit();
-    data.flagged.forEach(function (id) {
+  // Stage 3's own page arrives with its diagram already in it and shows it at
+  // once. The hosted page has to ask for one first.
+  if (data.diagram) {
+    show(data);
+  } else {
+    startApp();
+  }
+
+  // ---- the diagram ------------------------------------------------------
+
+  function show(payload) {
+    if (payload.title) {
+      heading.textContent = payload.title;
+      document.title = payload.title;
+    }
+    if (typeof payload.questions === 'string') {
+      panelBody.innerHTML = payload.questions;
+    }
+    label(payload.count);
+
+    // Before the import, so the container has a size to be fitted to: the
+    // landing view keeps <main> display:none, and a canvas of no width would
+    // fit the diagram to nothing.
+    body.setAttribute('data-view', 'diagram');
+    canvas.resized();
+
+    return viewer.importXML(payload.diagram).then(function (result) {
+      if (result.warnings && result.warnings.length) {
+        console.warn('bpmn-js import warnings', result.warnings);
+      }
+      mark(payload.flagged || []);
+      wire();
+      fit();
+    }).catch(fail);
+  }
+
+  function mark(flagged) {
+    cards = Array.prototype.slice.call(document.querySelectorAll('.question[data-elements]'));
+    byElement = {};
+    flagged.forEach(function (id) {
       if (registry.get(id)) {
         canvas.addMarker(id, FLAGGED);
       }
     });
+    cards.forEach(function (card) {
+      elementsOf(card).forEach(function (id) {
+        byElement[id] = byElement[id] || card;
+      });
+    });
+  }
 
-    // Which question concerns which element, so a click on the diagram can find
-    // its way back to the panel.
-    var byElement = {};
-    questions.forEach(function (question) {
-      elementsOf(question).forEach(function (id) {
-        byElement[id] = byElement[id] || question;
-      });
-      question.addEventListener('click', function () {
-        select(question, true);
-      });
+  // Once only: a second run re-imports the diagram, but the panel's clicks and
+  // the event bus outlive it, and registering them twice would fire twice.
+  function wire() {
+    if (wired) {
+      return;
+    }
+    wired = true;
+
+    panelBody.addEventListener('click', function (event) {
+      var card = event.target.closest ? event.target.closest('.question[data-elements]') : null;
+      if (card) {
+        select(card, true);
+      }
     });
 
     viewer.get('eventBus').on('element.click', function (event) {
-      var question = byElement[event.element.id];
-      if (question) {
-        select(question, false);
+      var card = byElement[event.element.id];
+      if (card) {
+        setPanel(true);
+        select(card, false);
       }
     });
+  }
 
-    document.querySelector('.controls').addEventListener('click', function (event) {
-      var how = event.target.getAttribute('data-zoom');
-      if (how === 'fit') {
-        fit();
-      } else if (how === 'in') {
-        canvas.zoom(canvas.zoom() * 1.2);
-      } else if (how === 'out') {
-        canvas.zoom(canvas.zoom() / 1.2);
-      }
-    });
+  // A process is far wider than it is tall, so fitting it to the viewport
+  // leaves slack on one axis: 'auto' centres in that slack instead of hanging
+  // the diagram off the top-left corner. Never magnified past life size -- a
+  // four-box diagram blown up to fill a monitor looks like a mistake.
+  //
+  // The panel floats over the canvas rather than taking space from it, which is
+  // what keeps toggling it free of any layout effect -- but it does mean the
+  // right of a fitted diagram would sit underneath it. So a fit made while the
+  // panel is open fits to the part still on show. Toggling deliberately does
+  // *not* re-fit: the diagram staying exactly where it was is the point, and
+  // Fit is there for whoever wants the other framing.
+  function fit() {
+    canvas.zoom('fit-viewport', 'auto');
 
-    // A process is far wider than it is tall, so fitting it to the viewport
-    // leaves slack on one axis: 'auto' centres in that slack instead of hanging
-    // the diagram off the top-left corner. Never magnified past life size -- a
-    // four-box diagram blown up to fill a monitor looks like a mistake.
-    function fit() {
-      canvas.zoom('fit-viewport', 'auto');
-      if (canvas.zoom() > 1) {
-        canvas.zoom(1, 'auto');
-      }
+    var covered = body.getAttribute('data-panel') === 'open' ? document.querySelector('aside').offsetWidth : 0;
+    var width = canvas.getSize().width;
+    if (covered && width > covered * 1.5) {
+      canvas.zoom(canvas.zoom() * (width - covered) / width, 'auto');
     }
-
-    function select(question, scroll) {
-      questions.forEach(function (other) {
-        other.classList.remove('active');
-        elementsOf(other).forEach(function (id) {
-          if (registry.get(id)) {
-            canvas.removeMarker(id, ACTIVE);
-          }
-        });
-      });
-
-      question.classList.add('active');
-      var found = elementsOf(question).filter(function (id) { return registry.get(id); });
-      found.forEach(function (id) { canvas.addMarker(id, ACTIVE); });
-
-      if (scroll && found.length) {
-        canvas.scrollToElement(registry.get(found[0]));
-      } else {
-        question.scrollIntoView({ block: 'nearest' });
-      }
+    if (canvas.zoom() > 1) {
+      canvas.zoom(1, 'auto');
+    }
+    if (covered && width > covered * 1.5) {
+      // Centred in the whole canvas a moment ago; this puts it in the middle of
+      // what the reader can actually see.
+      canvas.scroll({ dx: -covered / 2, dy: 0 });
     }
   }
 
-  function elementsOf(question) {
-    var value = question.getAttribute('data-elements');
+  function select(card, scroll) {
+    cards.forEach(function (other) {
+      other.classList.remove('active');
+      elementsOf(other).forEach(function (id) {
+        if (registry.get(id)) {
+          canvas.removeMarker(id, ACTIVE);
+        }
+      });
+    });
+
+    card.classList.add('active');
+    var found = elementsOf(card).filter(function (id) { return registry.get(id); });
+    found.forEach(function (id) { canvas.addMarker(id, ACTIVE); });
+
+    if (scroll && found.length) {
+      canvas.scrollToElement(registry.get(found[0]));
+    } else {
+      card.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  function elementsOf(card) {
+    var value = card.getAttribute('data-elements');
     return value ? value.split(' ') : [];
+  }
+
+  function setPanel(open) {
+    body.setAttribute('data-panel', open ? 'open' : 'closed');
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  function label(count) {
+    toggle.textContent = typeof count === 'number' ? 'Open questions (' + count + ')' : 'Open questions';
+  }
+
+  // ---- the hosted page --------------------------------------------------
+
+  function startApp() {
+    restart.hidden = false;
+    // Render sleeps a free instance after fifteen idle minutes and takes the
+    // best part of a minute to wake. Starting that now means the wait is
+    // already spent by the time anyone presses Generate.
+    request('GET', '/health', null, 1).catch(function () {});
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      var source = document.getElementById('source').value.trim();
+      if (!source) {
+        return showError('Paste a process description first.');
+      }
+      run(document.getElementById('process').value, source);
+    });
+  }
+
+  function toLanding() {
+    body.setAttribute('data-view', 'landing');
+    working(false);
+  }
+
+  function run(process, source) {
+    showError(null);
+    working(true);
+
+    var started = Date.now();
+    var ticking = setInterval(function () {
+      progress.querySelector('.elapsed').textContent = clock(Date.now() - started);
+    }, 1000);
+
+    stage('Starting the run');
+    request('POST', '/runs', { process: process, source: source }, BACKOFF_MS.length)
+      .then(function (queued) { return poll(queued.id); })
+      .then(function (finished) {
+        clearInterval(ticking);
+        return show(finished.result);
+      })
+      .catch(function (error) {
+        clearInterval(ticking);
+        working(false);
+        showError(error && error.message ? error.message : String(error));
+      });
+  }
+
+  function poll(id) {
+    var deadline = Date.now() + DEADLINE_MS;
+    var consecutiveFailures = 0;
+
+    return new Promise(function (resolve, reject) {
+      (function ask() {
+        if (Date.now() > deadline) {
+          return reject(new Error('The run is taking longer than six minutes. It may still finish; reload to try again.'));
+        }
+        request('GET', '/runs/' + encodeURIComponent(id), null, 1).then(function (state) {
+          consecutiveFailures = 0;
+          if (state.status === 'done') {
+            return resolve(state);
+          }
+          if (state.status === 'failed') {
+            return reject(new Error(state.detail || 'The run failed.'));
+          }
+          stage(state.label || state.status);
+          setTimeout(ask, POLL_MS);
+        }).catch(function (error) {
+          // A dropped poll is not a failed run: the server may be restarting, or
+          // the laptop's wifi blinked. Only a run of them is worth giving up on.
+          consecutiveFailures += 1;
+          if (consecutiveFailures > 8) {
+            return reject(error);
+          }
+          setTimeout(ask, POLL_MS * 2);
+        });
+      })();
+    });
+  }
+
+  function request(method, path, payload, attempts) {
+    var options = { method: method, headers: {} };
+    if (payload) {
+      options.headers['Content-Type'] = 'application/json';
+      options.body = JSON.stringify(payload);
+    }
+
+    return fetch(api + path, options).then(function (response) {
+      if (response.ok) {
+        return response.json();
+      }
+      return response.json().catch(function () { return {}; }).then(function (problem) {
+        var error = new Error(problem.detail || ('The server answered ' + response.status + '.'));
+        // A 4xx is about what was sent and will say the same thing next time;
+        // a 5xx or a cold start is worth another go.
+        error.retryable = response.status >= 500;
+        throw error;
+      });
+    }, function () {
+      // fetch only rejects when the request never got an answer at all.
+      var error = new Error('Cannot reach the pipeline service. It may be starting up.');
+      error.retryable = true;
+      return Promise.reject(error);
+    }).catch(function (error) {
+      if (attempts > 1 && error.retryable) {
+        // Waits longer each time: a cold Render instance takes the better part
+        // of a minute to answer its first request.
+        return delay(BACKOFF_MS[Math.min(BACKOFF_MS.length - attempts, BACKOFF_MS.length - 1)]).then(function () {
+          return request(method, path, payload, attempts - 1);
+        });
+      }
+      throw error;
+    });
+  }
+
+  function delay(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  function working(busy) {
+    progress.hidden = !busy;
+    form.querySelector('.generate').disabled = busy;
+    document.getElementById('source').readOnly = busy;
+    document.getElementById('process').disabled = busy;
+    if (!busy) {
+      progress.querySelector('.elapsed').textContent = '0:00';
+    }
+  }
+
+  function stage(text) {
+    progress.querySelector('.stage').textContent = text;
+  }
+
+  function clock(ms) {
+    var seconds = Math.floor(ms / 1000);
+    return Math.floor(seconds / 60) + ':' + ('0' + (seconds % 60)).slice(-2);
+  }
+
+  function showError(message) {
+    errorBox.hidden = !message;
+    errorBox.textContent = message || '';
   }
 
   function fail(error) {

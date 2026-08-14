@@ -21,10 +21,17 @@ package = false
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",      # fastapi's TestClient; no test opens a socket to the outside
     "mypy>=2.3.0",
     "pytest>=9.1.1",
     "ruff>=0.16.2",
     "types-pyyaml>=6.0.12",
+]
+# The hosted demo only. The CLI stages never import fastapi, so `uv sync` alone
+# still gives a working pipeline with nothing web-shaped in it.
+api = [
+    "fastapi>=0.121.0",
+    "uvicorn[standard]>=0.34.0",
 ]
 
 [tool.pytest.ini_options]

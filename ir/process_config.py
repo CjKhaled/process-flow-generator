@@ -4,11 +4,15 @@ Adding a process means copying a folder and swapping the data. Nothing in this
 module knows anything about enrollment specifically.
 """
 
+import logging
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+logger = logging.getLogger(__name__)
 
 METADATA_FILENAME = "metadata.yaml"
 SKELETON_FILENAME = "skeleton.json"
@@ -75,3 +79,41 @@ def load_process_config(process_dir: Path) -> ProcessConfig:
         (process_dir / METADATA_FILENAME).read_text(encoding="utf-8")
     )  # safe easy to identify failures
     return ProcessConfig.model_validate(raw)
+
+
+@dataclass(frozen=True)
+class Process:
+    """One process that exists on disk: its folder name, and what to call it."""
+
+    name: str
+    display_name: str
+
+
+def list_processes(processes_root: Path) -> tuple[Process, ...]:
+    """Every process that can be run, by name.
+
+    A process is a folder holding a readable ``metadata.yaml``. One that does not
+    load is logged and skipped rather than raising: a half-copied folder is a
+    reason not to offer that process, not a reason to hide the others.
+
+    Args:
+        processes_root: The directory holding the process folders.
+
+    Returns:
+        Each process, in folder-name order.
+
+    Raises:
+        FileNotFoundError: Never -- a missing root yields nothing, since "no
+            processes yet" is a state a caller has to handle anyway.
+    """
+    found = []
+    for directory in sorted(path for path in processes_root.glob("*") if path.is_dir()):
+        if not (directory / METADATA_FILENAME).is_file():
+            continue
+        try:
+            config = load_process_config(directory)
+        except (OSError, ValueError) as error:
+            logger.warning("skipping process '%s': %s", directory.name, error)
+            continue
+        found.append(Process(name=directory.name, display_name=config.display_name))
+    return tuple(found)

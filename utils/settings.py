@@ -65,6 +65,52 @@ class Stage2Settings(BaseSettings):
     )
 
 
+class ApiSettings(BaseSettings):
+    """Settings for the hosted demo's HTTP service. Every field has a default.
+
+    The service needs an ``ANTHROPIC_API_KEY`` to run a pipeline, but not to
+    start: :class:`Settings` is loaded when a run begins, so a misconfigured
+    instance answers ``/health`` and says what is wrong on the first run rather
+    than crash-looping at boot.
+    """
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    allowed_origins: str = Field(
+        default="*",
+        alias="PFG_ALLOWED_ORIGIN",
+        description=(
+            "Comma-separated origins the browser page may call from, e.g. "
+            "'https://user.github.io'. The default allows any, which is right only "
+            "while the URL is unpublished."
+        ),
+    )
+    max_source_chars: int = Field(
+        default=20_000,
+        gt=0,
+        alias="PFG_MAX_SOURCE_CHARS",
+        description=(
+            "Longest process description accepted. Not a security control -- it is "
+            "the difference between a paste that costs a few cents and one that "
+            "costs a great deal more."
+        ),
+    )
+
+    @property
+    def origins(self) -> list[str]:
+        """The origin list, as CORS wants it."""
+        return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
+
+
+def load_api_settings() -> ApiSettings:
+    """Read the HTTP service's settings from the environment.
+
+    Returns:
+        The validated settings. Never raises for a missing value.
+    """
+    return ApiSettings()
+
+
 def load_stage2_settings() -> Stage2Settings:
     """Read the layout stage's settings from the environment.
 

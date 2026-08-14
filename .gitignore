@@ -9,3 +9,6 @@ node_modules/
 
 # Stage 3 regenerates this in a second, and it is 90% vendored viewer.
 processes/*/outputs/diagram.html
+
+# The hosted page, built by pipelines/site.py. Generated for the same reason.
+site/

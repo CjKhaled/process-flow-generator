@@ -1,0 +1,20 @@
+# Render blueprint for the demo's pipeline service.
+#
+# The free plan sleeps an instance after fifteen idle minutes and takes the
+# better part of a minute to wake. The page pings /health on load to start that
+# early; if a demo cannot afford even that, this is the line to change.
+services:
+  - type: web
+    name: pfg-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      # Set in the Render dashboard, never here.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      # The origin the page is served from, e.g. https://cjkhaled.github.io.
+      # Left unset, any origin may call the service.
+      - key: PFG_ALLOWED_ORIGIN
+        sync: false

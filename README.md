@@ -4,6 +4,11 @@ Turns a written description of a patient support program business process into a
 validated process graph — on the way to rendered BPMN diagrams generated from user input
 alone.
 
+**[Try it](https://cjkhaled.github.io/process-flow-generator/)** — pick a process, paste a
+description, and watch it be read, checked and drawn. The pipeline runs on a free Render
+instance that sleeps when idle, so the first run of the day waits about a minute for it to
+wake; the page starts that wake-up as soon as it loads.
+
 The hard part is not drawing boxes. It is that real process descriptions are incomplete:
 they give the happy path, name three intake channels for one request, and stop before
 saying what happens when someone disagrees. So the graph this produces is explicit about
@@ -103,6 +108,57 @@ with an amber dashed outline, and the questions are listed beside the diagram ra
 than left in a JSON file next to it. Selecting a question finds its box; selecting a
 marked box finds its question. A graph with nothing outstanding says so.
 
+The questions panel is a drawer floating **over** the canvas, not a column beside it, so
+showing and hiding it never resizes the diagram or moves a single box. The header button
+carries the count, and a fit made while the drawer is open fits to the part of the canvas
+still on show.
+
+## The hosted demo
+
+```
+GitHub Pages (static)                        Render (Docker: Python + Node)
+┌────────────────────────┐  POST /runs       ┌──────────────────────────────┐
+│ site/index.html        │ ────────────────► │ api/app.py    the endpoints  │
+│  the same page shell,  │                   │ api/runs.py   runs in flight │
+│  built with no diagram │  GET /runs/{id}   │ api/pipeline.py              │
+│  in it yet             │ ◄──────────────── │   stages 1-3, nothing stored │
+└────────────────────────┘   {status, …}     └──────────────────────────────┘
+```
+
+Stages 1 and 2 cannot run in a browser: one needs an API key, the other shells out to
+Node. So the page is static and the pipeline is a service it calls.
+
+The API hands back **the same payload stage 3 inlines** — title, the questions panel as
+finished HTML, the diagram, and the ids to flag. That is why there is one page shell and
+not two: from the moment it has data, the hosted page and `diagram.html` are the same
+page. It also keeps every scrap of escaping in `render/page.py`, on the Python side,
+whichever way the payload travels.
+
+A run takes a minute or two, which is longer than a host will hold a connection open, so
+`POST /runs` answers with an id and the page polls it — which is also what lets it say
+which stage is running rather than spin at nothing. Runs are held in memory: this backs a
+demo, and a restart losing one costs a press of Generate.
+
+Nothing is written to `processes/<name>/outputs/` by a hosted run. What someone types
+belongs to them, not to the repository.
+
+```bash
+uv run python -m pipelines.site --api-base https://pfg-api.onrender.com   # the page
+uv run --group api uvicorn api.app:app --reload                          # the service
+```
+
+The page is built by `.github/workflows/pages.yml` on every push to `main` and deployed to
+Pages; the URL it calls is the `PFG_API_BASE` repository *variable*, not a secret, since it
+is public. The service is `render.yaml` plus the `Dockerfile` — Python and Node in one
+image, because the layouter is a Node CLI. Its image also builds a same-origin copy of the
+page and serves it at `/`, which costs nothing and is the answer if Pages is ever
+unavailable.
+
+**The endpoint is deliberately unguarded**: no rate limit, no passcode, and every run
+spends an Opus call. That is a decision that holds only while the URL is not shared. The
+one bound kept is `PFG_MAX_SOURCE_CHARS`, which is about an accidental paste rather than an
+attacker.
+
 ## Running it
 
 ```bash
@@ -146,9 +202,13 @@ Tests needing the real layouter are marked `requires_node` and skip when Node or
 | `PFG_MAX_TOKENS` | `32000` | Output cap per call. A cap, not a reservation. Too low truncates the graph mid-generation. |
 | `PFG_MAX_EXTRACTION_ATTEMPTS` | `3` | How many times to ask, including the first attempt. |
 | `PFG_LAYOUT_BIN` | pinned install | The `bpmn-auto-layout` executable. Empty uses the version pinned in `js/`. |
+| `PFG_ALLOWED_ORIGIN` | `*` | Hosted demo only: comma-separated origins the page may call from. |
+| `PFG_MAX_SOURCE_CHARS` | `20000` | Hosted demo only: longest description accepted. |
 
 Read from the environment or a `.env` file. Stage 2 needs none of them — it calls no model,
-so it runs without an API key.
+so it runs without an API key. Neither does the service at startup: it loads settings when
+a run begins, so a misconfigured instance answers `/health` and explains itself on the
+first run rather than crash-looping.
 
 ## Adding a process
 
@@ -187,14 +247,19 @@ one box get a lane, so declaring one the source never uses costs nothing.
   declared in; `document.py` writes the semantic XML and no diagram interchange;
   `autolayout.py` is the sole boundary to the layouter. The project contains no JavaScript;
   `js/` at the repo root holds the pinned npm dependencies.
-- `render/` — stage 3. `assets.py` holds every file read: the vendored viewer, and the page
-  shell; `template.html` is that shell, filled by plain string replacement over comment
-  sentinels; `page.py` assembles the page and touches no disk.
-- `pipelines/` — per-stage orchestrators. `stage1.py`, `stage2.py` and `stage3.py` each
-  compose one run end to end.
+- `render/` — stage 3, and the hosted page. `assets.py` holds every file read: the vendored
+  viewer, and the page shell; `template.html` is that shell, filled by plain string
+  replacement over comment sentinels; `page.py` assembles both pages from one payload and
+  touches no disk.
+- `api/` — the hosted demo's service. `pipeline.py` composes stages 1–3 in memory from the
+  same functions the CLI calls; `runs.py` holds runs in flight; `app.py` is the HTTP
+  surface, with the model and the layouter as constructor arguments so it can be tested
+  without either.
+- `pipelines/` — orchestrators. `stage1.py`, `stage2.py` and `stage3.py` each compose one
+  run end to end; `site.py` builds the hosted page.
 - `utils/` — IO helpers and typed environment settings.
 - `processes/<name>/` — data only, no code.
 - `tests/` — schema, validator, retry loop, IO, prompt, the BPMN mapping and document, the
-  page builder, and every orchestrator. Geometry is asserted only in the integration suite,
-  against the file the layouter produced. No test drives a browser: the page's tests prove
-  what it *says*, and that it *draws* is checked by opening it.
+  page builder, the service, and every orchestrator. Geometry is asserted only in the
+  integration suite, against the file the layouter produced. No test drives a browser: the
+  page's tests prove what it *says*, and that it *draws* is checked by opening it.
