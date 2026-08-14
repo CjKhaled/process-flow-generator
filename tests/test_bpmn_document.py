@@ -25,21 +25,25 @@ def sample_graph() -> ProcessGraph:
     """A graph covering every element type the renderer knows."""
     return graph(
         nodes=(
-            node("start", NodeType.START, actor="HCP", subprocess="intake"),
-            node("transcribe", subprocess="intake", actor="CM360"),
-            node("review", NodeType.SUBPROCESS, subprocess="off_label", actor="CM360"),
-            node("gw", NodeType.GATEWAY, subprocess="duplicate", actor="CM360"),
-            node("create", subprocess="duplicate", actor="PSM"),
-            node("done", NodeType.TERMINAL, subprocess="onboarding", actor="PSM"),
-            node("existing", NodeType.TERMINAL, subprocess="duplicate", actor="CM360"),
+            node("start", NodeType.START, actor="HCP"),
+            node("transcribe", actor="CM360"),
+            node("review", NodeType.SUBPROCESS, actor="CM360"),
+            node("gw", NodeType.GATEWAY, actor="CM360"),
+            # Tagged, so it is the one node that collapses -- the box it becomes
+            # is a second subProcess element, alongside the undetailed one above.
+            # It hangs off the gateway, because a collapsed box is where a path
+            # ends: anything drawn after it would be pruned away.
+            node("assess", subprocess="off_label", actor="PSM"),
+            node("create", actor="PSM"),
+            node("done", NodeType.TERMINAL, actor="PSM"),
             node("note", NodeType.ANNOTATION, label="Status: PENDING", actor="PSM"),
         ),
         edges=(
             edge("start", "transcribe"),
             edge("transcribe", "review"),
             edge("review", "gw"),
-            branch("gw", "create", "patient is new", order=0),
-            branch("gw", "existing", "patient already exists", order=1),
+            branch("gw", "assess", "patient already exists", order=0),
+            branch("gw", "create", "patient is new", order=1),
             edge("create", "done"),
             edge("note", "create", EdgeType.ANNOTATES),
         ),
@@ -142,11 +146,37 @@ def test_a_named_flow_carries_its_condition(rendered: ET.Element) -> None:
     assert named == {"patient is new", "patient already exists"}
 
 
+def test_a_collapsed_subprocess_is_emitted_as_a_childless_sub_process(rendered: ET.Element) -> None:
+    """Childless is what makes it collapsed: the layouter expands one only when it has children."""
+    boxes = rendered.findall("bpmn:process/bpmn:subProcess", NS)
+    collapsed = [box for box in boxes if box.get("id") == "Node_sub_off_label"]
+
+    assert len(collapsed) == 1
+    assert list(collapsed[0]) == []
+    assert collapsed[0].get("name") == "Off Label"
+
+
+def test_a_collapsed_subprocess_is_claimed_by_the_lane_the_skeleton_gives_it(rendered: ET.Element) -> None:
+    """It has no node of its own to take a lane from, so the skeleton must supply one."""
+    lanes = rendered.findall("bpmn:process/bpmn:laneSet/bpmn:lane", NS)
+    owner = {lane.get("name"): [ref.text for ref in lane.findall("bpmn:flowNodeRef", NS)] for lane in lanes}
+
+    assert "Node_sub_off_label" in owner["CM360"]
+
+
 def test_the_annotation_text_survives(rendered: ET.Element) -> None:
     text = rendered.find("bpmn:process/bpmn:textAnnotation/bpmn:text", NS)
 
     assert text is not None
     assert text.text == "Status: PENDING"
+
+
+def test_an_annotation_carries_its_own_id_prefix(rendered: ET.Element) -> None:
+    """The viewer draws a note as a box rather than a bracket, and CSS has only the id to go on."""
+    annotation = rendered.find("bpmn:process/bpmn:textAnnotation", NS)
+
+    assert annotation is not None
+    assert str(annotation.get("id")).startswith("Note_")
 
 
 def test_the_association_is_undirected(rendered: ET.Element) -> None:

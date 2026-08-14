@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from ir.process_config import OUTPUTS_DIRNAME
-from pipelines.stage1 import REPORT_FILENAME
+from ir.process_config import OUTPUTS_DIRNAME, SKELETON_FILENAME
+from pipelines.stage1 import GRAPH_FILENAME, REPORT_FILENAME
 from pipelines.stage2 import DIAGRAM_FILENAME
 from pipelines.stage3 import PAGE_FILENAME, main, run
 from render.assets import AssetError, ViewerAssets
@@ -82,6 +82,62 @@ def test_a_missing_report_is_not_an_error(processes_root: Path, viewer_assets: V
     rendered = run("enrollment", processes_root, assets=viewer_assets).read_text(encoding="utf-8")
 
     assert "Open questions (0)" in rendered
+
+
+def test_a_question_inside_a_collapsed_subprocess_points_at_the_box(
+    processes_root: Path, viewer_assets: ViewerAssets
+) -> None:
+    """Stage 2's mapping is re-derived here, so the panel addresses what was drawn."""
+    _write_collapsing_graph(processes_root)
+
+    rendered = run("enrollment", processes_root, assets=viewer_assets).read_text(encoding="utf-8")
+
+    assert 'data-elements="Node_sub_off_label"' in rendered
+    assert "Node_gw_test_result" not in rendered.replace("\\u003c", "<").split('id="pfg-data"')[0]
+
+
+def test_a_missing_graph_warns_rather_than_failing(
+    processes_root: Path, viewer_assets: ViewerAssets, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A diagram is still renderable; the questions simply point at their own elements."""
+    rendered = run("enrollment", processes_root, assets=viewer_assets).read_text(encoding="utf-8")
+
+    assert 'data-elements="Node_gw_test_result"' in rendered
+    assert "collapsed subprocess" in caplog.text
+
+
+def _write_collapsing_graph(processes_root: Path) -> None:
+    """A graph and skeleton that fold ``gw_test_result`` into the off-label box."""
+    process_dir = processes_root / "enrollment"
+    (process_dir / OUTPUTS_DIRNAME / GRAPH_FILENAME).write_text(
+        json.dumps(
+            {
+                "process_name": "enrollment",
+                "nodes": [
+                    {
+                        "id": "gw_test_result",
+                        "type": "gateway",
+                        "label": "Did the free test disprove it?",
+                        "actor": "CM360",
+                        "subprocess": "off_label",
+                        "status": "needs_clarification",
+                        "detail": "the source does not say",
+                    }
+                ],
+                "edges": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (process_dir / SKELETON_FILENAME).write_text(
+        json.dumps(
+            {
+                "process_name": "enrollment",
+                "subprocesses": [{"name": "off_label", "label": "Off-Label Review", "actor": "CM360", "order_hint": 1}],
+            }
+        ),
+        encoding="utf-8",
+    )
 
 
 def test_a_missing_diagram_names_stage_2(processes_root: Path, viewer_assets: ViewerAssets) -> None:

@@ -20,9 +20,11 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from api.app import create_app
+from bpmn.autolayout import Layouter
+from bpmn.decisions import DIAMOND
 from extractors.errors import SchemaCallError
 from ir.models import ProcessGraph
-from tests.conftest import ENROLLMENT_DIR, echo_layouter
+from tests.conftest import ENROLLMENT_DIR, decision_layouter, echo_layouter
 
 SOURCE = "The HCP faxes a PEF to CM360, who transcribes it."
 TIMEOUT_S = 10.0
@@ -51,11 +53,11 @@ def client(processes_root: Path, valid_graph: ProcessGraph) -> Iterator[TestClie
         yield running
 
 
-def app(processes_root: Path, call: Any, site_dir: Path | None = None) -> FastAPI:
+def app(processes_root: Path, call: Any, site_dir: Path | None = None, layout: Layouter = echo_layouter) -> FastAPI:
     """Build the service with both outside dependencies replaced."""
     return create_app(
         call=call,
-        layout=echo_layouter,
+        layout=layout,
         processes_root=processes_root,
         site_dir=site_dir or processes_root / "no-site-here",
     )
@@ -97,6 +99,14 @@ def test_a_run_finishes_with_a_page_payload(client: TestClient) -> None:
     assert state["status"] == "done"
     assert state["result"]["title"] == "Intake & Enrollment"
     assert state["result"]["diagram"].startswith("<?xml")
+
+
+def test_the_hosted_diagram_has_its_decisions_redrawn(processes_root: Path, valid_graph: ProcessGraph) -> None:
+    """The hosted page and the offline one must show the same drawing, redrawn decisions included."""
+    with TestClient(app(processes_root, lambda _prompt: valid_graph, layout=decision_layouter)) as running:
+        result = finished(running, start(running)["id"])["result"]
+
+    assert f'width="{int(DIAMOND[0])}" height="{int(DIAMOND[1])}"' in result["diagram"]
 
 
 def test_the_payload_flags_what_the_validator_raised(client: TestClient) -> None:

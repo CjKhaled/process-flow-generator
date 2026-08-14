@@ -37,6 +37,38 @@ def echo_layouter(xml: str) -> str:
     return xml
 
 
+LAID_OUT_WITH_A_DECISION = """<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" id="Definitions_stub">
+  <bpmn:process id="Process_stub">
+    <bpmn:task id="Node_task" name="Transcribe the PEF" />
+    <bpmn:exclusiveGateway id="Node_gw" name="Is it off-label?" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_stub">
+    <bpmndi:BPMNPlane id="BPMNPlane_stub" bpmnElement="Process_stub">
+      <bpmndi:BPMNShape id="Shape_task" bpmnElement="Node_task">
+        <dc:Bounds x="10" y="10" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_gw" bpmnElement="Node_gw" isMarkerVisible="true">
+        <dc:Bounds x="310" y="25" width="50" height="50" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
+"""
+"""What a layouter hands back, in miniature.
+
+Enough diagram interchange to tell a redrawn decision from an untouched task, for
+the stages that run :mod:`bpmn.decisions` over whatever the layouter returned.
+"""
+
+
+def decision_layouter(xml: str) -> str:  # noqa: ARG001  # the Layouter protocol names the parameter
+    """A stand-in that hands back a document with one gateway already placed."""
+    return LAID_OUT_WITH_A_DECISION
+
+
 @pytest.fixture
 def layouter() -> Layouter:
     """The pass-through layouter, as the injectable dependency."""

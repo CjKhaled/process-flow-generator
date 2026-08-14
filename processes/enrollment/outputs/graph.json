@@ -4,9 +4,9 @@
     {
       "id": "start_pef",
       "type": "start",
-      "label": "Complete PEF",
+      "label": "HCP completes PEF via portal or fax",
       "actor": "HCP",
-      "subprocess": "intake",
+      "subprocess": null,
       "status": "stated",
       "detail": "HCP can complete the PEF online via the portal or manually via fax.",
       "alternatives": []
@@ -16,9 +16,9 @@
       "type": "task",
       "label": "Transcribe PEF into CRM",
       "actor": "CM360",
-      "subprocess": "intake",
+      "subprocess": null,
       "status": "stated",
-      "detail": "CM360 will transcribe the PEF into the CRM",
+      "detail": "CM360 will transcribe the PEF into the CRM.",
       "alternatives": []
     },
     {
@@ -26,7 +26,7 @@
       "type": "task",
       "label": "Send PEF fax confirmation to HCP",
       "actor": "CM360",
-      "subprocess": "intake",
+      "subprocess": null,
       "status": "stated",
       "detail": "CM360 will send PEF confirmation of fax back to the HCP.",
       "alternatives": []
@@ -34,11 +34,11 @@
     {
       "id": "create_enrollment_record",
       "type": "task",
-      "label": "Create enrollment record",
+      "label": "Create enrollment record in CM360",
       "actor": "CM360",
-      "subprocess": "intake",
+      "subprocess": null,
       "status": "stated",
-      "detail": "Enrollment record is then created in CM360",
+      "detail": "Enrollment record is then created in CM360.",
       "alternatives": []
     },
     {
@@ -46,13 +46,13 @@
       "type": "gateway",
       "label": "Is diagnosis code off-label?",
       "actor": "CM360",
-      "subprocess": "intake",
+      "subprocess": null,
       "status": "stated",
       "detail": "CM360 checks if the diagnosis code on the PEF is off-label. They can also learn that it is off-label via an HCP inbound call.",
       "alternatives": []
     },
     {
-      "id": "gw_age_and_code",
+      "id": "gw_18_and_code",
       "type": "gateway",
       "label": "Patient 18+ AND diagnosis code in document?",
       "actor": "CM360",
@@ -62,9 +62,9 @@
       "alternatives": []
     },
     {
-      "id": "confirm_diagnosis_code",
+      "id": "psm_confirm_code",
       "type": "task",
-      "label": "Contact prescribing officer and confirm diagnosis code",
+      "label": "PSM contacts prescribing officer to confirm diagnosis code",
       "actor": "PSM",
       "subprocess": "off_label",
       "status": "stated",
@@ -74,7 +74,7 @@
     {
       "id": "gw_believes_on_label",
       "type": "gateway",
-      "label": "HCP believes patient has unconfirmed on-label condition?",
+      "label": "Does HCP believe patient has on-label condition unconfirmed by genetic testing?",
       "actor": "PSM",
       "subprocess": "off_label",
       "status": "stated",
@@ -82,9 +82,9 @@
       "alternatives": []
     },
     {
-      "id": "tell_prescriber_on_label",
+      "id": "psm_reactive_tell",
       "type": "task",
-      "label": "Advise prescriber to select on-label code; offer free post-rx genetic testing",
+      "label": "PSM tells prescriber to select on-label code and offers free post-rx genetic testing",
       "actor": "PSM",
       "subprocess": "off_label",
       "status": "stated",
@@ -94,7 +94,7 @@
     {
       "id": "gw_prescriber_agrees",
       "type": "gateway",
-      "label": "Prescriber agrees?",
+      "label": "Does the prescriber agree?",
       "actor": "PSM",
       "subprocess": "off_label",
       "status": "stated",
@@ -102,39 +102,39 @@
       "alternatives": []
     },
     {
-      "id": "gw_test_result",
+      "id": "term_prescriber_disagrees",
+      "type": "terminal",
+      "label": "Prescriber does not agree - outcome unspecified",
+      "actor": "PSM",
+      "subprocess": "off_label",
+      "status": "needs_clarification",
+      "detail": "Source does not state what happens if the prescriber does not agree to select the on-label diagnosis code.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_test_disproved",
       "type": "gateway",
       "label": "Did free test disprove on-label diagnosis?",
       "actor": "PSM",
       "subprocess": "off_label",
-      "status": "needs_clarification",
-      "detail": "Source describes the branch where the free test disproved the on-label diagnosis but does not state the outcome path if the test confirmed the diagnosis, nor whether the test occurs on the agreement path.",
-      "alternatives": []
-    },
-    {
-      "id": "contact_hcp_insist",
-      "type": "task",
-      "label": "Contact HCP about clinical judgement",
-      "actor": "PSM",
-      "subprocess": "off_label",
       "status": "stated",
-      "detail": "If the free test disproved the on-label diagnosis, the PSM will contact the HCP and see if the doctor insists on their clinical judgement that the patient does have the on-label diagnosis.",
+      "detail": "If the free test disproved the on-label diagnosis, the PSM will contact the HCP...",
       "alternatives": []
     },
     {
       "id": "gw_doctor_insists",
       "type": "gateway",
-      "label": "Doctor insists on clinical judgement?",
+      "label": "Does doctor insist on clinical judgement of on-label diagnosis?",
       "actor": "PSM",
       "subprocess": "off_label",
       "status": "stated",
-      "detail": "If they do, the patient will continue as normal. If they don't the patient is officially off-label",
+      "detail": "the PSM will contact the HCP and see if the doctor insists on their clinical judgement that the patient does have the on-label diagnosis. If they do, the patient will continue as normal. If they don't the patient is officially off-label.",
       "alternatives": []
     },
     {
-      "id": "term_off_label_record",
-      "type": "terminal",
-      "label": "Patient off-label: not entered or archived",
+      "id": "patient_off_label",
+      "type": "task",
+      "label": "Patient deemed off-label",
       "actor": "CM360",
       "subprocess": "off_label",
       "status": "stated",
@@ -151,11 +151,11 @@
       "actor": "CM360",
       "subprocess": "off_label",
       "status": "stated",
-      "detail": "CM360 will send the Off-label notification fax to the HCP office",
+      "detail": "CM360 will send the Off-label notification fax to the HCP office.",
       "alternatives": []
     },
     {
-      "id": "term_hcp_sp_biologics",
+      "id": "term_work_with_sp",
       "type": "terminal",
       "label": "HCP works directly with SP Biologics",
       "actor": "HCP",
@@ -167,17 +167,17 @@
     {
       "id": "gw_duplicate",
       "type": "gateway",
-      "label": "Does patient already exist?",
+      "label": "Does the patient already exist?",
       "actor": "CM360",
-      "subprocess": "duplicate",
+      "subprocess": null,
       "status": "stated",
       "detail": "From there, duplicate patient check will happen. If the patient exists already...",
       "alternatives": []
     },
     {
-      "id": "determine_existing_type",
+      "id": "determine_dup_type",
       "type": "task",
-      "label": "Determine re-enrollment, restart, or care plan update",
+      "label": "Determine re-enrollment, restart, or update to existing care plan",
       "actor": "CM360",
       "subprocess": "duplicate",
       "status": "stated",
@@ -189,13 +189,13 @@
       ]
     },
     {
-      "id": "term_existing_handled",
+      "id": "term_duplicate_resolved",
       "type": "terminal",
-      "label": "Existing patient handling determined",
+      "label": "Duplicate patient handling resolved - downstream unspecified",
       "actor": "CM360",
       "subprocess": "duplicate",
       "status": "needs_clarification",
-      "detail": "Source does not state what happens after CM360 determines the type of existing-patient case (re-enrollment, restart, or update).",
+      "detail": "Source does not state what happens after the duplicate type is determined for an existing patient.",
       "alternatives": []
     },
     {
@@ -203,9 +203,9 @@
       "type": "task",
       "label": "Create patient record and associate with care plan",
       "actor": "CM360",
-      "subprocess": "duplicate",
+      "subprocess": null,
       "status": "stated",
-      "detail": "If it is a new patient, CM 360 will create the patient record and associate it with the correct care plan.",
+      "detail": "CM360 will create the patient record and associate it with the correct care plan.",
       "alternatives": []
     },
     {
@@ -213,17 +213,17 @@
       "type": "task",
       "label": "Create BI case",
       "actor": "CM360",
-      "subprocess": "duplicate",
+      "subprocess": null,
       "status": "stated",
-      "detail": "they will create the BI case with the status being 'PENDING' and the substatus being 'NEW PATIENT – HUB ENROLLED'.",
+      "detail": "they will create the BI case.",
       "alternatives": []
     },
     {
       "id": "anno_bi_status",
       "type": "annotation",
-      "label": "Status: PENDING; Substatus: NEW PATIENT – HUB ENROLLED",
+      "label": "Status: PENDING, Substatus: NEW PATIENT – HUB ENROLLED",
       "actor": "CM360",
-      "subprocess": "duplicate",
+      "subprocess": null,
       "status": "stated",
       "detail": "the status being 'PENDING' and the substatus being 'NEW PATIENT – HUB ENROLLED'.",
       "alternatives": []
@@ -231,29 +231,19 @@
     {
       "id": "send_status_qral",
       "type": "task",
-      "label": "Send status to QRAL",
-      "actor": "CM360",
-      "subprocess": "onboarding",
-      "status": "stated",
-      "detail": "This status is sent to QRAL",
-      "alternatives": []
-    },
-    {
-      "id": "qral_send_jcrm",
-      "type": "task",
-      "label": "Send status to JCRM",
+      "label": "Send status to QRAL, QRAL sends to JCRM",
       "actor": "QRAL",
-      "subprocess": "onboarding",
+      "subprocess": null,
       "status": "stated",
-      "detail": "QRAL sends it to JCRM",
+      "detail": "This status is sent to QRAL, and QRAL sends it to JCRM.",
       "alternatives": []
     },
     {
       "id": "create_onboarding_case",
       "type": "task",
-      "label": "Create onboarding case",
-      "actor": "JCRM",
-      "subprocess": "onboarding",
+      "label": "Automatically create onboarding case",
+      "actor": "PSCRM",
+      "subprocess": null,
       "status": "stated",
       "detail": "This status automatically creates the onboarding case.",
       "alternatives": []
@@ -262,20 +252,370 @@
       "id": "assign_psm",
       "type": "task",
       "label": "Assign PSM via zip to territory mapping",
-      "actor": "JCRM",
-      "subprocess": "onboarding",
+      "actor": "PSCRM",
+      "subprocess": null,
       "status": "stated",
       "detail": "The PSM is assigned via zip to territory mapping.",
       "alternatives": []
     },
     {
+      "id": "gw_missing_info",
+      "type": "gateway",
+      "label": "Is there missing info (sections 1, 2, 5, or 6)?",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "Next we check if there is missing info. If there is (sections 1, 2, 5, or 6), the 'Collect MI' task is automatically created.",
+      "alternatives": []
+    },
+    {
+      "id": "create_collect_mi",
+      "type": "task",
+      "label": "Automatically create 'Collect MI' task",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "the 'Collect MI' task is automatically created.",
+      "alternatives": []
+    },
+    {
+      "id": "cm360_mi_check",
+      "type": "task",
+      "label": "CM360 missing info check including written consent",
+      "actor": "CM360",
+      "subprocess": "cm360_missing_info",
+      "status": "stated",
+      "detail": "CM360 does their own missing info check that includes written consent.",
+      "alternatives": []
+    },
+    {
+      "id": "cm360_send_mi_fax",
+      "type": "task",
+      "label": "Send MI fax to HCP, notify PSM via Teams, upload fax to CRM",
+      "actor": "CM360",
+      "subprocess": "cm360_missing_info",
+      "status": "stated",
+      "detail": "CM360 will send the missing information fax to the HCP as many times as needed, and they will also notify the PSM via teams. They will also upload fax communication to the CRM.",
+      "alternatives": []
+    },
+    {
+      "id": "cm360_send_mi_crm",
+      "type": "task",
+      "label": "Send missing information to CRM through QRAL, including written consent",
+      "actor": "CM360",
+      "subprocess": "cm360_missing_info",
+      "status": "stated",
+      "detail": "CM360 will then send any missing information to the CRM through QRAL, including written consent.",
+      "alternatives": []
+    },
+    {
+      "id": "psm_notify_has",
+      "type": "task",
+      "label": "PSM notifies Hemolytic Anemia Specialist",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "the PSM will notify the Hemolytic Anemia Specialist.",
+      "alternatives": []
+    },
+    {
+      "id": "has_outreach",
+      "type": "task",
+      "label": "HAS continually outreaches to HCP until required info obtained",
+      "actor": "HAS",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "They will continually outreach to the HCP until all required information via the missing info list in Salesforce is obtained.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_has_blocked_phi",
+      "type": "gateway",
+      "label": "Is HAS blocked from accessing PHI?",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "If the HAS is blocked because they can't access PHI, the PSM will step in to help.",
+      "alternatives": []
+    },
+    {
+      "id": "psm_step_in",
+      "type": "task",
+      "label": "PSM steps in to help",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "the PSM will step in to help.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_6_weeks",
+      "type": "gateway",
+      "label": "6 weeks unable to contact patient and collect info?",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "If it's been 6 weeks with the inability to contact the patient and collect required information, than enrollment will be cancelled.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_consent_missing",
+      "type": "gateway",
+      "label": "Is patient consent part of what is missing?",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "If patient consent is part of what is missing, the PSM will attempt to contact the patient.",
+      "alternatives": []
+    },
+    {
+      "id": "psm_contact_patient",
+      "type": "task",
+      "label": "PSM calls patient every other business day (3 attempts) plus alternate channels",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "They will call every other business day for a total of 3 attempts, and will also try reaching out using alternate channels at their discretion.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_patient_responsive",
+      "type": "gateway",
+      "label": "Is the patient responsive?",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "If the patient isn't responsive, the PSM will try contacting the HCP. If the patient is responsive, consent can be retrieved.",
+      "alternatives": []
+    },
+    {
+      "id": "psm_contact_hcp",
+      "type": "task",
+      "label": "PSM contacts HCP: verify details, inform, request help contacting patient",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "They'll verify patient contact details, inform the office they haven't been unable to move forward, and request the office help in contacting the patient by providing their own contact information.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_hcp_responsive",
+      "type": "gateway",
+      "label": "Is the HCP responsive?",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "If the HCP isn't responsive, the PSM will eventually contact the HAS.",
+      "alternatives": []
+    },
+    {
+      "id": "psm_contact_has_report",
+      "type": "task",
+      "label": "PSM contacts HAS to report status and request alternate HCP contacts (no PHI)",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "the PSM will eventually contact the HAS (at their discretion time wise) via teams or email or call to report the status and request alternate contacts for the HCP. They will not share any PHI with the HAS.",
+      "alternatives": []
+    },
+    {
+      "id": "psm_send_nonresponsive_letter",
+      "type": "task",
+      "label": "Send non-responsive letter (hard copy consent) and no-consent email to patient",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "They will also send a non-responsive letter to the patient containing a hard copy of patient consent, as well as an email that uses the no-consent email template.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_2_weeks_hcp",
+      "type": "gateway",
+      "label": "2 weeks unable to contact HCP and collect info?",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "If its been 2 weeks with the inability to contact the HCP and collect the required information, then enrollment will be cancelled.",
+      "alternatives": []
+    },
+    {
+      "id": "term_hcp_still_unresponsive",
+      "type": "terminal",
+      "label": "HCP contact ongoing before 2 weeks - outcome unspecified",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "needs_clarification",
+      "detail": "Source does not state what happens while under 2 weeks and HCP still not responsive but not yet cancelled.",
+      "alternatives": []
+    },
+    {
+      "id": "psm_alert_manager",
+      "type": "task",
+      "label": "PSM alerts manager (reason: unresponsive patient)",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "the PSM will alert their manager with the reasoning being an unresponsive patient.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_manager_approves",
+      "type": "gateway",
+      "label": "Does the manager approve cancellation?",
+      "actor": "PSM Manager",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "Once the manager approves, the PSM will notify the HCP and HAS that the PEF is being cancelled.",
+      "alternatives": []
+    },
+    {
+      "id": "term_manager_not_approve",
+      "type": "terminal",
+      "label": "Manager does not approve - outcome unspecified",
+      "actor": "PSM Manager",
+      "subprocess": "psm_missing_info",
+      "status": "needs_clarification",
+      "detail": "Source does not state what happens if the manager does not approve the cancellation.",
+      "alternatives": []
+    },
+    {
+      "id": "psm_notify_cancellation",
+      "type": "task",
+      "label": "Notify HCP and HAS PEF is cancelled, alert CM360",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "the PSM will notify the HCP and HAS that the PEF is being cancelled, and alert CM360 who will update the patient status in the CRM.",
+      "alternatives": []
+    },
+    {
+      "id": "cm360_update_status",
+      "type": "task",
+      "label": "CM360 updates patient status in CRM",
+      "actor": "CM360",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "alert CM360 who will update the patient status in the CRM.",
+      "alternatives": []
+    },
+    {
+      "id": "term_enrollment_cancelled",
+      "type": "terminal",
+      "label": "Enrollment cancelled",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "enrollment will be cancelled.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_consent_type",
+      "type": "gateway",
+      "label": "Consent type: DocuSign, paper, or verbal?",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "If patient is responsive, consent can be retrieved: DocuSign, paper copy, or verbal.",
+      "alternatives": []
+    },
+    {
+      "id": "consent_docusign",
+      "type": "task",
+      "label": "Send DocuSign link via text/email and document in CRM",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "If written through Docusign, PSM must send a link via text or email and document this in the CRM.",
+      "alternatives": []
+    },
+    {
+      "id": "consent_paper",
+      "type": "task",
+      "label": "Mail paper consent form to patient/caregiver and document in CRM",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "If written through paper copy. PSM must mail a paper copy of the consent form to the patient or caregiver, and document this in the CRM.",
+      "alternatives": []
+    },
+    {
+      "id": "consent_verbal",
+      "type": "task",
+      "label": "Record verbal consent, update consent record in CRM",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "If verbal, the patient cannot be a California resident, and written consent must be collected within 30 days. PSM should update the consent record in the CRM and note verbal consent was collected.",
+      "alternatives": []
+    },
+    {
+      "id": "anno_verbal_rules",
+      "type": "annotation",
+      "label": "Verbal: not California resident; written consent within 30 days",
+      "actor": "PSM",
+      "subprocess": "psm_missing_info",
+      "status": "stated",
+      "detail": "the patient cannot be a California resident, and written consent must be collected within 30 days.",
+      "alternatives": []
+    },
+    {
+      "id": "cm360_send_activated_milestone",
+      "type": "task",
+      "label": "Send patient data & activated coverage determination milestone to QRAL",
+      "actor": "CM360",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "Once everything is obtained, on CM360's end, they will send patient data and the activated coverage determination milestone to QRAL, who will send this to PSCRM.",
+      "alternatives": []
+    },
+    {
+      "id": "trigger_bi_case",
+      "type": "task",
+      "label": "Create BI case with Confirm Benefits Details and Additional Info tasks",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "This triggers the creation of the benefits investigation case, which creates the tasks Confirm Benefits Details task and Additional Info needed to complete BI automatically.",
+      "alternatives": []
+    },
+    {
+      "id": "close_collect_mi",
+      "type": "task",
+      "label": "Agent manually closes 'Collect MI' task",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "Once everything is obtained on PSCRM's end, the 'Collect MI' task will be manually closed by the agent.",
+      "alternatives": []
+    },
+    {
+      "id": "welcome_tasks",
+      "type": "task",
+      "label": "Create and manually close 'Make Welcome Call' and 'Send Welcome Materials' tasks",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "That triggers the 'Make Welcome Call' and 'Send Welcome Materials' tasks to be created and manually closed by the PSM.",
+      "alternatives": []
+    },
+    {
+      "id": "create_careplan",
+      "type": "task",
+      "label": "Create care plan with onboarding & coverage determination milestones activated",
+      "actor": "CM360",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "a careplan is created with onboarding and coverage determination milestones activated on CM360 system.",
+      "alternatives": []
+    },
+    {
       "id": "term_enrolled",
       "type": "terminal",
-      "label": "Patient onboarded",
+      "label": "Patient enrolled",
       "actor": "PSM",
-      "subprocess": "onboarding",
+      "subprocess": null,
       "status": "stated",
-      "detail": "End of described enrollment flow after onboarding case creation and PSM assignment.",
+      "detail": null,
       "alternatives": []
     }
   ],
@@ -285,6 +625,7 @@
       "to_id": "transcribe_pef",
       "type": "precedes",
       "condition": null,
+      "answer": null,
       "order": 0
     },
     {
@@ -292,6 +633,7 @@
       "to_id": "send_fax_confirmation",
       "type": "precedes",
       "condition": null,
+      "answer": null,
       "order": 0
     },
     {
@@ -299,6 +641,7 @@
       "to_id": "create_enrollment_record",
       "type": "precedes",
       "condition": null,
+      "answer": null,
       "order": 0
     },
     {
@@ -306,146 +649,159 @@
       "to_id": "gw_off_label",
       "type": "precedes",
       "condition": null,
+      "answer": null,
       "order": 0
     },
     {
       "from_id": "gw_off_label",
-      "to_id": "gw_age_and_code",
+      "to_id": "gw_18_and_code",
       "type": "branch",
-      "condition": "Diagnosis code is off-label",
+      "condition": "diagnosis code is off-label",
+      "answer": "yes",
       "order": 0
     },
     {
       "from_id": "gw_off_label",
       "to_id": "gw_duplicate",
       "type": "branch",
-      "condition": "Diagnosis code is not off-label",
+      "condition": "diagnosis code is not off-label",
+      "answer": "no",
       "order": 1
     },
     {
-      "from_id": "gw_age_and_code",
-      "to_id": "confirm_diagnosis_code",
+      "from_id": "gw_18_and_code",
+      "to_id": "psm_confirm_code",
       "type": "branch",
-      "condition": "Patient is 18 or older AND diagnosis code equals the ones in their document",
+      "condition": "patient is 18 or older AND diagnosis code is equal to the ones in their document",
+      "answer": "yes",
       "order": 0
     },
     {
-      "from_id": "gw_age_and_code",
-      "to_id": "term_off_label_record",
+      "from_id": "gw_18_and_code",
+      "to_id": "patient_off_label",
       "type": "branch",
-      "condition": "Otherwise (they are off-label)",
+      "condition": "not (patient 18+ and diagnosis code in document) - they are off-label",
+      "answer": "no",
       "order": 1
     },
     {
-      "from_id": "confirm_diagnosis_code",
+      "from_id": "psm_confirm_code",
       "to_id": "gw_believes_on_label",
       "type": "precedes",
       "condition": null,
+      "answer": null,
       "order": 0
     },
     {
       "from_id": "gw_believes_on_label",
-      "to_id": "tell_prescriber_on_label",
+      "to_id": "psm_reactive_tell",
       "type": "branch",
-      "condition": "HCP believes patient has an on-label condition not yet confirmed through genetic testing",
+      "condition": "HCP believes patient has on-label condition not yet confirmed through genetic testing",
+      "answer": "yes",
       "order": 0
     },
     {
       "from_id": "gw_believes_on_label",
-      "to_id": "term_off_label_record",
+      "to_id": "patient_off_label",
       "type": "branch",
-      "condition": "HCP does not indicate an unconfirmed on-label condition",
+      "condition": "HCP does not indicate belief in an unconfirmed on-label condition",
+      "answer": "no",
       "order": 1
     },
     {
-      "from_id": "tell_prescriber_on_label",
+      "from_id": "psm_reactive_tell",
       "to_id": "gw_prescriber_agrees",
       "type": "precedes",
       "condition": null,
+      "answer": null,
       "order": 0
     },
     {
       "from_id": "gw_prescriber_agrees",
-      "to_id": "gw_duplicate",
+      "to_id": "gw_test_disproved",
       "type": "branch",
-      "condition": "Prescriber agrees (patient proceeds with enrollment)",
+      "condition": "prescriber agrees",
+      "answer": "yes",
       "order": 0
     },
     {
       "from_id": "gw_prescriber_agrees",
-      "to_id": "gw_test_result",
+      "to_id": "term_prescriber_disagrees",
       "type": "branch",
-      "condition": "Prescriber does not agree / after free post-rx testing",
+      "condition": "prescriber does not agree",
+      "answer": "no",
       "order": 1
     },
     {
-      "from_id": "gw_test_result",
-      "to_id": "contact_hcp_insist",
-      "type": "branch",
-      "condition": "Free test disproved the on-label diagnosis",
-      "order": 0
-    },
-    {
-      "from_id": "gw_test_result",
-      "to_id": "gw_duplicate",
-      "type": "branch",
-      "condition": "Free test confirmed the on-label diagnosis (outcome not stated)",
-      "order": 1
-    },
-    {
-      "from_id": "contact_hcp_insist",
+      "from_id": "gw_test_disproved",
       "to_id": "gw_doctor_insists",
-      "type": "precedes",
-      "condition": null,
+      "type": "branch",
+      "condition": "free test disproved the on-label diagnosis",
+      "answer": "yes",
       "order": 0
+    },
+    {
+      "from_id": "gw_test_disproved",
+      "to_id": "gw_duplicate",
+      "type": "branch",
+      "condition": "free test did not disprove on-label diagnosis - patient proceeds with enrollment",
+      "answer": "no",
+      "order": 1
     },
     {
       "from_id": "gw_doctor_insists",
       "to_id": "gw_duplicate",
       "type": "branch",
-      "condition": "Doctor insists on clinical judgement (patient continues as normal)",
+      "condition": "doctor insists on clinical judgement that patient has on-label diagnosis - patient continues as normal",
+      "answer": "yes",
       "order": 0
     },
     {
       "from_id": "gw_doctor_insists",
-      "to_id": "term_off_label_record",
+      "to_id": "patient_off_label",
       "type": "branch",
-      "condition": "Doctor does not insist (patient officially off-label)",
+      "condition": "doctor does not insist - patient is officially off-label",
+      "answer": "no",
       "order": 1
     },
     {
-      "from_id": "term_off_label_record",
+      "from_id": "patient_off_label",
       "to_id": "send_off_label_fax",
       "type": "precedes",
       "condition": null,
+      "answer": null,
       "order": 0
     },
     {
       "from_id": "send_off_label_fax",
-      "to_id": "term_hcp_sp_biologics",
+      "to_id": "term_work_with_sp",
       "type": "precedes",
       "condition": null,
+      "answer": null,
       "order": 0
     },
     {
       "from_id": "gw_duplicate",
-      "to_id": "determine_existing_type",
+      "to_id": "determine_dup_type",
       "type": "branch",
-      "condition": "Patient already exists",
+      "condition": "patient exists already",
+      "answer": "yes",
       "order": 0
     },
     {
       "from_id": "gw_duplicate",
       "to_id": "create_patient_record",
       "type": "branch",
-      "condition": "New patient",
+      "condition": "new patient",
+      "answer": "no",
       "order": 1
     },
     {
-      "from_id": "determine_existing_type",
-      "to_id": "term_existing_handled",
+      "from_id": "determine_dup_type",
+      "to_id": "term_duplicate_resolved",
       "type": "precedes",
       "condition": null,
+      "answer": null,
       "order": 0
     },
     {
@@ -453,6 +809,7 @@
       "to_id": "create_bi_case",
       "type": "precedes",
       "condition": null,
+      "answer": null,
       "order": 0
     },
     {
@@ -460,6 +817,7 @@
       "to_id": "create_bi_case",
       "type": "annotates",
       "condition": null,
+      "answer": null,
       "order": 0
     },
     {
@@ -467,20 +825,15 @@
       "to_id": "send_status_qral",
       "type": "precedes",
       "condition": null,
+      "answer": null,
       "order": 0
     },
     {
       "from_id": "send_status_qral",
-      "to_id": "qral_send_jcrm",
-      "type": "precedes",
-      "condition": null,
-      "order": 0
-    },
-    {
-      "from_id": "qral_send_jcrm",
       "to_id": "create_onboarding_case",
       "type": "precedes",
       "condition": null,
+      "answer": null,
       "order": 0
     },
     {
@@ -488,13 +841,351 @@
       "to_id": "assign_psm",
       "type": "precedes",
       "condition": null,
+      "answer": null,
       "order": 0
     },
     {
       "from_id": "assign_psm",
+      "to_id": "gw_missing_info",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_missing_info",
+      "to_id": "create_collect_mi",
+      "type": "branch",
+      "condition": "there is missing info (sections 1, 2, 5, or 6)",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_missing_info",
+      "to_id": "cm360_send_activated_milestone",
+      "type": "branch",
+      "condition": "there is no missing info",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "create_collect_mi",
+      "to_id": "cm360_mi_check",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "cm360_mi_check",
+      "to_id": "cm360_send_mi_fax",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "cm360_send_mi_fax",
+      "to_id": "cm360_send_mi_crm",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "cm360_send_mi_crm",
+      "to_id": "psm_notify_has",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "psm_notify_has",
+      "to_id": "has_outreach",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "has_outreach",
+      "to_id": "gw_has_blocked_phi",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_has_blocked_phi",
+      "to_id": "psm_step_in",
+      "type": "branch",
+      "condition": "HAS is blocked because they can't access PHI",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_has_blocked_phi",
+      "to_id": "gw_6_weeks",
+      "type": "branch",
+      "condition": "HAS is not blocked from accessing PHI",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "psm_step_in",
+      "to_id": "gw_6_weeks",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_6_weeks",
+      "to_id": "psm_alert_manager",
+      "type": "branch",
+      "condition": "6 weeks with inability to contact the patient and collect required information",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_6_weeks",
+      "to_id": "gw_consent_missing",
+      "type": "branch",
+      "condition": "not yet 6 weeks / still able to progress",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "gw_consent_missing",
+      "to_id": "psm_contact_patient",
+      "type": "branch",
+      "condition": "patient consent is part of what is missing",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_consent_missing",
+      "to_id": "cm360_send_activated_milestone",
+      "type": "branch",
+      "condition": "patient consent is not part of what is missing",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "psm_contact_patient",
+      "to_id": "gw_patient_responsive",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_patient_responsive",
+      "to_id": "gw_consent_type",
+      "type": "branch",
+      "condition": "patient is responsive - consent can be retrieved",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_patient_responsive",
+      "to_id": "psm_contact_hcp",
+      "type": "branch",
+      "condition": "patient isn't responsive",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "psm_contact_hcp",
+      "to_id": "gw_hcp_responsive",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_hcp_responsive",
+      "to_id": "gw_consent_type",
+      "type": "branch",
+      "condition": "HCP is responsive",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_hcp_responsive",
+      "to_id": "psm_contact_has_report",
+      "type": "branch",
+      "condition": "HCP isn't responsive",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "psm_contact_has_report",
+      "to_id": "psm_send_nonresponsive_letter",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "psm_send_nonresponsive_letter",
+      "to_id": "gw_2_weeks_hcp",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_2_weeks_hcp",
+      "to_id": "psm_alert_manager",
+      "type": "branch",
+      "condition": "2 weeks with inability to contact the HCP and collect required information",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_2_weeks_hcp",
+      "to_id": "term_hcp_still_unresponsive",
+      "type": "branch",
+      "condition": "not yet 2 weeks with inability to contact the HCP",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "psm_alert_manager",
+      "to_id": "gw_manager_approves",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_manager_approves",
+      "to_id": "psm_notify_cancellation",
+      "type": "branch",
+      "condition": "manager approves",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_manager_approves",
+      "to_id": "term_manager_not_approve",
+      "type": "branch",
+      "condition": "manager does not approve",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "psm_notify_cancellation",
+      "to_id": "cm360_update_status",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "cm360_update_status",
+      "to_id": "term_enrollment_cancelled",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_consent_type",
+      "to_id": "consent_docusign",
+      "type": "branch",
+      "condition": "written through DocuSign",
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_consent_type",
+      "to_id": "consent_paper",
+      "type": "branch",
+      "condition": "written through paper copy",
+      "answer": null,
+      "order": 1
+    },
+    {
+      "from_id": "gw_consent_type",
+      "to_id": "consent_verbal",
+      "type": "branch",
+      "condition": "verbal",
+      "answer": null,
+      "order": 2
+    },
+    {
+      "from_id": "anno_verbal_rules",
+      "to_id": "consent_verbal",
+      "type": "annotates",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "consent_docusign",
+      "to_id": "cm360_send_activated_milestone",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "consent_paper",
+      "to_id": "cm360_send_activated_milestone",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "consent_verbal",
+      "to_id": "cm360_send_activated_milestone",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "cm360_send_activated_milestone",
+      "to_id": "trigger_bi_case",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "trigger_bi_case",
+      "to_id": "close_collect_mi",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "close_collect_mi",
+      "to_id": "welcome_tasks",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "welcome_tasks",
+      "to_id": "create_careplan",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "create_careplan",
       "to_id": "term_enrolled",
       "type": "precedes",
       "condition": null,
+      "answer": null,
       "order": 0
     }
   ]

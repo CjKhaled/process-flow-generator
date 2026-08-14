@@ -81,14 +81,21 @@ def test_broken_edge_reference_is_reported(enrollment_skeleton: Skeleton) -> Non
 def test_missing_required_subprocess_is_a_resolution_finding(
     valid_graph: ProcessGraph, enrollment_skeleton: Skeleton
 ) -> None:
-    """The absent missing_info subprocess is tagged, not dropped, and does not block emission."""
+    """The absent missing-info subprocesses are tagged, not dropped, and do not block emission.
+
+    One finding each, named: a reader has to know *which* part of the process the
+    source never described, and lumping them together would not say.
+    """
     report = validate(valid_graph, enrollment_skeleton)
     missing = [f for f in report.resolution if f.code is FindingCode.MISSING_REQUIRED_SUBPROCESS]
 
+    expected = {"cm360_missing_info", "psm_missing_info"}
+    named = {name for finding in missing for name in expected if name in finding.message}
+
     assert report.is_structurally_valid
-    assert len(missing) == 1
-    assert "missing_info" in missing[0].message
-    assert missing[0].severity is Severity.RESOLUTION
+    assert named == expected
+    assert len(missing) == len(expected)
+    assert all(finding.severity is Severity.RESOLUTION for finding in missing)
 
 
 def test_duplicate_node_ids_are_reported(enrollment_skeleton: Skeleton) -> None:

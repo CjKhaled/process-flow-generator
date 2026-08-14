@@ -15,12 +15,13 @@ from pathlib import Path
 import pytest
 
 from bpmn.autolayout import Layouter, LayoutError
+from bpmn.decisions import BPMNDI_NS, DC_NS, DIAMOND
 from bpmn.document import BPMN_NS
 from ir.models import NodeType, ProcessGraph
 from pipelines.stage1 import GRAPH_FILENAME
 from pipelines.stage2 import DIAGRAM_FILENAME, main, run
 from tests.builders import edge, graph, node
-from tests.conftest import ENROLLMENT_DIR, echo_layouter
+from tests.conftest import ENROLLMENT_DIR, decision_layouter, echo_layouter
 
 
 @pytest.fixture
@@ -58,15 +59,24 @@ def test_what_reaches_the_layouter_is_parseable_bpmn(processes_root: Path) -> No
     assert ET.fromstring(seen[0]).tag == f"{{{BPMN_NS}}}definitions"
 
 
-def test_the_layouters_output_is_what_gets_written(processes_root: Path) -> None:
-    """The stage must not post-process the geometry it asked for."""
+def test_the_layouters_geometry_survives_except_for_the_decisions(processes_root: Path) -> None:
+    """The stage post-processes one element type and no other.
 
-    def replace(xml: str) -> str:
-        return "<laid-out/>"
+    Decisions are redrawn so each carries its own question -- see
+    :mod:`bpmn.decisions` for why that has to happen after the layout -- and
+    everything else reaches disk with the coordinates it was given.
+    """
+    written = run("enrollment", processes_root, layout=decision_layouter)
+    diagram = ET.fromstring(written.read_text(encoding="utf-8"))
+    bounds = {
+        shape.get("bpmnElement"): shape.find(f"{{{DC_NS}}}Bounds")
+        for shape in diagram.iter(f"{{{BPMNDI_NS}}}BPMNShape")
+    }
 
-    written = run("enrollment", processes_root, layout=replace)
-
-    assert written.read_text(encoding="utf-8") == "<laid-out/>"
+    task, gateway = bounds["Node_task"], bounds["Node_gw"]
+    assert task is not None and gateway is not None
+    assert (task.get("x"), task.get("y"), task.get("width"), task.get("height")) == ("10", "10", "100", "80")
+    assert (gateway.get("width"), gateway.get("height")) == (str(int(DIAMOND[0])), str(int(DIAMOND[1])))
 
 
 def test_ids_come_from_the_metadata_not_the_graphs_own_label(processes_root: Path, layouter: Layouter) -> None:

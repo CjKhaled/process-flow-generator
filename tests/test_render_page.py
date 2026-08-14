@@ -41,9 +41,10 @@ def page(
     *findings: Finding,
     diagram: str = DIAGRAM,
     display_name: str = "Intake & Enrollment",
+    element_of: dict[str, str] | None = None,
 ) -> str:
     """Build a page, defaulting everything the test under way does not care about."""
-    return build(diagram, findings, display_name, assets, template)
+    return build(diagram, findings, display_name, assets, template, element_of)
 
 
 def payload(rendered: str) -> dict[str, object]:
@@ -128,6 +129,49 @@ def test_a_finding_about_no_node_is_not_clickable(template: str, viewer_assets: 
 
     assert '<li class="question">' in rendered, "the card should carry no data-elements to be clicked through"
     assert payload(rendered)["flagged"] == []
+
+
+def test_a_finding_inside_a_collapsed_subprocess_points_at_the_box(template: str, viewer_assets: ViewerAssets) -> None:
+    """Stage 2 drew one box in place of the step, so the highlight has to follow it."""
+    rendered = page(
+        template,
+        viewer_assets,
+        clarification("gw_test_result"),
+        element_of={"gw_test_result": "Node_sub_off_label"},
+    )
+
+    assert 'data-elements="Node_sub_off_label"' in rendered
+    assert payload(rendered)["flagged"] == ["Node_sub_off_label"]
+
+
+def test_a_map_that_does_not_mention_a_node_leaves_it_alone(template: str, viewer_assets: ViewerAssets) -> None:
+    """The map is stage 2's answer where it has one, not a replacement for the slug rule."""
+    rendered = page(template, viewer_assets, clarification("gw_test_result"), element_of={"other": "Node_sub_x"})
+
+    assert payload(rendered)["flagged"] == ["Node_gw_test_result"]
+
+
+def test_two_findings_inside_one_collapse_mark_the_box_once(template: str, viewer_assets: ViewerAssets) -> None:
+    """data-elements is a selector; naming the same box twice would mark it twice."""
+    both = {"gw_test_result": "Node_sub_off_label", "term_off_label": "Node_sub_off_label"}
+    rendered = page(
+        template,
+        viewer_assets,
+        Finding.of(FindingCode.NEEDS_CLARIFICATION, "two at once", "gw_test_result", "term_off_label"),
+        element_of=both,
+    )
+
+    assert 'data-elements="Node_sub_off_label"' in rendered
+    assert payload(rendered)["flagged"] == ["Node_sub_off_label"]
+
+
+def test_a_page_built_without_a_map_is_unchanged(template: str, viewer_assets: ViewerAssets) -> None:
+    """The argument is optional, and adding it must not have moved anything else."""
+    findings = (clarification("gw_test_result"), Finding.of(FindingCode.MISSING_REQUIRED_SUBPROCESS, "no 'x'"))
+
+    assert build(DIAGRAM, findings, "Intake & Enrollment", viewer_assets, template) == build(
+        DIAGRAM, findings, "Intake & Enrollment", viewer_assets, template, None
+    )
 
 
 def test_a_node_named_twice_is_highlighted_once(template: str, viewer_assets: ViewerAssets) -> None:

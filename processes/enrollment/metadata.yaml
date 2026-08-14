@@ -13,15 +13,17 @@ actors:
   Patient: the patient
   CM360: an external hub that performs some enrollment activities
   PSM: a patient service manager, assigned to patients to help them through the patient journey
+  PSM Manager: the PSM's own manager, whose approval is needed before an enrolment is cancelled
+  HAS: a hemolytic anemia specialist, a field clinical role the PSM escalates outreach to
   QRAL: an integration layer used by the hub to transmit information to the Salesforce platform
-  JCRM: the Salesforce platform, which runs automations
+  PSCRM: the Salesforce platform, which runs automations
   SP Biologics: a specialty pharmacy that performs some external hub activities
 
 # The lane a box falls to when the source does not say who performs it. Source text
 # routinely describes automated steps in the passive voice ("the PSM is assigned via
 # zip to territory mapping"), which would otherwise leave the box without a lane.
 # Must be one of the actors above.
-default_actor: JCRM
+default_actor: PSCRM
 
 # Domain shorthand the source text uses without expanding. Given to the extractor
 # so it does not mistake an acronym for an actor or invent a meaning for it.
@@ -30,6 +32,9 @@ glossary:
   PEF: Patient Enrollment Form
   CRM: Customer Relationship Management system
   BI: Benefits Investigation
+  MI: Missing Information
+  PHI: Protected Health Information
+  JCRM: another name the source uses for PSCRM, the Salesforce platform; not a separate system
 
 # Optional override of the model used for this process. Null uses the global default.
 model_id: null

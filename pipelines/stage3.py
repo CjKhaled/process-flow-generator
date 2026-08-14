@@ -5,11 +5,18 @@ validation report beside it -> write ``processes/<name>/outputs/diagram.html``.
 Deterministic, like stage 2: no model, no network, and nothing read at view time
 either, since the viewer is inlined into the page.
 
-The report is optional. A diagram is renderable whether or not the questions
-that came with it are still on disk, and refusing to draw one because a sibling
-file was deleted would be a rule with nothing behind it. Stage 2's output is not
-optional: without it there is nothing to render, and the error says which stage
-to run.
+The report is optional, and so is the graph beside it. A diagram is renderable
+whether or not the questions that came with it are still on disk, and refusing to
+draw one because a sibling file was deleted would be a rule with nothing behind
+it. Stage 2's output is not optional: without it there is nothing to render, and
+the error says which stage to run.
+
+The graph is read for one thing only: stage 2 draws each subprocess as a single
+collapsed box, so a question raised on a step inside one has to be pointed at
+that box instead. Working out which box means re-deriving stage 2's mapping,
+which needs the graph and the skeleton. Without them the page still renders --
+every question simply points at its own element, which is correct for a diagram
+that collapsed nothing and merely inert for one that did.
 """
 
 import argparse
@@ -20,8 +27,11 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from ir.process_config import OUTPUTS_DIRNAME, load_process_config
-from pipelines.stage1 import REPORT_FILENAME
+from bpmn.semantics import element_ids
+from ir.models import ProcessGraph
+from ir.process_config import OUTPUTS_DIRNAME, SKELETON_FILENAME, load_process_config
+from ir.skeleton import load_skeleton
+from pipelines.stage1 import GRAPH_FILENAME, REPORT_FILENAME
 from pipelines.stage2 import DIAGRAM_FILENAME
 from render import page
 from render.assets import AssetError, ViewerAssets, load_assets, load_template
@@ -52,7 +62,8 @@ def run(
 
     Raises:
         FileNotFoundError: If the process folder or stage 2's diagram is missing.
-        pydantic.ValidationError: If the report on disk does not match the schema.
+        pydantic.ValidationError: If the report or graph on disk does not match
+            the schema.
         render.assets.AssetError: If the viewer's files are not installed.
     """
     process_dir = processes_root / process_name
@@ -70,6 +81,7 @@ def run(
         config.display_name,
         assets or load_assets(),
         load_template(),
+        _element_map(process_dir),
     )
 
     destination = process_dir / OUTPUTS_DIRNAME / PAGE_FILENAME
@@ -85,6 +97,26 @@ def _open_questions(report_path: Path) -> tuple[Finding, ...]:
         return ()
     report = ValidationReport.model_validate(json.loads(report_path.read_text(encoding="utf-8")))
     return report.resolution
+
+
+def _element_map(process_dir: Path) -> dict[str, str] | None:
+    """Stage 2's IR id -> BPMN id mapping, re-derived, or nothing if it cannot be.
+
+    Re-derived rather than stored: it is a pure function of the graph and the
+    skeleton, both of which are already on disk, and a fourth output file would
+    be one more thing to keep in step with the three that matter.
+    """
+    graph_path = process_dir / OUTPUTS_DIRNAME / GRAPH_FILENAME
+    skeleton_path = process_dir / SKELETON_FILENAME
+    if not graph_path.is_file() or not skeleton_path.is_file():
+        logger.warning(
+            "no graph at %s or skeleton at %s; questions raised inside a collapsed subprocess will not be clickable",
+            graph_path,
+            skeleton_path,
+        )
+        return None
+    graph = ProcessGraph.model_validate(json.loads(graph_path.read_text(encoding="utf-8")))
+    return element_ids(graph, load_skeleton(skeleton_path))
 
 
 def main(argv: list[str] | None = None) -> int:

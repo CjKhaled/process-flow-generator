@@ -19,7 +19,7 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 
-from bpmn import document, semantics
+from bpmn import decisions, document, semantics
 from bpmn.autolayout import Layouter, subprocess_layouter
 from extractors.model import build_model_call
 from extractors.process import DEFAULT_MAX_ATTEMPTS, ModelCall, extract
@@ -100,10 +100,15 @@ def run(
 
     _say(progress, LAYING_OUT)
     definitions = semantics.translate(result.graph, config, skeleton)
-    laid_out = layout(document.render(definitions))
+    laid_out = decisions.widen(layout(document.render(definitions)))
 
     _say(progress, RENDERING)
-    return page.payload(laid_out, result.report.resolution, config.display_name)
+    return page.payload(
+        laid_out,
+        result.report.resolution,
+        config.display_name,
+        semantics.element_ids(result.graph, skeleton),
+    )
 
 
 def _say(progress: Progress | None, stage: str) -> None:

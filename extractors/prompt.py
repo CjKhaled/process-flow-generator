@@ -20,11 +20,27 @@ several ways in for the same request (a portal, a fax, a phone call). Name the
 channels in that node's `label` and `detail`. Separate start nodes for separate
 channels produce a diagram that reads as several unrelated processes.
 
-**Subprocesses are a tag, not a container.** When the source describes a
-subprocess step by step, emit its steps as ordinary `task` and `gateway` nodes and
-set each node's `subprocess` field to the subprocess it belongs to. Reserve the
-`subprocess` node type for a subprocess the source names but does not detail --
-one collapsed box standing in for work described elsewhere.
+**A subprocess is work the source hands off.** A subprocess begins where a
+decision sends the process down a named path -- "if it is off-label, the
+off-label process begins" -- or where the document gives a stretch of text its
+own heading. Tag every node on that path with the subprocess it belongs to, and
+keep tagging until the path rejoins the main line.
+
+The decision itself is *not* part of what it hands off: the gateway stays on the
+main line with `subprocess` null, and only the branch leaving it is tagged. Steps
+in the running narrative -- the ones the source describes without handing them
+off to anything -- leave `subprocess` null too. If in doubt, ask whether the
+source treats the work as a named thing that happens rather than as the next
+sentence; only the first is a subprocess.
+
+Tagging is still flat: emit the tagged steps as ordinary `task` and `gateway`
+nodes with a tag, never as a graph nested inside another. Reserve the
+`subprocess` node *type* for a subprocess the source names but does not detail at
+all -- one box standing in for work described nowhere.
+
+A later stage draws every tagged subprocess as a single collapsed box, so the
+steps you tag will not appear individually in the diagram. Extract them in full
+regardless: they are what the open questions are found in.
 
 **Every gateway gets at least two conditioned branches.** Sources routinely give
 only the happy path: "if the prescriber agrees, the patient proceeds", with
@@ -34,6 +50,16 @@ by the text ("prescriber does not agree"), point it at a `terminal` node, and ma
 that terminal `status: needs_clarification` with a `detail` saying the source does
 not state this outcome. A dangling gateway is rejected; a tagged open question is
 exactly what this stage is for.
+
+**Say which branch is the yes.** Most gateways ask a yes/no question -- "is the
+diagnosis code off-label?", "does the patient already exist?". On each branch of
+one, set `answer` to `yes` or `no`, and still fill in `condition` with the
+source's own wording. The diagram draws the answer on the arrow and keeps the
+wording in the graph, so a reader sees a decision and its two outcomes rather
+than a sentence hanging off a line. Where the decision is not a yes/no question
+-- three outcomes, or a choice between named alternatives such as DocuSign,
+paper or verbal -- leave `answer` null on every branch and the condition is drawn
+instead.
 
 **Every path reaches a terminal.** No node may be a dead end. Loops back to an
 earlier step are fine as long as some route out of the loop reaches a terminal.

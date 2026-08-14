@@ -19,6 +19,8 @@ from pathlib import Path
 
 import pytest
 
+from bpmn import decisions
+from bpmn.decisions import DIAMOND
 from pipelines.stage2 import DIAGRAM_FILENAME, run
 from tests.conftest import ENROLLMENT_DIR, requires_node
 
@@ -30,7 +32,7 @@ DC_NS = "http://www.omg.org/spec/DD/20100524/DC"
 DI_NS = "http://www.omg.org/spec/DD/20100524/DI"
 NS = {"bpmn": BPMN_NS, "bpmndi": BPMNDI_NS, "dc": DC_NS, "di": DI_NS}
 
-ENROLLMENT_LANES = ["HCP", "CM360", "PSM", "QRAL", "JCRM"]
+ENROLLMENT_LANES = ["HCP", "CM360", "PSM", "QRAL", "PSCRM"]
 
 Rect = tuple[float, float, float, float]
 
@@ -76,18 +78,17 @@ def contains(outer: Rect, inner: Rect, tolerance: float = 0.5) -> bool:
     )
 
 
-def crosses(start: tuple[float, float], end: tuple[float, float], box: Rect, tolerance: float = 0.5) -> bool:
-    """Whether a segment passes through a box's interior rather than skirting it."""
-    x, y, width, height = box
-    return (
-        max(start[0], end[0]) > x + tolerance
-        and min(start[0], end[0]) < x + width - tolerance
-        and max(start[1], end[1]) > y + tolerance
-        and min(start[1], end[1]) < y + height - tolerance
-    )
+def crosses(start: tuple[float, float], end: tuple[float, float], box: Rect) -> bool:
+    """Whether a segment passes through a box's interior rather than skirting it.
+
+    The same question :mod:`bpmn.decisions` asks before it re-routes a branch, so
+    it is the same answer: a re-route this would have rejected must not be one the
+    suite then accepts.
+    """
+    return decisions.crosses(start, end, decisions.Rect(*box))
 
 
-def test_the_five_enrollment_lanes_are_drawn(diagram: ET.Element) -> None:
+def test_the_enrollment_lanes_are_drawn(diagram: ET.Element) -> None:
     """Only the actors that own a node, in metadata.yaml declaration order."""
     lanes = diagram.findall("bpmn:process/bpmn:laneSet/bpmn:lane", NS)
 
@@ -170,6 +171,104 @@ def test_no_edge_passes_through_an_unrelated_box(diagram: ET.Element) -> None:
     ]
 
     assert offences == []
+
+
+def test_every_decision_is_redrawn_at_the_size_that_holds_its_question(diagram: ET.Element) -> None:
+    """:mod:`bpmn.decisions` runs on the real layout, not only on a hand-written one."""
+    drawn = bounds_of(diagram)
+    gateways = [str(item.get("id")) for item in diagram.iter(f"{{{BPMN_NS}}}exclusiveGateway")]
+
+    assert gateways
+    for element in gateways:
+        assert drawn[element][2:] == DIAMOND, element
+
+
+def test_every_decisions_question_sits_inside_it(diagram: ET.Element) -> None:
+    """The whole point of the redraw: no question floating loose beside its diamond."""
+    drawn = bounds_of(diagram)
+
+    for shape in diagram.iter(f"{{{BPMNDI_NS}}}BPMNShape"):
+        element = str(shape.get("bpmnElement"))
+        label = shape.find("bpmndi:BPMNLabel/dc:Bounds", NS)
+        if drawn[element][2:] != DIAMOND or label is None:
+            continue
+        box: Rect = (
+            float(label.get("x", 0)),
+            float(label.get("y", 0)),
+            float(label.get("width", 0)),
+            float(label.get("height", 0)),
+        )
+        assert contains(drawn[element], box), element
+
+
+def test_the_arrows_still_meet_the_diamonds_they_join(diagram: ET.Element) -> None:
+    """An endpoint left inside a widened diamond buries its own arrowhead."""
+    drawn = bounds_of(diagram)
+    process = diagram.find("bpmn:process", NS)
+    assert process is not None
+    ends = {
+        str(child.get("id")): (str(child.get("sourceRef")), str(child.get("targetRef")))
+        for child in process
+        if child.tag.split("}")[-1] == "sequenceFlow"
+    }
+
+    for element, points in waypoints_of(diagram).items():
+        for node_id, point in zip(ends.get(element, ("", "")), (points[0], points[-1]), strict=False):
+            if drawn.get(node_id, (0, 0, 0, 0))[2:] != DIAMOND:
+                continue
+            x, y, width, height = drawn[node_id]
+            on_edge = point[0] in {x, x + width} or point[1] in {y, y + height}
+            assert on_edge, (element, node_id, point)
+
+
+def test_no_two_branches_leave_a_decision_from_the_same_point(diagram: ET.Element) -> None:
+    """Sharing a vertex leaves two arrows drawn along one line, and three corners unused."""
+    drawn = bounds_of(diagram)
+    process = diagram.find("bpmn:process", NS)
+    assert process is not None
+    sources = {
+        str(child.get("id")): str(child.get("sourceRef"))
+        for child in process
+        if child.tag.split("}")[-1] == "sequenceFlow"
+    }
+
+    starts: dict[str, list[tuple[float, float]]] = {}
+    for element, points in waypoints_of(diagram).items():
+        source = sources.get(element, "")
+        if drawn.get(source, (0, 0, 0, 0))[2:] == DIAMOND:
+            starts.setdefault(source, []).append(points[0])
+
+    assert starts
+    for gateway, points in starts.items():
+        assert len(set(points)) == len(points), (gateway, points)
+
+
+def test_no_widened_diamond_overlaps_another_shape(diagram: ET.Element) -> None:
+    """The redraw takes space the layouter left clear; this is what notices if it takes too much."""
+    drawn = bounds_of(diagram)
+    lanes = {str(lane.get("id")) for lane in diagram.findall("bpmn:process/bpmn:laneSet/bpmn:lane", NS)}
+    participant = diagram.find("bpmn:collaboration/bpmn:participant", NS)
+    assert participant is not None
+    boxes = {name: box for name, box in drawn.items() if name not in lanes | {str(participant.get("id"))}}
+
+    offences = [
+        (name, other)
+        for name, box in boxes.items()
+        if box[2:] == DIAMOND
+        for other, against in boxes.items()
+        if other != name and overlaps(box, against)
+    ]
+
+    assert offences == []
+
+
+def overlaps(one: Rect, other: Rect, tolerance: float = 0.5) -> bool:
+    return (
+        one[0] + one[2] > other[0] + tolerance
+        and other[0] + other[2] > one[0] + tolerance
+        and one[1] + one[3] > other[1] + tolerance
+        and other[1] + other[3] > one[1] + tolerance
+    )
 
 
 def test_every_semantic_element_is_drawn(diagram: ET.Element) -> None:

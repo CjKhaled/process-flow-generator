@@ -21,7 +21,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from bpmn import document, semantics
+from bpmn import decisions, document, semantics
 from bpmn.autolayout import Layouter, LayoutError, subprocess_layouter
 from ir.models import ProcessGraph
 from ir.process_config import (
@@ -81,7 +81,7 @@ def run(
         layout = subprocess_layouter([settings.layout_bin] if settings.layout_bin else None)
 
     definitions = semantics.translate(graph, config, skeleton)
-    laid_out = layout(document.render(definitions))
+    laid_out = decisions.widen(layout(document.render(definitions)))
 
     destination = process_dir / OUTPUTS_DIRNAME / DIAGRAM_FILENAME
     destination.parent.mkdir(parents=True, exist_ok=True)

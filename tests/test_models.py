@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from ir.models import Edge, EdgeType, Node, NodeStatus, NodeType, ProcessGraph
+from ir.models import BranchAnswer, Edge, EdgeType, Node, NodeStatus, NodeType, ProcessGraph
 from ir.process_config import ProcessConfig, load_process_config
 from ir.skeleton import load_skeleton
 from tests.conftest import ENROLLMENT_DIR
@@ -43,6 +43,24 @@ def test_optional_fields_default_to_empty() -> None:
     assert minimal.subprocess is None
     assert minimal.detail is None
     assert minimal.alternatives == ()
+
+
+def test_a_branch_answer_round_trips_as_an_enum() -> None:
+    """It decides what the arrow says, so a bare string reaching stage 2 would be a silent miss."""
+    branch = Edge(
+        from_id="gw", to_id="yes", type=EdgeType.BRANCH, condition="it is off-label", answer=BranchAnswer.YES, order=0
+    )
+    restored = Edge.model_validate_json(branch.model_dump_json())
+
+    assert restored.answer is BranchAnswer.YES
+    assert branch.model_dump(mode="json")["answer"] == "yes"
+
+
+def test_an_edge_with_no_answer_still_loads() -> None:
+    """Graphs extracted before the field existed are still on disk and still readable."""
+    restored = Edge.model_validate({"from_id": "a", "to_id": "b", "type": "precedes", "order": 0})
+
+    assert restored.answer is None
 
 
 def test_graph_is_immutable(valid_graph: ProcessGraph) -> None:
@@ -92,12 +110,27 @@ def test_pydantic_does_not_enforce_graph_semantics() -> None:
     assert broken.edges[0].to_id == "nowhere"
 
 
-def test_enrollment_skeleton_lists_the_five_required_subprocesses() -> None:
-    """The skeleton on disk matches the documented enrollment subprocesses."""
+def test_enrollment_skeleton_lists_only_the_work_the_process_hands_off() -> None:
+    """The skeleton names the stretches that collapse into a box, not every phase.
+
+    Intake and onboarding are the running narrative -- the steps the source
+    describes without handing them off to anything -- so they are drawn one by
+    one and belong nowhere in here. Listing them would make them vanish.
+    """
     skeleton = load_skeleton(ENROLLMENT_DIR / "skeleton.json")
 
-    assert skeleton.required_names == {"intake", "off_label", "duplicate", "missing_info", "onboarding"}
-    assert [spec.name for spec in skeleton.in_hint_order()][:3] == ["intake", "off_label", "duplicate"]
+    expected = ["off_label", "duplicate", "cm360_missing_info", "psm_missing_info"]
+
+    assert skeleton.required_names == set(expected)
+    assert [spec.name for spec in skeleton.in_hint_order()] == expected
+
+
+def test_every_enrollment_subprocess_is_drawn_in_a_declared_lane() -> None:
+    """A collapsed box takes its lane from here, so a typo would be caught only at stage 2."""
+    skeleton = load_skeleton(ENROLLMENT_DIR / "skeleton.json")
+    config = load_process_config(ENROLLMENT_DIR)
+
+    assert all(spec.actor in config.actors for spec in skeleton.subprocesses)
 
 
 def test_enrollment_metadata_loads() -> None:
@@ -107,7 +140,7 @@ def test_enrollment_metadata_loads() -> None:
     assert config.process_name == "enrollment"
     assert "CM360" in config.actors
     assert "hub" in config.actors["CM360"]
-    assert config.default_actor == "JCRM"
+    assert config.default_actor == "PSCRM"
     assert config.glossary["PEF"] == "Patient Enrollment Form"
     assert config.model_id is None
 

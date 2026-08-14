@@ -322,6 +322,37 @@
     color: var(--muted);
   }
 
+  /* A collapsed subprocess is the end of the path at this level, so the marker
+     that promises something inside is a promise the diagram does not keep. It is
+     drawn as a small square and a plus: the second rect of the visual, and the
+     only path carrying a data-marker. The semantic file keeps the subProcess --
+     any BPMN tool opening it should still see one -- this is the drawing only. */
+  #canvas [data-element-id^="Node_sub_"] .djs-visual > rect:nth-of-type(n + 2),
+  #canvas [data-element-id^="Node_sub_"] .djs-visual > path[data-marker] {
+    display: none !important;
+  }
+
+  /* A note is a box, not an open bracket. bpmn-js draws a textAnnotation as an
+     invisible rect plus a bracket path; the rect is given the border and the
+     bracket is dropped, so the note reads as the box of context it is. Ids are
+     the only handle CSS has on element type, which is why annotations carry a
+     prefix of their own. */
+  #canvas [data-element-id^="Note_"] .djs-visual > rect {
+    stroke: var(--line) !important;
+    stroke-width: 2px !important;
+    fill: var(--page) !important;
+  }
+
+  #canvas [data-element-id^="Note_"] .djs-visual > path {
+    display: none !important;
+  }
+
+  /* And the connector to it is a line, not a dotted hint. */
+  #canvas [data-element-id^="Association_"] .djs-visual > path {
+    stroke-dasharray: none !important;
+    stroke: var(--muted) !important;
+  }
+
   /* Boxes a human still has to settle. The first child of a shape's visual is
      its outline -- rect, circle or polygon -- so this reaches every element type
      without knowing which one it is. */

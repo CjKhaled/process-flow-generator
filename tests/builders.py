@@ -4,7 +4,7 @@ Tests need to build deliberately broken graphs, so these wrap the IR models with
 defaults rather than adding any validation of their own.
 """
 
-from ir.models import Edge, EdgeType, Node, NodeStatus, NodeType, ProcessGraph
+from ir.models import BranchAnswer, Edge, EdgeType, Node, NodeStatus, NodeType, ProcessGraph
 from ir.process_config import ProcessConfig
 from ir.skeleton import Skeleton, SubprocessSpec
 from validators.report import FindingCode, ValidationReport
@@ -43,14 +43,15 @@ def edge(
     *,
     condition: str | None = None,
     order: int = 0,
+    answer: BranchAnswer | None = None,
 ) -> Edge:
     """Build an edge, defaulting to plain sequence flow."""
-    return Edge(from_id=from_id, to_id=to_id, type=edge_type, condition=condition, order=order)
+    return Edge(from_id=from_id, to_id=to_id, type=edge_type, condition=condition, order=order, answer=answer)
 
 
-def branch(from_id: str, to_id: str, condition: str | None, order: int = 0) -> Edge:
+def branch(from_id: str, to_id: str, condition: str | None, order: int = 0, answer: BranchAnswer | None = None) -> Edge:
     """Build a gateway branch edge."""
-    return edge(from_id, to_id, EdgeType.BRANCH, condition=condition, order=order)
+    return edge(from_id, to_id, EdgeType.BRANCH, condition=condition, order=order, answer=answer)
 
 
 def graph(nodes: tuple[Node, ...], edges: tuple[Edge, ...], name: str = "enrollment") -> ProcessGraph:
@@ -73,12 +74,17 @@ def config(
     )
 
 
-def skeleton(*names: str, name: str = "enrollment") -> Skeleton:
-    """Build a skeleton whose subprocesses are in the order given."""
+def skeleton(*names: str, name: str = "enrollment", actor: str = "CM360") -> Skeleton:
+    """Build a skeleton whose subprocesses are in the order given.
+
+    Every subprocess is drawn in the same lane, which matches :func:`config`'s
+    default actor. A test that cares which lane a collapsed box lands in builds
+    its ``SubprocessSpec`` directly.
+    """
     return Skeleton(
         process_name=name,
         subprocesses=tuple(
-            SubprocessSpec(name=item, label=item.replace("_", " ").title(), order_hint=position)
+            SubprocessSpec(name=item, label=item.replace("_", " ").title(), actor=actor, order_hint=position)
             for position, item in enumerate(names)
         ),
     )

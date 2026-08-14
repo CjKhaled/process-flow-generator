@@ -58,6 +58,13 @@ class EdgeType(StrEnum):
     ANNOTATES = "annotates"
 
 
+class BranchAnswer(StrEnum):
+    """Which answer a branch of a yes/no decision represents."""
+
+    YES = "yes"
+    NO = "no"
+
+
 class Node(BaseModel):
     """A single box in the process flow."""
 
@@ -97,8 +104,11 @@ class Node(BaseModel):
     subprocess: str | None = Field(
         default=None,
         description=(
-            "Which known subprocess this node belongs to. Must be one of the subprocess names "
-            "supplied in the prompt, or null when the node sits outside all of them."
+            "Which known subprocess this node belongs to -- set only on work the source hands "
+            "off down a named path, such as the branch leaving 'if it is off-label'. The "
+            "deciding gateway itself stays on the main line, and so does the running narrative: "
+            "both leave this null. Must be one of the subprocess names supplied in the prompt. "
+            "A later stage draws each tagged subprocess as one collapsed box."
         ),
     )
     status: NodeStatus = Field(
@@ -148,6 +158,18 @@ class Edge(BaseModel):
             "The guard on a branch edge, phrased as the source phrases it. Keep a combined "
             "condition whole -- 'patient is 18 or older AND the diagnosis code is in the "
             "document' is one condition, not two. Null on precedes and annotates edges."
+        ),
+    )
+    answer: BranchAnswer | None = Field(
+        default=None,
+        description=(
+            "On a branch leaving a gateway that asks a yes/no question, which answer this "
+            "branch is: 'yes' or 'no'. The diagram draws that word on the arrow, which is why "
+            "it is worth setting even though `condition` says the same thing at length -- the "
+            "wording stays in the graph without crowding the drawing. Leave null when the "
+            "decision is not a yes/no question, such as one with three outcomes or a choice "
+            "between named alternatives; the condition is drawn instead. Null on precedes and "
+            "annotates edges."
         ),
     )
     order: int = Field(

@@ -69,17 +69,62 @@ processes/<name>/outputs/graph.json
 Entirely deterministic: no model, no network, no credentials. The same graph always
 produces byte-identical XML.
 
-This stage computes **no geometry**. It emits semantic BPMN — a pool, one lane per actor,
-flow elements, artifacts — and hands it to `bpmn-io/bpmn-auto-layout`, which generates
-every shape bound, waypoint and label bound. That library is a BPMN-specific layered
+This stage computes **almost no geometry**. It emits semantic BPMN — a pool, one lane per
+actor, flow elements, artifacts — and hands it to `bpmn-io/bpmn-auto-layout`, which
+generates every shape bound, waypoint and label bound. The single exception is described
+under *Decisions carry their question* below. That library is a BPMN-specific layered
 layouter rather than a general graph one, which is the whole reason it is here: it knows
 that a lane constrains a node, that a gateway's branches are a narrative to be kept near
 their spine, and that an edge must not cross a shape it has nothing to do with.
 
 The consequence is that the one lever this stage holds is **declaration order**, since the
-layouter breaks ties on it. Flow nodes go out in the skeleton's subprocess order, which is
-what puts intake before onboarding; a gateway's branches go out in `Edge.order`, which
-decides which way each is drawn.
+layouter breaks ties on it. Flow nodes go out in the graph's own order, which follows the
+source narrative; a gateway's branches go out in `Edge.order`, which decides which way each
+is drawn.
+
+### Decisions carry their question
+
+A decision is drawn as a diamond with its question written **inside** it and **Yes** or **No**
+on the arrows leaving it — each arrow out of its own corner of the diamond. There is no `X`
+in the middle: BPMN allows an exclusive gateway without the marker, and the space is better
+spent on the question.
+
+The answer comes from the extractor, on `Edge.answer`, rather than being guessed at render
+time from the order of the branches or from the word *not* in the condition — a diagram that
+is confidently backwards is worse than one that is wordy. A decision that is not a yes/no
+question keeps the source's wording on its arrows, which is also what happens to a graph
+extracted before the field existed. Either way the full condition stays in `graph.json`.
+
+The rest needs the one piece of geometry this project computes. BPMN puts a gateway's name
+on an *external* label and bpmn-js hard-codes the list of types whose labels are external, so
+no amount of styling moves it inside the shape; the layouter then finds that label a clear
+spot near the diamond, which lands one question above its decision and the next below it,
+adrift from the shape they belong to. It also runs every branch out of the same vertex and
+separates them further along, which leaves two arrows sharing a line. So `bpmn/decisions.py`
+runs over the laid-out document afterwards and redraws each gateway in place — a bigger
+diamond about the same centre, the label moved inside it, the marker dropped, the arrows that
+met the old boundary pushed out to the new one, and each branch sent out of the corner it is
+headed for. Where a re-route would cross a box it is abandoned and the layouter's route
+stands. Nothing else in the document is touched.
+
+### Collapsed subprocesses
+
+This is also where **subprocesses collapse**. Every subprocess named in `skeleton.json` is
+drawn as a single box, and the steps tagged with it are not drawn at all: a decision hands
+work off down a named path, and the diagram says so once rather than eleven times. The box
+stands where the first of its steps stood, in the lane the skeleton declares for it.
+
+**Nothing leaves a collapsed box.** At this level the path is over when it reaches one, so
+an edge running out of a subprocess is dropped, and anything only that edge led to — an end
+state the subprocess reached, the rest of a branch it rejoined — is dropped with it.
+Whatever the main line still reaches, such as a decision the subprocess happened to feed
+back into, is untouched. The one thing lifted back out is the start event, because a
+process without a visible entry point is not a process; a start tagged into a subprocess is
+a tagging mistake, and drawing it is how that gets noticed.
+
+Nothing is lost on disk: `graph.json` keeps every step, and the open questions raised inside
+a collapsed section stay in the report and on the page — pointing at the box, whether their
+step was folded into it or stranded behind it.
 
 The layouter is pinned to an exact pre-release, `2.0.0-alpha.2`. The stable 1.x line has no
 lane support at all, and lanes are the point of the stage.
@@ -222,10 +267,15 @@ Copy `processes/enrollment/`, then swap the data — no code changes:
   a box falls when the source never says who — source text routinely describes automation
   in the passive voice ("the PSM is assigned via zip to territory mapping"). It must name
   one of the declared actors.
-- `skeleton.json` — the subprocesses a complete description is expected to cover. Drives
-  the "is a part missing?" check. `order_hint` is never enforced by the validator — real
-  sources routinely run the subprocesses out of order — but stage 2 does use it, as the
-  order flow nodes are declared in, which is what sequences the phases across the diagram.
+- `skeleton.json` — the stretches of work the process **hands off**, each of which stage 2
+  draws as one collapsed box. Not a coverage checklist for the whole process: the running
+  narrative belongs to no subprocess and is drawn step by step, so listing a main-flow phase
+  here would make it vanish into a box. Drives the "is a part missing?" check as well.
+  `actor` is the lane the box is drawn in, and must be one of the declared actors — it is
+  stated rather than derived, because the lane that owns a subprocess is frequently not the
+  lane performing most of its steps. `order_hint` is never enforced by the validator — real
+  sources routinely run the subprocesses out of order — and it orders them for prompts and
+  reports only; the diagram places each box where its first step appeared.
 - `inputs/` — the source documents (`.md` or `.txt`), concatenated in filename order.
 
 Actor declaration order is also lane order, top to bottom. Only actors that own at least
@@ -245,7 +295,8 @@ one box get a lane, so declaring one the source never uses costs nothing.
   tiers; `report.py` defines the codes and severities.
 - `bpmn/` — stage 2. `semantics.py` decides what each element *is* and the order it is
   declared in; `document.py` writes the semantic XML and no diagram interchange;
-  `autolayout.py` is the sole boundary to the layouter. The project contains no JavaScript;
+  `autolayout.py` is the sole boundary to the layouter; `decisions.py` redraws each gateway
+  afterwards, and is the only geometry this project owns. The project contains no JavaScript;
   `js/` at the repo root holds the pinned npm dependencies.
 - `render/` — stage 3, and the hosted page. `assets.py` holds every file read: the vendored
   viewer, and the page shell; `template.html` is that shell, filled by plain string

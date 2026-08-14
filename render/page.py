@@ -22,7 +22,9 @@ Two decisions are load-bearing:
   through :func:`bpmn.semantics.node_element_id`. That function is imported
   rather than reimplemented: an NCName slug rule that exists in two places will
   eventually disagree with itself, and the failure would be a highlight silently
-  landing on nothing.
+  landing on nothing. A caller that knows better -- one holding the graph, and so
+  able to see that stage 2 folded the node into a collapsed subprocess -- passes
+  ``element_of`` and the highlight lands on the box instead.
 
 Everything interpolated is escaped for the context it lands in: text and
 attributes through :func:`html.escape`, and the payload through ``json.dumps``
@@ -54,7 +56,12 @@ APP_TITLE = "Process Flow Generator"
 """What the hosted page is called before a run has named a process."""
 
 
-def payload(diagram: str, findings: Sequence[Finding], display_name: str) -> dict[str, object]:
+def payload(
+    diagram: str,
+    findings: Sequence[Finding],
+    display_name: str,
+    element_of: Mapping[str, str] | None = None,
+) -> dict[str, object]:
     """One finished run, as the page consumes it.
 
     The single shape: :func:`build` inlines it, and the API returns it as JSON.
@@ -66,6 +73,11 @@ def payload(diagram: str, findings: Sequence[Finding], display_name: str) -> dic
         findings: The open questions to list, usually a report's resolution tier.
             Order is preserved within a code; the codes themselves are grouped.
         display_name: The process's human-readable name.
+        element_of: IR node id -> BPMN element id, from
+            :func:`bpmn.semantics.element_ids`. Supplying it is what keeps a
+            question about a step inside a collapsed subprocess pointing at the
+            box that swallowed it. Omitted, every id maps to its own element,
+            which is right for any diagram that collapsed nothing.
 
     Returns:
         ``title``, ``questions`` (finished HTML), ``count`` (how many, for the
@@ -73,10 +85,10 @@ def payload(diagram: str, findings: Sequence[Finding], display_name: str) -> dic
         each once, in the order the panel names them.
     """
     grouped = sorted(findings, key=lambda finding: finding.code)
-    flagged = dict.fromkeys(node_element_id(node_id) for finding in grouped for node_id in finding.node_ids)
+    flagged = dict.fromkeys(_element(node_id, element_of) for finding in grouped for node_id in finding.node_ids)
     return {
         "title": display_name,
-        "questions": _questions(grouped),
+        "questions": _questions(grouped, element_of),
         "count": len(grouped),
         "diagram": diagram,
         "flagged": list(flagged),
@@ -89,6 +101,7 @@ def build(
     display_name: str,
     assets: ViewerAssets,
     template: str,
+    element_of: Mapping[str, str] | None = None,
 ) -> str:
     """Render the offline page: one file, everything inlined, nothing fetched.
 
@@ -98,11 +111,12 @@ def build(
         display_name: The process's human-readable name, for the title and header.
         assets: The viewer's script and stylesheets, to inline.
         template: The page shell, sentinels unsubstituted.
+        element_of: IR node id -> BPMN element id, as :func:`payload` takes it.
 
     Returns:
         A self-contained HTML document showing the diagram.
     """
-    data = payload(diagram, findings, display_name)
+    data = payload(diagram, findings, display_name, element_of)
     return _fill(
         template,
         assets,
@@ -179,23 +193,34 @@ def _option(name: str, display_name: str) -> str:
     return f'<option value="{escape(name, quote=True)}">{escape(display_name)}</option>'
 
 
-def _questions(findings: Sequence[Finding]) -> str:
+def _element(node_id: str, element_of: Mapping[str, str] | None) -> str:
+    """The BPMN element that stands for an IR node on this diagram."""
+    if element_of is not None and node_id in element_of:
+        return element_of[node_id]
+    return node_element_id(node_id)
+
+
+def _questions(findings: Sequence[Finding], element_of: Mapping[str, str] | None) -> str:
     """The panel: a heading, and one card per finding or an empty state."""
     heading = f"<h2>Open questions ({len(findings)})</h2>"
     if not findings:
         return f'{heading}<p class="empty">{EMPTY_STATE}</p>'
 
-    cards = "".join(_card(finding) for finding in findings)
+    cards = "".join(_card(finding, element_of) for finding in findings)
     return f'{heading}<p class="lede">{LEDE}</p><ul class="questions">{cards}</ul>'
 
 
-def _card(finding: Finding) -> str:
+def _card(finding: Finding, element_of: Mapping[str, str] | None) -> str:
     """One finding.
 
     A finding with no ``node_ids`` -- a subprocess the source never described --
     has nothing to point at, so it gets no ``data-elements`` and is not clickable.
+
+    Two findings inside the same collapsed subprocess both resolve to its box, so
+    the ids are de-duplicated: the attribute is a selector, and naming the same
+    box twice would mark it twice.
     """
-    elements = " ".join(node_element_id(node_id) for node_id in finding.node_ids)
+    elements = " ".join(dict.fromkeys(_element(node_id, element_of) for node_id in finding.node_ids))
     attribute = f' data-elements="{escape(elements)}"' if elements else ""
     label = escape(finding.code.replace("_", " "))
     return (

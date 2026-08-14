@@ -1,25 +1,35 @@
 {
   "findings": [
     {
-      "code": "missing_required_subprocess",
-      "severity": "resolution",
-      "message": "the source text does not describe the 'missing_info' subprocess (Missing Information); a human should confirm whether it is genuinely absent",
-      "node_ids": []
-    },
-    {
       "code": "needs_clarification",
       "severity": "resolution",
-      "message": "node 'gw_test_result' (Did free test disprove on-label diagnosis?) needs human confirmation: Source describes the branch where the free test disproved the on-label diagnosis but does not state the outcome path if the test confirmed the diagnosis, nor whether the test occurs on the agreement path.",
+      "message": "node 'term_prescriber_disagrees' (Prescriber does not agree - outcome unspecified) needs human confirmation: Source does not state what happens if the prescriber does not agree to select the on-label diagnosis code.",
       "node_ids": [
-        "gw_test_result"
+        "term_prescriber_disagrees"
       ]
     },
     {
       "code": "needs_clarification",
       "severity": "resolution",
-      "message": "node 'term_existing_handled' (Existing patient handling determined) needs human confirmation: Source does not state what happens after CM360 determines the type of existing-patient case (re-enrollment, restart, or update).",
+      "message": "node 'term_duplicate_resolved' (Duplicate patient handling resolved - downstream unspecified) needs human confirmation: Source does not state what happens after the duplicate type is determined for an existing patient.",
       "node_ids": [
-        "term_existing_handled"
+        "term_duplicate_resolved"
+      ]
+    },
+    {
+      "code": "needs_clarification",
+      "severity": "resolution",
+      "message": "node 'term_hcp_still_unresponsive' (HCP contact ongoing before 2 weeks - outcome unspecified) needs human confirmation: Source does not state what happens while under 2 weeks and HCP still not responsive but not yet cancelled.",
+      "node_ids": [
+        "term_hcp_still_unresponsive"
+      ]
+    },
+    {
+      "code": "needs_clarification",
+      "severity": "resolution",
+      "message": "node 'term_manager_not_approve' (Manager does not approve - outcome unspecified) needs human confirmation: Source does not state what happens if the manager does not approve the cancellation.",
+      "node_ids": [
+        "term_manager_not_approve"
       ]
     }
   ]
