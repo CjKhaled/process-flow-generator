@@ -15,6 +15,10 @@ saying what happens when someone disagrees. So the graph this produces is explic
 what the source actually supports. Every node is either `stated` or `needs_clarification`,
 and every open question is reported for a human rather than quietly invented.
 
+[technical.md](technical.md) is the decision log: every technical choice, why it was made,
+and what it cost. This file says what the project does; that one says what was chosen
+instead.
+
 Actors are swimlanes. Every box sits in one — a step in the lane that performs it, a
 gateway in the lane that decides, a terminal in the lane that owns the outcome, an
 annotation in the lane of the box it describes. A box with no lane is one the renderer
