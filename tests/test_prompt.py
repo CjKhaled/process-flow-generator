@@ -80,13 +80,6 @@ def test_system_prompt_encodes_the_extraction_conventions(enrollment_skeleton: S
     assert "inferred" not in prompt, "there is no middle status; offering one invites gap-filling"
 
 
-def test_system_prompt_does_not_name_the_subprocess_order(enrollment_skeleton: Skeleton) -> None:
-    """order_hint is a layout hint; telling the model about it would bias extraction."""
-    prompt = build_system_prompt(config(), enrollment_skeleton)
-
-    assert "order_hint" not in prompt
-
-
 def test_extraction_prompt_embeds_the_source_text() -> None:
     """The source text is the only thing the first turn adds."""
     prompt = build_extraction_prompt("HCP can complete the PEF online via the portal.")

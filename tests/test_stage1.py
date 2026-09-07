@@ -105,46 +105,10 @@ def test_unknown_process_is_reported(processes_root: Path) -> None:
         run("enrolment", processes_root)
 
 
-def test_mismatched_process_names_fail_before_the_model_is_called(
-    processes_root: Path, valid_graph: ProcessGraph
-) -> None:
-    """A half-edited folder copy is caught rather than extracted under the wrong name."""
-    metadata = processes_root / "enrollment" / "metadata.yaml"
-    metadata.write_text(
-        metadata.read_text(encoding="utf-8").replace("process_name: enrollment", "process_name: onboarding"),
-        encoding="utf-8",
-    )
-    called = False
-
-    def call(prompt: str) -> ProcessGraph:
-        nonlocal called
-        called = True
-        return valid_graph
-
-    with pytest.raises(ValueError, match="metadata.yaml says 'onboarding'"):
-        run("enrollment", processes_root, call=call)
-
-    assert not called
-
-
 def test_a_zero_attempt_budget_is_rejected(processes_root: Path, valid_graph: ProcessGraph) -> None:
     """An explicit 0 reaches the guard in extract() instead of silently becoming the default."""
     with pytest.raises(ValueError, match="max_attempts"):
         run("enrollment", processes_root, call=constant_call(valid_graph), max_attempts=0)
-
-
-def test_main_reports_a_mismatched_process_name(processes_root: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    """A name mismatch is a configuration error, so it exits 2 with no traceback."""
-    skeleton = processes_root / "enrollment" / "skeleton.json"
-    skeleton.write_text(
-        skeleton.read_text(encoding="utf-8").replace('"process_name": "enrollment"', '"process_name": "onboarding"'),
-        encoding="utf-8",
-    )
-
-    exit_code = main(["--process", "enrollment", "--processes-root", str(processes_root)])
-
-    assert exit_code == 2
-    assert "skeleton.json says 'onboarding'" in capsys.readouterr().err
 
 
 def test_main_reports_a_missing_api_key_without_a_traceback(

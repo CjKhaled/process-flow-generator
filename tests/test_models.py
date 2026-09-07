@@ -122,11 +122,16 @@ def test_enrollment_skeleton_lists_only_the_work_the_process_hands_off() -> None
     expected = ["off_label", "duplicate", "cm360_missing_info", "psm_missing_info"]
 
     assert skeleton.required_names == set(expected)
-    assert [spec.name for spec in skeleton.in_hint_order()] == expected
+    assert [spec.name for spec in skeleton.subprocesses] == expected
 
 
 def test_every_enrollment_subprocess_is_drawn_in_a_declared_lane() -> None:
-    """A collapsed box takes its lane from here, so a typo would be caught only at stage 2."""
+    """A collapsed box takes its lane from here, and nothing checks an undrawn one.
+
+    Stage 2 rejects a bad lane only on a box it actually draws, so a subprocess
+    this source never mentions would slip through. For enrollment specifically,
+    this test is the guard.
+    """
     skeleton = load_skeleton(ENROLLMENT_DIR / "skeleton.json")
     config = load_process_config(ENROLLMENT_DIR)
 

@@ -104,10 +104,9 @@ def valid_graph() -> ProcessGraph:
 
     Exercises every modelling decision the validator depends on: a single start
     collapsing multiple intake channels, subprocesses as single collapsed boxes,
-    a gateway with two conditioned branches, an annotation hanging off a task by a
-    dashed edge, and off_label running before duplicate (against the order hints).
-    It deliberately omits the ``missing_info`` subprocess so the resolution tier
-    has something to report.
+    a gateway with two conditioned branches, and an annotation hanging off a task
+    by a dashed edge. It deliberately omits the two missing-info subprocesses so
+    the resolution tier has something to report.
     """
     nodes = (
         node("start_intake", NodeType.START, subprocess="intake", detail="via the portal or manually via fax"),

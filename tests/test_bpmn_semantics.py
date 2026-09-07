@@ -185,8 +185,7 @@ def test_the_steps_of_a_subprocess_are_not_drawn() -> None:
 def test_a_collapsed_box_is_drawn_in_the_lane_the_skeleton_declares() -> None:
     """It has no node to take a lane from, and the busiest lane is routinely the wrong answer."""
     phases = Skeleton(
-        process_name="enrollment",
-        subprocesses=(SubprocessSpec(name="off_label", label="Off-Label Review", actor="CM360", order_hint=1),),
+        subprocesses=(SubprocessSpec(name="off_label", label="Off-Label Review", actor="CM360"),),
     )
     result = translate(graph((node("a", subprocess="off_label", actor="PSM"),), ()), ("CM360", "PSM"), phases)
 
@@ -198,8 +197,7 @@ def test_a_collapsed_box_is_drawn_in_the_lane_the_skeleton_declares() -> None:
 def test_a_lane_is_drawn_for_a_box_even_when_no_visible_node_uses_it() -> None:
     """Collapsing every node in a lane must not collapse the lane out from under the box."""
     phases = Skeleton(
-        process_name="enrollment",
-        subprocesses=(SubprocessSpec(name="off_label", label="Off-Label Review", actor="PSM", order_hint=1),),
+        subprocesses=(SubprocessSpec(name="off_label", label="Off-Label Review", actor="PSM"),),
     )
     result = translate(graph((node("a", subprocess="off_label", actor="CM360"),), ()), ("CM360", "PSM"), phases)
 
@@ -468,15 +466,20 @@ def test_element_ids_maps_a_hidden_node_to_its_box() -> None:
     }
 
 
-def test_a_skeleton_naming_an_undeclared_lane_is_rejected() -> None:
-    """A lane that does not exist is a config error, and stage 2 is where the two meet."""
+def test_a_drawn_box_in_an_undeclared_lane_is_rejected() -> None:
+    """A collapsed box carries its lane into ``lane_order``, which knows the declared set.
+
+    Only boxes this graph actually draws are checked. A subprocess the skeleton
+    declares but the source never mentions produces no box, so it names no lane
+    here and passes unexamined until some later description mentions it.
+    """
     phases = Skeleton(
-        process_name="enrollment",
-        subprocesses=(SubprocessSpec(name="off_label", label="Off-Label", actor="Acme Corp", order_hint=1),),
+        subprocesses=(SubprocessSpec(name="off_label", label="Off-Label", actor="Acme Corp"),),
     )
+    tagged = graph((node("a", subprocess="off_label", actor="CM360"),), ())
 
     with pytest.raises(ValueError, match="Acme Corp"):
-        translate(graph((node("a"),), ()), ("CM360",), phases)
+        translate(tagged, ("CM360",), phases)
 
 
 # --- lanes ---

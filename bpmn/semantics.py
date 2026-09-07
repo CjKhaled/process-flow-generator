@@ -280,7 +280,7 @@ def _collapse(graph: ProcessGraph, skeleton: Skeleton) -> _Collapse:
     """
     boxes: list[_Box] = []
     hidden: dict[str, str] = {}
-    for spec in skeleton.in_hint_order():
+    for spec in skeleton.subprocesses:
         members = [
             (index, node)
             for index, node in enumerate(graph.nodes)
@@ -347,10 +347,11 @@ def translate(graph: ProcessGraph, config: ProcessConfig, skeleton: Skeleton) ->
         The document's elements, ready to be written.
 
     Raises:
-        ValueError: If a node, or a subprocess in the skeleton, names an actor
-            ``metadata.yaml`` does not declare.
+        ValueError: If a node, or a collapsed box this graph actually draws, names
+            an actor ``metadata.yaml`` does not declare. A subprocess the skeleton
+            declares but this graph never mentions is not checked -- it produces no
+            box, so it names no lane here.
     """
-    _check_skeleton_actors(skeleton, config)
     drawing = _draw(graph, skeleton)
 
     # Only lanes with something left in them. A lane whose every node was folded
@@ -530,22 +531,6 @@ def _draw(graph: ProcessGraph, skeleton: Skeleton) -> _Drawing:
         associations=tuple(item for item in associations if item.source_id in live),
         element_of=resolved,
     )
-
-
-def _check_skeleton_actors(skeleton: Skeleton, config: ProcessConfig) -> None:
-    """Every subprocess is drawn in a lane the process declares.
-
-    Checked for the whole skeleton rather than only the subprocesses this graph
-    happens to contain: a lane named in config that does not exist is a config
-    error whichever source text is being extracted, and finding it on the run
-    that first mentions the subprocess would be finding it late.
-    """
-    unknown = sorted({spec.actor for spec in skeleton.subprocesses} - set(config.actors))
-    if unknown:
-        known = ", ".join(config.actors) or "none are declared"
-        raise ValueError(
-            f"the skeleton draws subprocess(es) in undeclared actor(s) {', '.join(unknown)}; declared actors: {known}"
-        )
 
 
 _ANSWER_WORDS: dict[BranchAnswer, str] = {BranchAnswer.YES: "Yes", BranchAnswer.NO: "No"}

@@ -231,7 +231,7 @@ def check_reachable_from_start(view: FlowView) -> Iterator[Finding]:
 def check_required_subprocesses(graph: ProcessGraph, skeleton: Skeleton) -> Iterator[Finding]:
     """Every subprocess the skeleton expects is accounted for somewhere in the graph."""
     present = {node.subprocess for node in graph.nodes if node.subprocess}
-    for spec in skeleton.in_hint_order():
+    for spec in skeleton.subprocesses:
         if spec.name not in present:
             yield Finding.of(
                 FindingCode.MISSING_REQUIRED_SUBPROCESS,

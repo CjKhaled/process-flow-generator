@@ -1,9 +1,8 @@
 {
-  "process_name": "enrollment",
   "subprocesses": [
-    { "name": "off_label", "label": "Off-Label Review", "actor": "CM360", "order_hint": 1 },
-    { "name": "duplicate", "label": "Duplicate Handling", "actor": "CM360", "order_hint": 2 },
-    { "name": "cm360_missing_info", "label": "CM360 Missing Info", "actor": "CM360", "order_hint": 3 },
-    { "name": "psm_missing_info", "label": "PSM Missing Info", "actor": "PSM", "order_hint": 4 }
+    { "name": "off_label", "label": "Off-Label Review", "actor": "CM360" },
+    { "name": "duplicate", "label": "Duplicate Handling", "actor": "CM360" },
+    { "name": "cm360_missing_info", "label": "CM360 Missing Info", "actor": "CM360" },
+    { "name": "psm_missing_info", "label": "PSM Missing Info", "actor": "PSM" }
   ]
 }

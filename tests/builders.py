@@ -74,7 +74,7 @@ def config(
     )
 
 
-def skeleton(*names: str, name: str = "enrollment", actor: str = "CM360") -> Skeleton:
+def skeleton(*names: str, actor: str = "CM360") -> Skeleton:
     """Build a skeleton whose subprocesses are in the order given.
 
     Every subprocess is drawn in the same lane, which matches :func:`config`'s
@@ -82,10 +82,8 @@ def skeleton(*names: str, name: str = "enrollment", actor: str = "CM360") -> Ske
     its ``SubprocessSpec`` directly.
     """
     return Skeleton(
-        process_name=name,
         subprocesses=tuple(
-            SubprocessSpec(name=item, label=item.replace("_", " ").title(), actor=actor, order_hint=position)
-            for position, item in enumerate(names)
+            SubprocessSpec(name=item, label=item.replace("_", " ").title(), actor=actor) for item in names
         ),
     )
 

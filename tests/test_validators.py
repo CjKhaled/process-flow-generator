@@ -232,11 +232,14 @@ def test_rework_loop_still_reaches_a_terminal(enrollment_skeleton: Skeleton) -> 
 
 
 def test_subprocess_order_is_not_enforced(valid_graph: ProcessGraph, enrollment_skeleton: Skeleton) -> None:
-    """order_hint is a layout hint; the real text runs off_label before duplicate."""
-    hints = {spec.name: spec.order_hint for spec in enrollment_skeleton.subprocesses}
+    """The skeleton's declaration order is presentation only; the validator must ignore it.
+
+    Real source text routinely runs the subprocesses out of the order the skeleton
+    lists them in, so a graph that does so is still structurally sound and no
+    finding may mention sequence.
+    """
     report = validate(valid_graph, enrollment_skeleton)
 
-    assert hints["off_label"] < hints["duplicate"]
     assert report.is_structurally_valid
     assert all("order" not in finding.message for finding in report.findings)
 

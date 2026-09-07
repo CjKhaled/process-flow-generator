@@ -135,7 +135,7 @@ def build_system_prompt(config: ProcessConfig, skeleton: Skeleton) -> str:
 
 
 def _subprocess_section(skeleton: Skeleton) -> str:
-    listed = "\n".join(f"- `{spec.name}` -- {spec.label}" for spec in skeleton.in_hint_order())
+    listed = "\n".join(f"- `{spec.name}` -- {spec.label}" for spec in skeleton.subprocesses)
     return (
         "## Known subprocesses\n\n"
         "These are the only values the `subprocess` field may take. Leave it null for a node "

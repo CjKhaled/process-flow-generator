@@ -1,212 +1,236 @@
 # Process Flow Generator
 
-Turns a written description of a patient support program business process into a typed,
-validated process graph — on the way to rendered BPMN diagrams generated from user input
-alone.
+Turns a written description of a patient support program business process into a proper
+BPMN process diagram — swimlanes, decisions, subprocesses and all — from the prose alone.
 
 **[Try it](https://cjkhaled.github.io/process-flow-generator/)** — pick a process, paste a
 description, and watch it be read, checked and drawn. The pipeline runs on a free Render
 instance that sleeps when idle, so the first run of the day waits about a minute for it to
 wake; the page starts that wake-up as soon as it loads.
 
-The hard part is not drawing boxes. It is that real process descriptions are incomplete:
-they give the happy path, name three intake channels for one request, and stop before
-saying what happens when someone disagrees. So the graph this produces is explicit about
-what the source actually supports. Every node is either `stated` or `needs_clarification`,
-and every open question is reported for a human rather than quietly invented.
+## The problem this solves
 
-[technical.md](technical.md) is the decision log: every technical choice, why it was made,
-and what it cost. This file says what the project does; that one says what was chosen
-instead.
+Drawing boxes is the easy part. The hard part is that real process descriptions are
+incomplete. They give the happy path and stop. They name three ways a request can arrive as
+though it were three processes. They say what happens when the prescriber agrees and never
+say what happens when they don't.
 
-Actors are swimlanes. Every box sits in one — a step in the lane that performs it, a
-gateway in the lane that decides, a terminal in the lane that owns the outcome, an
-annotation in the lane of the box it describes. A box with no lane is one the renderer
-cannot place, so it fails the structural tier; where the source names nobody, the box
-falls to the process's declared default lane rather than to a blank.
+A tool that quietly fills those gaps is worse than useless, because the invented steps look
+exactly like the real ones. So this one doesn't. Every box it produces is marked either
+**stated** — the source supports this — or **needs clarification**, meaning a human has to
+settle it. The open questions come out in a list beside the diagram instead of being guessed
+at.
 
-## Stage 1
+The other thing it insists on is that **every box belongs to somebody**. Actors are
+swimlanes: a step sits in the lane of whoever performs it, a decision in the lane of whoever
+decides, an end state in the lane that owns the outcome. Where the description never says
+who — and real documents say "the record is created" constantly — the box falls to a
+default lane the process declares, rather than floating unattached.
 
-```
-processes/<name>/metadata.yaml  ─┐
-processes/<name>/skeleton.json  ─┼─► system prompt ─► LLM ─► ProcessGraph
-processes/<name>/inputs/*.md    ─┘                            │
-                                                              ▼
-                                                 validate(graph, skeleton)
-                                                   │              │
-                                        structural fail      structural pass
-                                                   │              │
-                                          repair prompt ──┘   outputs/graph.json
-                                          (bounded retry)     outputs/validation.json
-```
+Three stages, run in order. Only the first one uses AI; the other two are ordinary code that
+produces the same result every time.
 
-The design turns on one distinction:
+*In the code: [technical.md](technical.md) walks through all three in full detail.*
 
-- A **mechanical** defect — the response did not fit the schema, or the graph breaks a
-  structural rule such as a gateway with one branch — is something the model can see and
-  fix. It earns a retry with the specific complaint fed back.
-- **Ambiguity** in the source is not a defect. It is the output of this stage. Resolution
-  findings never trigger a retry; retrying them would only pressure the model into
-  inventing content the source does not support.
-
-A graph that fails the structural tier is never written, so later stages may assume
-anything in `outputs/` is well formed.
-
-## Stage 2
+## Stage 1 — reading the description
 
 ```
-processes/<name>/outputs/graph.json
-            │
-            ▼
-     graph -> BPMN elements      (bpmn/semantics.py)
-            │
-            ▼
-     semantic BPMN XML, no DI    (bpmn/document.py)
-            │
-            ▼
-     bpmn-auto-layout            (bpmn/autolayout.py -> Node)
-            │
-            ▼
-     outputs/diagram.bpmn        (BPMN 2.0 + full DI)
+what the process is   ─┐
+which parts fold up   ─┼─► instructions ─► AI ─► first draft
+the written description┘                          │
+                                                  ▼
+                                          automatic checks
+                                            │            │
+                                       malformed       sound
+                                            │            │
+                                       ask again    the diagram data
+                                       (up to 3x)   + open questions
 ```
 
-Entirely deterministic: no model, no network, no credentials. The same graph always
-produces byte-identical XML.
+Three things go in.
 
-This stage computes **almost no geometry**. It emits semantic BPMN — a pool, one lane per
-actor, flow elements, artifacts — and hands it to `bpmn-io/bpmn-auto-layout`, which
-generates every shape bound, waypoint and label bound. The single exception is described
-under *Decisions carry their question* below. That library is a BPMN-specific layered
-layouter rather than a general graph one, which is the whole reason it is here: it knows
-that a lane constrains a node, that a gateway's branches are a narrative to be kept near
-their spine, and that an edge must not cross a shape it has nothing to do with.
+**What the process is.** Written once by hand, and reused for every run: the list of people
+and systems involved, each with a sentence saying what they are, plus a glossary of the
+shorthand the industry uses. This matters more than it sounds. Told only that "JCRM" exists,
+the AI cannot know it's the platform that runs the automations, so it cannot work out that
+an automated step belongs in that lane. The sentence is what makes the decision possible.
 
-The consequence is that the one lever this stage holds is **declaration order**, since the
-layouter breaks ties on it. Flow nodes go out in the graph's own order, which follows the
-source narrative; a gateway's branches go out in `Edge.order`, which decides which way each
-is drawn.
+**Which parts fold up.** Also written by hand: the named chunks of work the process hands
+off to — off-label review, duplicate handling. These are listed once rather than discovered
+each time, because they're the same whoever writes the description up. Stage 2 draws each as
+a single box.
+
+**The written description.** The prose itself. Locally this is a file; on the hosted version
+it's whatever you paste into the form.
+
+Those become a set of instructions, and the AI is asked to fill in a strict form rather than
+write freehand — so the answer comes back as structured data, not as text to be
+interpreted.
+
+### Then it gets checked
+
+The draft is put through about a dozen automatic checks, which sort into two piles.
+
+**Malformed** means the diagram data is broken and could not be drawn: two boxes with the
+same name, an arrow pointing at a box that doesn't exist, a decision with only one way out,
+a box that nothing leads to, a box that leads nowhere, a box with no lane. These are
+mechanical mistakes. The AI is told exactly what's wrong and asked to fix that and nothing
+else, up to three attempts. **If it never succeeds, nothing is saved at all** — a broken
+diagram is worse than no diagram.
+
+**Needs a human** means the diagram is fine but the description left something open. These
+are *never* sent back to the AI. Asking it to "fix" an ambiguity is asking it to invent
+something, which is the one failure this whole design exists to prevent. They're saved
+alongside the diagram and shown to the reader.
+
+You might reasonably ask why any of this is needed when the AI is already filling in a
+strict form. The form guarantees each box and each arrow is individually well-shaped — right
+fields, sensible values. It can't check anything involving *two* boxes at once, because it
+only ever sees one at a time. Every check above is about how things relate to each other,
+which is why they have to live somewhere else.
+
+*In the code: `extractors/` builds the prompt and runs the retry loop, `validators/` holds
+the checks, `ir/models.py` is the form being filled in.*
+
+## Stage 2 — drawing it
+
+```
+the diagram data
+      │
+      ▼
+decide what each thing is  ─  step, decision, end, lane
+      │
+      ▼
+fold up the subprocesses
+      │
+      ▼
+write the file (no positions yet)
+      │
+      ▼
+work out where everything goes
+      │
+      ▼
+make the decisions readable
+      │
+      ▼
+a real BPMN diagram
+```
+
+No AI here at all. The same data always produces exactly the same drawing.
+
+A BPMN file is really two files in one: a list of *what the things are* and how they connect,
+and a separate list of *where each one sits on the page*. This stage writes the first list
+itself and hands it to an off-the-shelf library to work out the second. That library is worth
+depending on because it understands BPMN specifically — it knows a lane restricts where a box
+can go, that a decision's branches belong near it, and that an arrow shouldn't be run through
+an unrelated box.
+
+Because the positions are somebody else's job, the only influence this stage has on how the
+final picture looks is **the order it lists things in** — the library breaks ties that way. So
+the sorting is doing real work, not tidying.
+
+Two things get special treatment.
+
+### Subprocesses fold into one box
+
+Anything the process hands off — off-label review, duplicate handling — is drawn as a single
+box, and its internal steps aren't drawn at all. The box goes where the first of its steps
+would have gone, in the lane the process declares for it.
+
+**Nothing comes back out of one of these boxes.** At this level of detail the path is over
+once it reaches one, so arrows leaving it are dropped, and anything only those arrows led to
+goes with them. Whatever the main flow still reaches is untouched. The one exception is a
+start, which is always drawn even if it was tagged as belonging inside a subprocess — a
+process with no visible beginning isn't a process, and seeing it there is how you notice the
+tagging was wrong.
+
+Nothing is actually lost: the saved data still has every step, and a question raised about a
+hidden step is pointed at the box that swallowed it.
 
 ### Decisions carry their question
 
-A decision is drawn as a diamond with its question written **inside** it and **Yes** or **No**
-on the arrows leaving it — each arrow out of its own corner of the diamond. There is no `X`
-in the middle: BPMN allows an exclusive gateway without the marker, and the space is better
-spent on the question.
+A decision in a flowchart is usually drawn as an empty diamond with the question floating
+somewhere nearby. When there are twenty of them, matching each question to its diamond is
+work the reader shouldn't have to do. And the layout library, having no better idea, puts one
+question above its diamond and the next one below.
 
-The answer comes from the extractor, on `Edge.answer`, rather than being guessed at render
-time from the order of the branches or from the word *not* in the condition — a diagram that
-is confidently backwards is worse than one that is wordy. A decision that is not a yes/no
-question keeps the source's wording on its arrows, which is also what happens to a graph
-extracted before the field existed. Either way the full condition stays in `graph.json`.
+So after everything is positioned, each diamond is redrawn: made bigger, with its question
+moved inside it, and the arrows leaving it labelled **Yes** and **No**. The branches are also
+fanned out to leave from different corners, rather than all sharing one line.
 
-The rest needs the one piece of geometry this project computes. BPMN puts a gateway's name
-on an *external* label and bpmn-js hard-codes the list of types whose labels are external, so
-no amount of styling moves it inside the shape; the layouter then finds that label a clear
-spot near the diamond, which lands one question above its decision and the next below it,
-adrift from the shape they belong to. It also runs every branch out of the same vertex and
-separates them further along, which leaves two arrows sharing a line. So `bpmn/decisions.py`
-runs over the laid-out document afterwards and redraws each gateway in place — a bigger
-diamond about the same centre, the label moved inside it, the marker dropped, the arrows that
-met the old boundary pushed out to the new one, and each branch sent out of the corner it is
-headed for. Where a re-route would cross a box it is abandoned and the layouter's route
-stands. Nothing else in the document is touched.
+Which branch is the "yes" comes from the AI in stage 1, not from guessing at render time. A
+diagram that's confidently backwards is worse than one that's wordy, and guessing from the
+wording works right up until it meets "unless the prescriber declines".
 
-### Collapsed subprocesses
+This redrawing is careful about what it touches. If moving an arrow would send it through
+another box, the change is abandoned and the library's version is kept. Nothing but the
+decisions is altered.
 
-This is also where **subprocesses collapse**. Every subprocess named in `skeleton.json` is
-drawn as a single box, and the steps tagged with it are not drawn at all: a decision hands
-work off down a named path, and the diagram says so once rather than eleven times. The box
-stands where the first of its steps stood, in the lane the skeleton declares for it.
+*In the code: `bpmn/semantics.py` decides what each thing is and folds the subprocesses,
+`bpmn/document.py` writes the file, `bpmn/autolayout.py` calls the layout library, and
+`bpmn/decisions.py` redraws the diamonds.*
 
-**Nothing leaves a collapsed box.** At this level the path is over when it reaches one, so
-an edge running out of a subprocess is dropped, and anything only that edge led to — an end
-state the subprocess reached, the rest of a branch it rejoined — is dropped with it.
-Whatever the main line still reaches, such as a decision the subprocess happened to feed
-back into, is untouched. The one thing lifted back out is the start event, because a
-process without a visible entry point is not a process; a start tagged into a subprocess is
-a tagging mistake, and drawing it is how that gets noticed.
-
-Nothing is lost on disk: `graph.json` keeps every step, and the open questions raised inside
-a collapsed section stay in the report and on the page — pointing at the box, whether their
-step was folded into it or stranded behind it.
-
-The layouter is pinned to an exact pre-release, `2.0.0-alpha.2`. The stable 1.x line has no
-lane support at all, and lanes are the point of the stage.
-
-## Stage 3
+## Stage 3 — making it viewable
 
 ```
-processes/<name>/outputs/diagram.bpmn ─┐
-processes/<name>/outputs/validation.json ─┼─► page (render/page.py)
-js/node_modules/bpmn-js               ─┘        │
-                                                ▼
-                                     outputs/diagram.html
+the BPMN diagram  ─┐
+the open questions ┼─► one HTML file you can just open
+the viewer         ┘
 ```
 
-One self-contained HTML file: the bpmn.io viewer, its stylesheets, the diagram and
-the open questions are all inlined, so nothing is fetched when it is opened. Open it
-with Live Server, or straight off the filesystem.
+The result is a single self-contained page. The diagram viewer, its styling, the drawing and
+the questions are all baked into the one file, so nothing is loaded from anywhere when you
+open it. That's deliberate: the page gets opened from whatever folder someone happens to
+point at, and any link to a neighbouring file breaks the moment they choose a different one.
+The cost is about 350 KB a page, which is why it's generated rather than kept in the repo.
 
-Self-contained because Live Server's root is wherever you point it, and any relative
-path into `node_modules` is broken by a different choice of folder. The cost is about
-350 KB a page, most of it the viewer, which is why the page is generated rather than
-committed.
+This is where the open questions finally become visible. Every box that has one is outlined
+in dashed amber, and the questions are listed beside the diagram rather than left in a file
+next to it. Select a question and it finds the box; select a marked box and it finds the
+question. A diagram with nothing outstanding says so.
 
-This is where `needs_clarification` finally shows: every node a finding names is drawn
-with an amber dashed outline, and the questions are listed beside the diagram rather
-than left in a JSON file next to it. Selecting a question finds its box; selecting a
-marked box finds its question. A graph with nothing outstanding says so.
+The question list sits in a panel that floats *over* the drawing rather than beside it, so
+opening and closing it never resizes the diagram or shifts a single box.
 
-The questions panel is a drawer floating **over** the canvas, not a column beside it, so
-showing and hiding it never resizes the diagram or moves a single box. The header button
-carries the count, and a fit made while the drawer is open fits to the part of the canvas
-still on show.
+*In the code: `render/page.py` assembles the page, `render/template.html` is the shell and
+where the diagram's appearance is decided.*
 
 ## The hosted demo
 
 ```
-GitHub Pages (static)                        Render (Docker: Python + Node)
-┌────────────────────────┐  POST /runs       ┌──────────────────────────────┐
-│ site/index.html        │ ────────────────► │ api/app.py    the endpoints  │
-│  the same page shell,  │                   │ api/runs.py   runs in flight │
-│  built with no diagram │  GET /runs/{id}   │ api/pipeline.py              │
-│  in it yet             │ ◄──────────────── │   stages 1-3, nothing stored │
-└────────────────────────┘   {status, …}     └──────────────────────────────┘
+the web page                    the server
+┌──────────────────┐  here's a description   ┌────────────────────┐
+│ pick a process   │ ──────────────────────► │ run all three      │
+│ paste a          │                         │ stages in memory   │
+│ description      │  how's it going?        │                    │
+│                  │ ◄────────────────────── │ nothing saved      │
+└──────────────────┘   still working / done  └────────────────────┘
 ```
 
-Stages 1 and 2 cannot run in a browser: one needs an API key, the other shells out to
-Node. So the page is static and the pipeline is a service it calls.
+Stages 1 and 2 can't run in a browser — one needs an API key, the other needs a program
+installed on a server. So the page is static and the actual work happens elsewhere.
 
-The API hands back **the same payload stage 3 inlines** — title, the questions panel as
-finished HTML, the diagram, and the ids to flag. That is why there is one page shell and
-not two: from the moment it has data, the hosted page and `diagram.html` are the same
-page. It also keeps every scrap of escaping in `render/page.py`, on the Python side,
-whichever way the payload travels.
+A run takes a minute or two, which is longer than a web request is allowed to stay open. So
+the page doesn't wait for an answer: it asks for the work to start, gets a ticket back, and
+checks in every so often. That's also what lets it tell you *which* stage is running rather
+than just spinning.
 
-A run takes a minute or two, which is longer than a host will hold a connection open, so
-`POST /runs` answers with an id and the page polls it — which is also what lets it say
-which stage is running rather than spin at nothing. Runs are held in memory: this backs a
-demo, and a restart losing one costs a press of Generate.
+The server hands back exactly what the offline page contains, so from the moment there's a
+result, the hosted page and the downloadable one are the same page.
 
-Nothing is written to `processes/<name>/outputs/` by a hosted run. What someone types
-belongs to them, not to the repository.
+**Nothing you type is saved.** No run writes anything to the repository — what someone pastes
+in belongs to them.
+
+The demo is deliberately unguarded: no rate limit, no password, and every run costs a real AI
+call. That's a decision that only holds while the link isn't widely shared.
 
 ```bash
 uv run python -m pipelines.site --api-base https://pfg-api.onrender.com   # the page
 uv run --group api uvicorn api.app:app --reload                          # the service
 ```
 
-The page is built by `.github/workflows/pages.yml` on every push to `main` and deployed to
-Pages; the URL it calls is the `PFG_API_BASE` repository *variable*, not a secret, since it
-is public. The service is `render.yaml` plus the `Dockerfile` — Python and Node in one
-image, because the layouter is a Node CLI. Its image also builds a same-origin copy of the
-page and serves it at `/`, which costs nothing and is the answer if Pages is ever
-unavailable.
-
-**The endpoint is deliberately unguarded**: no rate limit, no passcode, and every run
-spends an Opus call. That is a decision that holds only while the URL is not shared. The
-one bound kept is `PFG_MAX_SOURCE_CHARS`, which is about an accidental paste rather than an
-attacker.
+*In the code: `api/pipeline.py` runs the three stages in memory, `api/runs.py` tracks work in
+progress, `api/app.py` is the web endpoint.*
 
 ## Running it
 
@@ -263,8 +287,11 @@ first run rather than crash-looping.
 
 Copy `processes/enrollment/`, then swap the data — no code changes:
 
-- `metadata.yaml` — machine name (must match the folder), display name, the swimlanes and
+- `metadata.yaml` — machine name, display name, the swimlanes and
   what each one *is*, the default lane, domain shorthand, optional model override.
+  Nothing enforces that the machine name matches the folder, but every id in the generated
+  BPMN file is built from it, so a copied folder with an unedited name produces a diagram
+  whose internals name the process it was copied from.
   `actors` is the complete set of lanes the diagram may use. Descriptions are not
   decoration: a model told only "JCRM" cannot know it is the platform that runs the
   automations, so it cannot place an automated step in that lane. `default_actor` is where
@@ -277,10 +304,13 @@ Copy `processes/enrollment/`, then swap the data — no code changes:
   here would make it vanish into a box. Drives the "is a part missing?" check as well.
   `actor` is the lane the box is drawn in, and must be one of the declared actors — it is
   stated rather than derived, because the lane that owns a subprocess is frequently not the
-  lane performing most of its steps. `order_hint` is never enforced by the validator — real
-  sources routinely run the subprocesses out of order — and it orders them for prompts and
-  reports only; the diagram places each box where its first step appeared.
-- `inputs/` — the source documents (`.md` or `.txt`), concatenated in filename order.
+  lane performing most of its steps. There is no ordering field: the order they are listed
+  in sets the order they appear in prompts and reports, and nothing else. It is never
+  enforced, because real sources run the subprocesses in any order, and it places nothing —
+  the diagram draws each box where its first step appeared.
+- `inputs/` — the source documents (`.md` or `.txt`), concatenated in filename order. Used
+  by the command line only; the hosted demo extracts from whatever is pasted into the form,
+  and reads the two files above from disk regardless.
 
 Actor declaration order is also lane order, top to bottom. Only actors that own at least
 one box get a lane, so declaring one the source never uses costs nothing.

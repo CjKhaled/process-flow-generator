@@ -20,13 +20,11 @@ from extractors.model import build_model_call
 from extractors.process import DEFAULT_MAX_ATTEMPTS, ExtractionResult, ModelCall, extract
 from ir.process_config import (
     INPUTS_DIRNAME,
-    METADATA_FILENAME,
     OUTPUTS_DIRNAME,
     SKELETON_FILENAME,
-    ProcessConfig,
     load_process_config,
 )
-from ir.skeleton import Skeleton, load_skeleton
+from ir.skeleton import load_skeleton
 from utils.io import read_source, write_json
 from utils.settings import load_settings
 
@@ -58,7 +56,6 @@ def run(
 
     Raises:
         FileNotFoundError: If the process folder or its inputs are missing.
-        ValueError: If the folder, metadata, and skeleton disagree about the name.
         pydantic.ValidationError: If required settings are missing.
         ExtractionError: If no attempt produced a structurally valid graph. Nothing
             is written in that case.
@@ -69,7 +66,6 @@ def run(
 
     config = load_process_config(process_dir)
     skeleton = load_skeleton(process_dir / SKELETON_FILENAME)
-    _check_names_agree(process_name, config, skeleton)
     source_text = read_source(process_dir / INPUTS_DIRNAME)
 
     if call is None:
@@ -98,29 +94,6 @@ def run(
     write_json(outputs / GRAPH_FILENAME, result.graph)
     write_json(outputs / REPORT_FILENAME, result.report)
     return result
-
-
-def _check_names_agree(process_name: str, config: ProcessConfig, skeleton: Skeleton) -> None:
-    """Fail before spending a model call when the three copies of the name disagree.
-
-    The folder, ``metadata.yaml`` and ``skeleton.json`` each carry the process name
-    and nothing else cross-checks them. Adding a process means copying a folder, so
-    a half-edited copy would otherwise extract one process's vocabulary under
-    another's filename.
-
-    Raises:
-        ValueError: If either file names a different process than the folder.
-    """
-    mismatched = [
-        f"{filename} says '{found}'"
-        for filename, found in (
-            (METADATA_FILENAME, config.process_name),
-            (SKELETON_FILENAME, skeleton.process_name),
-        )
-        if found != process_name
-    ]
-    if mismatched:
-        raise ValueError(f"the process folder is named '{process_name}' but {' and '.join(mismatched)}")
 
 
 def main(argv: list[str] | None = None) -> int:

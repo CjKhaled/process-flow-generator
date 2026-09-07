@@ -18,8 +18,11 @@ drawn one by one, so listing them here would make them vanish.
 inferred: the lane that owns a subprocess is frequently not the lane that
 performs most of its steps, so there is no rule to derive it from.
 
-``order_hint`` is a hint for later layout only. The validator must never enforce
-it -- real source text routinely runs the subprocesses out of the expected order.
+There is no ordering field. Declaration order here is presentation order -- it is
+the sequence the subprocesses are listed in for the prompt and reported in by the
+validator, and nothing more. It must never be enforced, because real source text
+routinely runs the subprocesses out of any expected order, and it does not place
+anything either: stage 2 draws each box where the first of its steps appeared.
 """
 
 import json
@@ -38,7 +41,6 @@ class SubprocessSpec(BaseModel):
     actor: str = Field(
         min_length=1, description="The swimlane the collapsed box is drawn in. Must be a declared actor."
     )
-    order_hint: int = Field(ge=0, description="Expected position. A hint for layout; never enforced.")
 
 
 class Skeleton(BaseModel):
@@ -46,17 +48,12 @@ class Skeleton(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    process_name: str = Field(min_length=1)
     subprocesses: tuple[SubprocessSpec, ...] = Field(min_length=1)
 
     @property
     def required_names(self) -> frozenset[str]:
         """The subprocess names every complete extraction should account for."""
         return frozenset(spec.name for spec in self.subprocesses)
-
-    def in_hint_order(self) -> tuple[SubprocessSpec, ...]:
-        """The subprocesses sorted by ``order_hint``, for display in prompts."""
-        return tuple(sorted(self.subprocesses, key=lambda spec: spec.order_hint))
 
 
 def load_skeleton(path: Path) -> Skeleton:

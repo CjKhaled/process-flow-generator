@@ -130,12 +130,7 @@ def _write_collapsing_graph(processes_root: Path) -> None:
         encoding="utf-8",
     )
     (process_dir / SKELETON_FILENAME).write_text(
-        json.dumps(
-            {
-                "process_name": "enrollment",
-                "subprocesses": [{"name": "off_label", "label": "Off-Label Review", "actor": "CM360", "order_hint": 1}],
-            }
-        ),
+        json.dumps({"subprocesses": [{"name": "off_label", "label": "Off-Label Review", "actor": "CM360"}]}),
         encoding="utf-8",
     )
 
