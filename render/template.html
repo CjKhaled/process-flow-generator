@@ -96,6 +96,45 @@
     color: var(--flag);
   }
 
+  /* ---- edit mode ------------------------------------------------------
+
+     The modeler is live from the moment it is constructed, so "not editing" is
+     a state this page builds rather than one bpmn-js offers. The script refuses
+     every mutating command while it is off; these rules take away the things
+     that would otherwise invite one. Hiding rather than removing, because both
+     are bpmn-js's own DOM and it puts them back whenever it likes. */
+  .controls .edit[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--panel);
+  }
+
+  body:not([data-editing="on"]) .reset,
+  body:not([data-editing="on"]) #scratch,
+  body:not([data-editing="on"]) .djs-palette,
+  body:not([data-editing="on"]) .djs-context-pad { display: none; }
+
+  /* Floats over the canvas like the questions drawer, for the same reason: it
+     must not resize the diagram, because that would move every box the moment
+     editing began. */
+  #scratch {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    margin: 0;
+    max-width: min(560px, calc(100% - 32px));
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
   /* Which half of the page is on show. The other is display:none, so the
      viewer's container has no size until the diagram view is up -- which is why
      the script flips the view before it fits the diagram. */
@@ -380,12 +419,14 @@
   }
 </style>
 </head>
-<body data-view="<!--PFG:VIEW-->" data-panel="open">
+<body data-view="<!--PFG:VIEW-->" data-panel="open" data-editing="off">
 <header>
   <h1><!--PFG:TITLE--></h1>
   <div class="spacer"></div>
   <div class="controls">
     <button type="button" class="restart" data-action="restart" hidden>New run</button>
+    <button type="button" class="reset" data-action="reset">Reset</button>
+    <button type="button" class="edit" data-action="edit" aria-pressed="false">Edit</button>
     <button type="button" class="toggle" data-action="panel" aria-expanded="true" aria-controls="panel">Open questions</button>
     <button type="button" data-zoom="out" title="Zoom out">&minus;</button>
     <button type="button" data-zoom="fit">Fit</button>
@@ -415,6 +456,8 @@
   </form>
 </section>
 <main>
+  <p id="scratch">Changes are a scratchpad. Nothing is saved, and reloading restores the generated diagram.
+    The open questions still describe the original.</p>
   <div id="canvas"></div>
   <aside id="panel">
     <button type="button" class="close" data-action="panel" title="Hide">&times;</button>
@@ -447,12 +490,52 @@
   var progress = document.getElementById('progress');
   var errorBox = document.getElementById('error');
 
-  var viewer = new BpmnJS({ container: '#canvas' });
+  // Every command that changes the diagram rather than the view. Refused while
+  // editing is off, which is how this page has a read-only state at all: a
+  // modeler is live from construction and bpmn-js offers no switch.
+  var MUTATIONS = [
+    'shape.create', 'shape.append', 'shape.delete', 'shape.move', 'shape.resize',
+    'shape.attach', 'shape.replace', 'shape.toggleCollapse',
+    'elements.create', 'elements.delete', 'elements.move',
+    'connection.create', 'connection.delete', 'connection.reconnect',
+    'connection.updateWaypoints', 'bendpoint.move',
+    'element.updateLabel', 'label.create'
+  ];
+
+  // Above the 1000 bpmn-js registers its own rules at, so this answers first and
+  // its refusal is the one that stands. Only the named commands are touched --
+  // a blanket veto would also catch the layout and resize work that importing a
+  // diagram does for itself.
+  var RULE_PRIORITY = 2000;
+
+  var editing = false;
+
+  function EditGate(eventBus) {
+    function veto() {
+      // undefined is "no opinion", which lets bpmn-js's own rules decide.
+      return editing ? undefined : false;
+    }
+    MUTATIONS.forEach(function (command) {
+      eventBus.on('commandStack.' + command + '.canExecute', RULE_PRIORITY, veto);
+    });
+    // Renaming is refused above, but direct editing opens on a double-click
+    // rather than through a rule, so without this the box would appear and then
+    // silently decline to save what was typed into it.
+    eventBus.on('element.dblclick', RULE_PRIORITY, veto);
+  }
+  EditGate.$inject = ['eventBus'];
+
+  var viewer = new BpmnJS({
+    container: '#canvas',
+    additionalModules: [{ __init__: ['pfgEditGate'], pfgEditGate: ['type', EditGate] }]
+  });
   var canvas = viewer.get('canvas');
   var registry = viewer.get('elementRegistry');
+  var edit = document.querySelector('.edit');
   var cards = [];
   var byElement = {};
   var wired = false;
+  var shown = null;
 
   document.querySelector('header').addEventListener('click', function (event) {
     var action = event.target.getAttribute('data-action');
@@ -461,6 +544,14 @@
       setPanel(body.getAttribute('data-panel') !== 'open');
     } else if (action === 'restart') {
       toLanding();
+    } else if (action === 'edit') {
+      setEditing(!editing);
+    } else if (action === 'reset') {
+      // Re-imports the diagram as it was generated. `shown` is never written to,
+      // so it is still the original however much the canvas has been rearranged.
+      if (shown) {
+        show(shown);
+      }
     } else if (how === 'fit') {
       fit();
     } else if (how === 'in') {
@@ -487,6 +578,7 @@
   // ---- the diagram ------------------------------------------------------
 
   function show(payload) {
+    shown = payload;
     if (payload.title) {
       heading.textContent = payload.title;
       document.title = payload.title;
@@ -611,6 +703,16 @@
     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
   }
 
+  // The flag the rules read, plus the attribute the stylesheet reads. Nothing
+  // is re-imported on the way in or out: turning editing off leaves whatever was
+  // rearranged on screen, and Reset is what puts it back.
+  function setEditing(on) {
+    editing = on;
+    body.setAttribute('data-editing', on ? 'on' : 'off');
+    edit.setAttribute('aria-pressed', on ? 'true' : 'false');
+    edit.textContent = on ? 'Done' : 'Edit';
+  }
+
   function label(count) {
     toggle.textContent = typeof count === 'number' ? 'Open questions (' + count + ')' : 'Open questions';
   }
@@ -636,6 +738,8 @@
 
   function toLanding() {
     body.setAttribute('data-view', 'landing');
+    // A new run arrives as a fresh diagram, so it should not arrive mid-edit.
+    setEditing(false);
     working(false);
   }
 

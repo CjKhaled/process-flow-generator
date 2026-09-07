@@ -228,6 +228,52 @@ def test_the_offline_page_opens_on_the_diagram(template: str, viewer_assets: Vie
     assert 'data-view="diagram"' in page(template, viewer_assets)
 
 
+# ---- edit mode ---------------------------------------------------------------
+#
+# Session-only, so there is nothing on disk for a test to inspect afterwards.
+# What can be asserted from here is that the page *offers* editing and *starts*
+# with it off; whether a box can actually be dragged is settled by opening the
+# page, like everything else interactive.
+
+
+def test_the_page_offers_edit_and_reset(template: str, viewer_assets: ViewerAssets) -> None:
+    rendered = page(template, viewer_assets)
+
+    assert 'data-action="edit"' in rendered
+    assert 'data-action="reset"' in rendered
+
+
+def test_the_page_starts_with_editing_off(template: str, viewer_assets: ViewerAssets) -> None:
+    """A page that opened mid-edit would let a reader rearrange the result by accident."""
+    rendered = page(template, viewer_assets)
+
+    assert 'data-editing="off"' in rendered
+    assert 'class="edit" data-action="edit" aria-pressed="false"' in rendered
+
+
+def test_the_page_says_edits_are_not_saved(template: str, viewer_assets: ViewerAssets) -> None:
+    """The one thing a reader must not have to discover by losing work."""
+    rendered = page(template, viewer_assets)
+
+    assert "Nothing is saved" in rendered
+    assert "reloading restores the generated diagram" in rendered
+
+
+def test_the_page_warns_that_the_questions_describe_the_original(
+    template: str, viewer_assets: ViewerAssets
+) -> None:
+    """Findings are never recomputed, so an edited diagram outruns its own panel."""
+    assert "The open questions still describe the original." in page(template, viewer_assets)
+
+
+def test_the_hosted_page_offers_editing_too(template: str, viewer_assets: ViewerAssets) -> None:
+    """One shell serves both deliveries, so this is a property of the shell, not of stage 3."""
+    rendered = build_app(viewer_assets, template, [("enrollment", "Intake & Enrollment")], "")
+
+    assert 'data-action="edit"' in rendered
+    assert 'data-editing="off"' in rendered
+
+
 # ---- the payload, which the API returns and the offline page inlines ----------
 
 

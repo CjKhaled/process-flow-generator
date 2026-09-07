@@ -8,7 +8,7 @@ path is broken by a different choice of root. Inlining removes the question.
 
 It is affordable because the icon font is already a base64 data URI inside
 ``bpmn-embedded.css`` -- so nothing else has to be embedded by hand, and the
-whole page lands around 350 KB.
+whole page lands around 730 KB, most of it :data:`VIEWER_JS`.
 
 This module holds stage 3's only file reads. :mod:`render.page` is pure string
 assembly, and stays that way by being handed what it needs.
@@ -22,8 +22,18 @@ DIST = Path(__file__).resolve().parent.parent / "js" / "node_modules" / "bpmn-js
 
 JS_ROOT = DIST.parents[2]
 
-VIEWER_JS = "bpmn-navigated-viewer.production.min.js"
-"""The *navigated* viewer: pan, keyboard move and zoom-on-scroll, no editing."""
+VIEWER_JS = "bpmn-modeler.production.min.js"
+"""The modeler, for the page's session-only Edit mode.
+
+Three times the navigated viewer's size -- about 570 KB against 190 KB, which is
+most of why a page is now nearer 730 KB than 350 KB. The viewer bundle cannot be
+used instead: the machinery for dragging a shape lives in modules it does not
+contain, and taking only those would need a bundler this project does not have.
+
+The page opens with editing off and builds that state itself, since a modeler is
+live from construction. Nothing it produces is ever saved, so an edited diagram
+can never disagree with ``graph.json`` on disk.
+"""
 
 STYLESHEETS = (
     "assets/diagram-js.css",

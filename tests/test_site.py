@@ -97,7 +97,7 @@ def test_main_reports_nothing_to_build(tmp_path: Path, monkeypatch: pytest.Monke
 
 def test_main_reports_a_missing_install(tmp_path: Path, processes_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     def missing() -> ViewerAssets:
-        raise AssetError("cannot read bpmn-navigated-viewer.production.min.js")
+        raise AssetError("cannot read bpmn-modeler.production.min.js")
 
     monkeypatch.setattr("pipelines.site.load_assets", missing)
     argv = ["--api-base", API, "--out", str(tmp_path / "site"), "--processes-root", str(processes_root)]

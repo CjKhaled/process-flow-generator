@@ -182,7 +182,7 @@ The result is a single self-contained page. The diagram viewer, its styling, the
 the questions are all baked into the one file, so nothing is loaded from anywhere when you
 open it. That's deliberate: the page gets opened from whatever folder someone happens to
 point at, and any link to a neighbouring file breaks the moment they choose a different one.
-The cost is about 350 KB a page, which is why it's generated rather than kept in the repo.
+The cost is about 730 KB a page, which is why it's generated rather than kept in the repo.
 
 This is where the open questions finally become visible. Every box that has one is outlined
 in dashed amber, and the questions are listed beside the diagram rather than left in a file
@@ -192,8 +192,26 @@ question. A diagram with nothing outstanding says so.
 The question list sits in a panel that floats *over* the drawing rather than beside it, so
 opening and closing it never resizes the diagram or shifts a single box.
 
-*In the code: `render/page.py` assembles the page, `render/template.html` is the shell and
-where the diagram's appearance is decided.*
+### You can rearrange it, but you can't keep it
+
+There's an **Edit** button. Turn it on and the diagram becomes fully editable — drag boxes
+around, rename them, add or delete things, re-route arrows. **Reset** puts everything back
+where the generator had it.
+
+None of it is saved. Reload the page and you get the generated diagram again.
+
+That's on purpose rather than an unfinished edge. Think of it as a scratchpad: somewhere to
+push the boxes around until the process makes sense to you, not somewhere to correct
+mistakes and keep the correction. Making a correction stick would mean feeding it back into
+the underlying data and re-running the checks, which is a much bigger piece of work and
+isn't here.
+
+One consequence worth knowing: the open questions are worked out before you start editing
+and never recalculated. If you delete a box that had a question against it, the question
+stays in the list, now pointing at nothing. The page says as much while you're editing.
+
+*In the code: `render/page.py` assembles the page, `render/template.html` is the shell —
+where the diagram's appearance is decided, and where editing is switched on and off.*
 
 ## The hosted demo
 

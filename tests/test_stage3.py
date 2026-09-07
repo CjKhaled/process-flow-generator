@@ -173,7 +173,7 @@ def test_main_reports_a_malformed_report(
 
 def test_main_reports_a_missing_install(processes_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     def missing() -> ViewerAssets:
-        raise AssetError("cannot read bpmn-navigated-viewer.production.min.js")
+        raise AssetError("cannot read bpmn-modeler.production.min.js")
 
     monkeypatch.setattr("pipelines.stage3.load_assets", missing)
 

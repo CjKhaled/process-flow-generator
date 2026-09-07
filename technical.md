@@ -503,8 +503,11 @@ The element map is **re-derived, not stored** — it is a pure function of the g
 skeleton, both already on disk, and a fourth output file would be one more thing to keep in
 step with the three that matter.
 
-**The viewer** is the *navigated* build: pan, keyboard move, zoom on scroll, no editing. The
-page shows a result; an editable canvas would invite changes that go nowhere. Three
+**The viewer** is the **modeler** build, for the page's session-only Edit mode (§3D). It is
+three times the navigated viewer's size — about 570 KB against 190 KB — which is most of why
+a page is nearer 730 KB than 350 KB. The lighter bundle cannot be used instead: the machinery
+for dragging a shape lives in modules it does not contain, and taking only those would need a
+bundler this project does not have. Three
 stylesheets are concatenated in order: `diagram-js.css` (the canvas), `bpmn-js.css` (BPMN's
 own rules), `bpmn-embedded.css` (the icon font).
 
@@ -514,9 +517,9 @@ own rules), `bpmn-embedded.css` (the icon font).
 all inlined; nothing is fetched when the page opens. Not a preference for big files: the page
 is opened with Live Server or over `file://` from whatever folder the reader happens to point
 at, and any relative `../../node_modules` path is broken by a different choice of root.
-Inlining removes the question. It costs about 350 KB a page, most of it the viewer, which is
-why the page is generated rather than committed — and it is affordable because the icon font
-is already a base64 data URI inside `bpmn-embedded.css`.
+Inlining removes the question. It costs about 730 KB a page, most of it the modeler bundle,
+which is why the page is generated rather than committed — and it is affordable because the
+icon font is already a base64 data URI inside `bpmn-embedded.css`.
 
 **`payload()` is the one shape both deliveries use:**
 
@@ -566,7 +569,41 @@ opening it sees the real thing. This is the drawing only.
 **Exit codes:** `0` success · `1` the page could not be built (bpmn-js not installed) ·
 `2` the process or stage 2's diagram could not be read.
 
-## 3D. The hosted delivery
+## 3D. Edit mode
+
+The page carries an **Edit** toggle and a **Reset**. While editing is on the full bpmn-js
+modeler is available — move, resize, rename, add, delete, re-route. **Nothing is saved.** A
+reload restores the generated diagram, and no edit ever reaches disk or the API.
+
+That is the whole feature, and the framing that makes it coherent is *scratchpad, not
+editor*: rearrange the diagram to think about it, reload to get the generated truth back. It
+is deliberately not a way to correct the extraction and keep the correction — that would need
+a diagram → graph reverse mapping, which does not exist in any form.
+
+Because nothing is ever written, **an edited diagram can never disagree with `graph.json`**,
+and the export hazard never arises — no chance of the modeler re-adding the `X` marker
+`bpmn/decisions.py` strips, because there is no export.
+
+| Concern | How it is handled |
+| --- | --- |
+| A modeler is live from construction; bpmn-js offers no read-only switch | The page builds the off state itself. A module passed via `additionalModules` listens on `commandStack.<command>.canExecute` for every mutating command and returns `false` while editing is off |
+| Those listeners must outrank bpmn-js's own rules | They register at priority 2000, above the 1000 `BpmnRules` uses, so they answer first and their refusal stands. Returning `undefined` while editing is on hands the decision back to bpmn-js |
+| Why not one blanket veto | `canExecute` fires `commandStack.<command>.canExecute` and then the generic `commandStack.canExecute`, but a specific rule answering first cancels the bubble, so the generic is not reliably reached. A blanket veto would also catch the layout and resize work importing does for itself |
+| Double-click rename opens without consulting a rule | `element.dblclick` is intercepted at the same priority, so the edit box never appears rather than appearing and silently declining to save |
+| The palette and context pad are always in the DOM | Hidden by CSS while editing is off — the same id/class technique used to restyle annotations and collapsed boxes. Hidden rather than removed, because bpmn-js owns that DOM and puts it back |
+| Reset | Re-imports the payload the page already holds and never mutates. It reuses `show()`, which the hosted flow already calls a second time when a new run finishes |
+
+**Accepted, not solved:** the questions panel is never recomputed, so once anyone edits it
+describes a diagram that no longer exists — a deleted box leaves a card pointing at nothing,
+a renamed box no longer matches its question's wording, and an added box has no status
+because nothing ever checked it. Nothing breaks (`mark()` and `select()` both test
+`registry.get(id)` first, so dead cards go inert), and the notice on screen says so. Also
+accepted: resizing a decision breaks the question-inside-the-diamond geometry, because
+`bpmn/decisions.py` centres that label at exactly 50% inset and nothing re-centres it.
+
+The template is shared, so the hosted page is editable on the same terms.
+
+## 3E. The hosted delivery
 
 ```
 GitHub Pages (static)                        Render (Docker: Python + Node)
