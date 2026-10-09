@@ -64,7 +64,7 @@ def test_a_sound_graph_raises_nothing(domain: DomainKnowledge) -> None:
 
 def test_every_session_finding_is_structural(domain: DomainKnowledge) -> None:
     """Each is a mechanical defect the model can fix from the complaint, so each earns a repair turn."""
-    broken = swap(swap(sound(), "start", evidence=(), actor="Nobody"), "gw", subprocess="made_up")
+    broken = swap(swap(sound(), "start", evidence=()), "gw", subprocess="made_up")
 
     report = validate_session(broken, CORPUS, LANES, domain.process)
 
@@ -136,11 +136,9 @@ def test_a_quote_may_come_from_the_restatement() -> None:
     assert not quote_found("an e-sign link", CORPUS[2])
 
 
-def test_a_node_in_a_lane_the_session_has_not_learned_is_rejected(domain: DomainKnowledge) -> None:
-    report = validate_session(swap(sound(), "gw", actor="CM360"), CORPUS, LANES, domain.process)
-
-    assert codes(report) == {FindingCode.UNKNOWN_LANE}
-    assert "HCP, Vendor" in report.findings[0].message
+def test_a_lane_the_session_has_not_learned_is_not_a_defect(domain: DomainKnowledge) -> None:
+    """It is learned and asked about instead; rejecting the patch would only make the model drop the name."""
+    assert check(swap(sound(), "gw", actor="CM360"), domain) == set()
 
 
 def test_a_subprocess_the_process_does_not_declare_is_rejected(domain: DomainKnowledge) -> None:

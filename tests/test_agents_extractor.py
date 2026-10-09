@@ -105,15 +105,15 @@ def test_a_patch_error_earns_a_repair_turn(domain: DomainKnowledge) -> None:
     assert FindingCode.PATCH_DUPLICATE_NODE in fake.prompts[EXTRACTOR][1]
 
 
-def test_an_invented_lane_earns_a_repair_turn(domain: DomainKnowledge) -> None:
+def test_a_lane_the_session_has_not_learned_is_accepted_without_a_repair(domain: DomainKnowledge) -> None:
     operations = list(first_patch().operations)
     operations[1] = add(node("key_form", actor="Intake Team", evidence=(ref("s_0002", "The vendor keys the form"),)))
-    fake = FakeConversations().extractor(patch(*operations), first_patch())
+    fake = FakeConversations().extractor(patch(*operations))
 
     outcome = extract_patch(session_with(domain), domain, ["s_0002"], conversations=fake, max_attempts=3)
 
-    assert outcome.updated
-    assert FindingCode.UNKNOWN_LANE in fake.prompts[EXTRACTOR][1]
+    assert outcome.updated and outcome.attempts == 1
+    assert next(n for n in outcome.graph.nodes if n.id == "key_form").actor == "Intake Team"
 
 
 def test_a_schema_failure_is_retried_with_the_complaint(domain: DomainKnowledge) -> None:
@@ -207,4 +207,4 @@ def test_check_runs_both_validators(domain: DomainKnowledge) -> None:
 
     found = {finding.code for finding in check(broken, session, domain).findings}
 
-    assert {FindingCode.START_NODE_COUNT, FindingCode.UNKNOWN_LANE, FindingCode.MISSING_EVIDENCE} <= found
+    assert {FindingCode.START_NODE_COUNT, FindingCode.MISSING_EVIDENCE} <= found

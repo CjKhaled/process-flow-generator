@@ -95,8 +95,8 @@ def test_ids_come_from_the_metadata_not_the_graphs_own_label(processes_root: Pat
     assert "Some_Label_The_Model_Chose" not in text
 
 
-def test_an_undeclared_actor_is_refused(processes_root: Path, layouter: Layouter) -> None:
-    """Stage 1 cannot catch this: the validator never sees metadata.yaml."""
+def test_an_undeclared_actor_is_drawn_in_a_lane_of_its_own(processes_root: Path, layouter: Layouter) -> None:
+    """The source may name someone ``metadata.yaml`` never listed. That is a lane, not a failure."""
     write_graph(
         processes_root,
         graph(
@@ -105,8 +105,10 @@ def test_an_undeclared_actor_is_refused(processes_root: Path, layouter: Layouter
         ),
     )
 
-    with pytest.raises(ValueError, match="Acme Corp"):
-        run("enrollment", processes_root, layout=layouter)
+    written = run("enrollment", processes_root, layout=layouter)
+
+    lanes = [lane.get("name") for lane in ET.fromstring(written.read_text(encoding="utf-8")).iter(f"{{{BPMN_NS}}}lane")]
+    assert lanes == ["CM360", "Acme Corp"], "declared lanes first, then the one the config never mentioned"
 
 
 def test_a_missing_process_folder_is_reported(tmp_path: Path, layouter: Layouter) -> None:
@@ -143,7 +145,7 @@ def test_main_returns_two_for_a_missing_process(tmp_path: Path) -> None:
     assert main(["--process", "nope", "--processes-root", str(tmp_path)]) == 2
 
 
-def test_main_returns_two_for_an_undeclared_actor(processes_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_main_succeeds_for_an_undeclared_actor(processes_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("pipelines.stage2.subprocess_layouter", lambda *_args, **_kwargs: echo_layouter)
     write_graph(
         processes_root,
@@ -153,7 +155,7 @@ def test_main_returns_two_for_an_undeclared_actor(processes_root: Path, monkeypa
         ),
     )
 
-    assert main(["--process", "enrollment", "--processes-root", str(processes_root)]) == 2
+    assert main(["--process", "enrollment", "--processes-root", str(processes_root)]) == 0
 
 
 def test_main_returns_one_when_the_layout_fails(processes_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:

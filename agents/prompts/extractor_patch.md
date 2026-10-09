@@ -61,7 +61,10 @@ and `status: stated`. Otherwise add the real steps, re-point the branch at them 
 
 ## Lanes and subprocesses
 
-- `actor` is one of the swimlanes listed below, verbatim. Never a name that is not listed,
-  even if a statement uses one. Work nobody is named for goes to the default lane.
+- `actor` is one of the swimlanes listed below, verbatim, whenever one of them is who the
+  statement means. Where a statement attributes work to someone who is **not** listed, use
+  the statement's own name for them, exactly as written; the user will be asked what it is.
+  Never rename a listed lane, never merge two, and never make up a name no statement uses.
+  Work nobody is named for goes to the default lane.
 - `subprocess` is one of the listed subprocess ids or null. The deciding gateway stays on the
   main line with `subprocess` null; the work it hands off is tagged.

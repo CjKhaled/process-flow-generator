@@ -50,6 +50,7 @@ branches in ``Edge.order``. Shuffling either would redraw the diagram without
 changing its meaning.
 """
 
+import logging
 import re
 from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass, replace
@@ -58,6 +59,8 @@ from enum import StrEnum
 from ir.models import BranchAnswer, Edge, EdgeType, Node, NodeType, ProcessGraph
 from ir.process_config import ProcessConfig
 from ir.skeleton import Skeleton, SubprocessSpec
+
+logger = logging.getLogger(__name__)
 
 _NOT_NAME_CHAR = re.compile(r"[^A-Za-z0-9_]")
 
@@ -191,22 +194,32 @@ def lane_order(nodes: Sequence[Node], actors: Sequence[str], *, also: Collection
             node, so a lane can be needed that no *visible* node asks for.
 
     Returns:
-        The declared actors that own at least one node, in declaration order.
-        A declared actor no node is attributed to gets no lane, so listing one
-        the source never uses costs nothing but an unused line of config.
+        The declared actors that own at least one node, in declaration order,
+        then any lane a node names that was never declared, in the order the
+        graph first uses them. A declared actor no node is attributed to gets no
+        lane, so listing one the source never uses costs nothing but an unused
+        line of config.
 
-    Raises:
-        ValueError: If a node names an actor the process never declared. The
-            stage-1 validator cannot catch this -- it has no ``ProcessConfig``,
-            so it can only check that a lane was named, not that it exists --
-            which makes this the first point the two can be compared.
+    An undeclared lane is drawn, not refused. The declared list is a vocabulary
+    the extractor is offered, with what each actor is; it was never a complete
+    account of who a description might mention, and the extraction prompt says
+    so -- "if the source attributes a step to someone outside this list, use the
+    source's own wording". Rejecting the diagram for a name the source used
+    would throw away a whole run over the one thing a reader could have fixed by
+    looking at it. Such a lane goes last because the config says nothing about
+    where it belongs, and it is logged so its appearance is not a surprise.
     """
-    used = {node.actor for node in nodes if node.actor} | set(also)
-    unknown = sorted(used - set(actors))
-    if unknown:
-        known = ", ".join(actors) or "none are declared"
-        raise ValueError(f"nodes are attributed to undeclared actor(s) {', '.join(unknown)}; declared actors: {known}")
-    return tuple(actor for actor in actors if actor in used)
+    declared = set(actors)
+    named = [node.actor for node in nodes if node.actor] + sorted(also)
+    used = set(named)
+    unlisted = tuple(dict.fromkeys(actor for actor in named if actor not in declared))
+    if unlisted:
+        logger.warning(
+            "drawing lane(s) the process config does not declare: %s (declared: %s)",
+            ", ".join(unlisted),
+            ", ".join(actors) or "none",
+        )
+    return (*(actor for actor in actors if actor in used), *unlisted)
 
 
 @dataclass(frozen=True)
@@ -346,20 +359,12 @@ def translate(graph: ProcessGraph, config: ProcessConfig, skeleton: Skeleton) ->
     Returns:
         The document's elements, ready to be written.
 
-    Raises:
-        ValueError: If a node, or a collapsed box this graph actually draws, names
-            an actor ``metadata.yaml`` does not declare. A subprocess the skeleton
-            declares but this graph never mentions is not checked -- it produces no
-            box, so it names no lane here.
     """
     drawing = _draw(graph, skeleton)
 
     # Only lanes with something left in them. A lane whose every node was folded
     # into a box drawn elsewhere, or pruned away behind one, would otherwise
-    # survive as an empty band -- the thing lane_order exists to avoid. Every
-    # node is still passed to lane_order, hidden ones included, because an
-    # invented actor is worth rejecting whether or not the node carrying it is
-    # drawn.
+    # survive as an empty band -- the thing lane_order exists to avoid.
     described = {item.node_id for item in drawing.annotations}
     drawn = {item.actor for item in drawing.flow_nodes if item.actor}
     drawn |= {node.actor for node in graph.nodes if node.id in described and node.actor}

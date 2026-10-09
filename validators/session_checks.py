@@ -9,7 +9,16 @@ the conversation's two hardest promises mechanically:
 * **Extraction is literal.** Every node and every branch must cite the statements
   it came from, and each quote is looked up in the statement it names. A step
   that rests on nothing the user said is rejected, not flagged.
-* **Lanes and subprocesses come from the session**, never from the model.
+* **Subprocesses come from the process definition**, never from the model.
+
+Lanes are deliberately *not* checked here. A lane the extractor uses that the
+session has not learned is a name the user's statements contained and the
+interpreter missed, far more often than an invention -- and either way the right
+response is to ask the user what it is, not to send the patch back. So an
+unlisted lane is learned by :func:`session.orchestrator.learn_lanes` and becomes
+a question. ``lanes`` stays in :func:`validate_session`'s signature because the
+session is what this validator is a function of, and a lane rule that *is*
+mechanical would belong here.
 
 Kept apart from ``validate`` rather than folded into it, so the one-shot
 pipeline's contract does not change: that path has no statements to check against
@@ -43,7 +52,8 @@ def validate_session(
     Args:
         graph: The master graph to check. Never modified.
         corpus: Every statement the user has made.
-        lanes: The lanes the session has learned.
+        lanes: The lanes the session has learned. Not checked against; see the
+            module docstring.
         process: The process definition, for its declared subprocesses.
 
     Returns:
@@ -54,7 +64,6 @@ def validate_session(
     findings.extend(check_origin(graph))
     findings.extend(check_evidence_present(graph))
     findings.extend(check_evidence_found(graph, statements))
-    findings.extend(check_lanes(graph, {lane.name for lane in lanes}))
     findings.extend(check_scopes(graph, set(process.subprocess_ids)))
     return ValidationReport(findings=tuple(findings))
 
@@ -138,23 +147,6 @@ def check_evidence_found(graph: ProcessGraph, statements: dict[str, Statement]) 
                     edge.from_id,
                     edge.to_id,
                 )
-
-
-def check_lanes(graph: ProcessGraph, lanes: Collection[str]) -> Iterator[Finding]:
-    """Every node sits in a lane the session has learned.
-
-    The check the one-shot pipeline cannot make until stage 2: here the lane list
-    is in hand, so an invented actor is caught on the turn it appears.
-    """
-    known = ", ".join(sorted(lanes)) or "none"
-    for node in graph.nodes:
-        if node.actor and node.actor not in lanes:
-            yield Finding.of(
-                FindingCode.UNKNOWN_LANE,
-                f"node '{node.id}' ({node.label}) is in lane '{node.actor}', which is not one of the "
-                f"session's lanes ({known}); use a listed lane verbatim, or the default lane",
-                node.id,
-            )
 
 
 def check_scopes(graph: ProcessGraph, subprocesses: Collection[str]) -> Iterator[Finding]:

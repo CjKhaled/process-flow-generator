@@ -39,7 +39,6 @@ class FindingCode(StrEnum):
     # can see the statements and lanes a one-shot extraction never has.
     MISSING_EVIDENCE = "missing_evidence"
     EVIDENCE_NOT_FOUND = "evidence_not_found"
-    UNKNOWN_LANE = "unknown_lane"
     UNKNOWN_SCOPE = "unknown_scope"
     RULE_ORIGIN_MISUSE = "rule_origin_misuse"
 
@@ -72,7 +71,6 @@ _SEVERITY_BY_CODE: dict[FindingCode, Severity] = {
     FindingCode.MISSING_SWIMLANE: Severity.STRUCTURAL,
     FindingCode.MISSING_EVIDENCE: Severity.STRUCTURAL,
     FindingCode.EVIDENCE_NOT_FOUND: Severity.STRUCTURAL,
-    FindingCode.UNKNOWN_LANE: Severity.STRUCTURAL,
     FindingCode.UNKNOWN_SCOPE: Severity.STRUCTURAL,
     FindingCode.RULE_ORIGIN_MISUSE: Severity.STRUCTURAL,
     FindingCode.PATCH_UNKNOWN_NODE: Severity.STRUCTURAL,

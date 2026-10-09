@@ -322,18 +322,28 @@ def test_a_new_lane_is_learned_and_used_in_the_same_turn(domain: DomainKnowledge
     assert "**PSM**" in fake.system_prompts[EXTRACTOR][-1]
 
 
-def test_a_lane_the_session_has_not_learned_is_refused_and_repaired(domain: DomainKnowledge) -> None:
+def test_a_lane_the_extractor_names_is_learned_and_asked_about(domain: DomainKnowledge) -> None:
+    """Not a defect to repair: a lane nobody has described yet, which is a question for the user."""
     fake = FakeConversations()
     session = started(domain, fake)
-    invented = patch(
-        add(node("call", actor="Nurse", evidence=(ref("s_0004", "Someone calls"),))), add(edge("key_form", "call"))
+    text = "The nurse calls the patient."
+    named = patch(
+        add(node("call", actor="Nurse", evidence=(ref("s_0004", "The nurse calls the patient"),))),
+        add(edge("key_form", "call")),
+        add(edge("call", "gw_complete")),
     )
-    fake.interpreter(answer("Someone calls.")).extractor(invented, patch()).navigator(says())
+    fake.interpreter(answer(text)).extractor(named).navigator(says("Noted.", ask("c2", "What is the Nurse's part?")))
 
-    session = turn(session, domain, fake, "Someone calls.")
+    session = turn(session, domain, fake, text)
 
-    assert "unknown_lane" in fake.prompts[EXTRACTOR][-1]
-    assert session.versions[-1].attempts == 2
+    lane = session.lane("Nurse")
+    assert lane is not None
+    assert (lane.status, lane.persona, lane.evidence) == (LaneStatus.PROPOSED, None, ("s_0004",))
+    assert session.versions[-1].attempts == 1, "accepted first time, with no repair turn"
+    candidate = next(c for c in rank_candidates(session, domain) if c.subject == "Nurse")
+    assert (candidate.rank, candidate.kind) == (2, QuestionKind.LANE)
+    assert "id: c2 | kind: lane" in fake.prompts[NAVIGATOR][-1]
+    assert (session.pending[0].kind, session.pending[0].subject) == (QuestionKind.LANE, "Nurse")
 
 
 def test_a_screening_answer_switches_its_dependent_topics_off(domain: DomainKnowledge) -> None:

@@ -72,7 +72,6 @@ def run(
         extractors.errors.ExtractionError: If no attempt produced a structurally
             valid graph.
         extractors.errors.ModelUnavailableError: If the API rejected the request.
-        ValueError: If a node names an actor ``metadata.yaml`` does not declare.
         bpmn.autolayout.LayoutError: If the diagram could not be laid out.
     """
     process_dir = processes_root / process_name

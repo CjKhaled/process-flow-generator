@@ -6,11 +6,10 @@ model, no network, no credentials; the only thing outside Python is the pinned
 `bpmn-auto-layout` CLI, which owns every coordinate in the result.
 
 Stage 1 guarantees that anything in ``outputs/`` passed the structural tier, so
-this stage assumes a well-formed graph rather than re-validating one. The single
-check it adds is one stage 1 could not make: that every ``actor`` is an actor
-``metadata.yaml`` declares. The validator never sees the process config, so it
-can only require that a node names *a* lane, not that the lane exists -- and an
-actor the model invented reaches disk looking perfectly valid.
+this stage assumes a well-formed graph rather than re-validating one. It does not
+check lane names against ``metadata.yaml`` either: a lane the config never
+declared is drawn after the declared ones and logged, since refusing a whole
+diagram over a name the source used helps nobody.
 """
 
 import argparse
@@ -25,7 +24,6 @@ from bpmn import colors, decisions, document, semantics
 from bpmn.autolayout import Layouter, LayoutError, subprocess_layouter
 from ir.models import ProcessGraph
 from ir.process_config import (
-    METADATA_FILENAME,
     OUTPUTS_DIRNAME,
     SKELETON_FILENAME,
     load_process_config,
@@ -59,7 +57,6 @@ def run(
 
     Raises:
         FileNotFoundError: If the process folder or stage 1's graph is missing.
-        ValueError: If a node names an actor ``metadata.yaml`` does not declare.
         pydantic.ValidationError: If the graph on disk does not match the schema.
         bpmn.autolayout.LayoutError: If the layouter could not be run or refused
             the document. Nothing is written in that case.
@@ -118,7 +115,6 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     except ValueError as error:  # After ValidationError, which subclasses it.
         print(f"error: {error}", file=sys.stderr)
-        print(f"every actor must be declared in {METADATA_FILENAME}.", file=sys.stderr)
         return 2
     except LayoutError as error:
         print(f"error: {error}", file=sys.stderr)

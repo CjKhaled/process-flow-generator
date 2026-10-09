@@ -31,7 +31,7 @@ from session.closeout import (
 )
 from session.ledger import TopicUpdate, apply_updates, open_items
 from session.models import LearnedTerm, Phase, Session
-from session.orchestrator import new_session
+from session.orchestrator import learn_lanes, new_session
 from session.store import FileSessionStore
 from tests.master_graph import master_session
 from validators.report import FindingCode, ValidationReport
@@ -327,3 +327,25 @@ def test_outputs_are_listed_per_flow_once_they_exist(
 
     assert [entry["flow"] for entry in listed] == [MAIN_SCOPE, *SUBS]
     assert listed[0] == {"flow": "main", "label": "Main flow", "files": ["diagram.bpmn", "diagram.html", "graph.json"]}
+
+
+def test_a_lane_learned_from_the_graph_is_drawn_like_any_other(
+    session: Session, domain: DomainKnowledge, tmp_path: Path, layouter: Layouter, viewer_assets: ViewerAssets
+) -> None:
+    """A lane the extractor named and the session then learned reaches the final diagram as a lane."""
+    session.graph = session.graph.model_copy(
+        update={
+            "nodes": tuple(
+                n.model_copy(update={"actor": "Field Team"}) if n.id == "mi_escalate" else n
+                for n in session.graph.nodes
+            )
+        }
+    )
+    assert learn_lanes(session) == ("Field Team",)
+
+    done, store = finished(session, domain, tmp_path, layouter, viewer_assets)
+    path = store.path_for_outputs(done.id, "missing_info_hcp") / "outputs" / "diagram.bpmn"
+    lanes = [lane.get("name") for lane in ET.fromstring(path.read_text("utf-8")).iter(f"{{{BPMN_NS}}}lane")]
+
+    assert "Field Team" in compose_flow(session, domain, "missing_info_hcp").config.actors
+    assert lanes[-1] == "Field Team", "no persona, so it sorts after the lanes the process has a usual place for"

@@ -224,6 +224,7 @@ def run_turn(
             raise TurnRejected(str(error)) from error
         timings.extend(outcome.timings)
         working.graph = outcome.graph
+        learn_lanes(working)
         if outcome.updated:
             working.retry_statement_ids = []
         else:
@@ -540,6 +541,32 @@ def resolve_default_lane(session: Session, name: str) -> None:
         }
     )
     session.lanes = [lane for lane in session.lanes if lane.name != old]
+
+
+def learn_lanes(session: Session) -> tuple[str, ...]:
+    """Add a lane for every actor the graph uses that the session has not learned.
+
+    The extractor is offered the session's lanes, and told to use the user's own
+    name for anyone a statement attributes work to who is not among them. When
+    it does, that is not a defect to repair: it is a lane nobody has described
+    yet. It is added as ``proposed`` with no persona, which is exactly the state
+    :mod:`session.candidates` turns into a question -- "what is X, and what part
+    does it play?" -- so the user confirms it on the next turn.
+
+    Args:
+        session: The session to change in place, its graph already updated.
+
+    Returns:
+        The names added, in the order the graph first uses them.
+    """
+    known = {lane.name for lane in session.lanes}
+    added: dict[str, list[str]] = {}
+    for node in session.graph.nodes:
+        if node.actor and node.actor not in known:
+            added.setdefault(node.actor, []).extend(ref.statement_id for ref in node.evidence)
+    for name, statement_ids in added.items():
+        session.lanes.append(SessionLane(name=name, evidence=tuple(dict.fromkeys(statement_ids))))
+    return tuple(added)
 
 
 def _lane_named(session: Session, name: str) -> SessionLane | None:

@@ -101,9 +101,10 @@ def extractor_context(domain: DomainKnowledge, session: Session) -> str:
     return "\n\n".join(
         [
             "## Swimlanes\n\n"
-            "These are the lanes of the diagram, and the only values the `actor` field may take. "
-            "Use the names verbatim, exactly as written here. What each one is matters: it is how "
-            "you tell which lane a box belongs in.\n\n"
+            "These are the lanes learned so far. Use these names verbatim, exactly as written "
+            "here, wherever one of them is who a statement means. What each one is matters: it is "
+            "how you tell which lane a box belongs in. If a statement attributes work to someone "
+            "not listed, use the statement's own name for them.\n\n"
             f"{lanes}\n\n"
             "Where the statements do not say who performs a step, it is automatic: use "
             f"`{session.default_lane}`.",

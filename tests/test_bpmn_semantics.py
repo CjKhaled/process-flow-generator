@@ -466,20 +466,14 @@ def test_element_ids_maps_a_hidden_node_to_its_box() -> None:
     }
 
 
-def test_a_drawn_box_in_an_undeclared_lane_is_rejected() -> None:
-    """A collapsed box carries its lane into ``lane_order``, which knows the declared set.
-
-    Only boxes this graph actually draws are checked. A subprocess the skeleton
-    declares but the source never mentions produces no box, so it names no lane
-    here and passes unexamined until some later description mentions it.
-    """
+def test_a_drawn_box_in_an_undeclared_lane_gets_that_lane() -> None:
+    """A collapsed box carries its lane into ``lane_order`` like any node's, declared or not."""
     phases = Skeleton(
         subprocesses=(SubprocessSpec(name="off_label", label="Off-Label", actor="Acme Corp"),),
     )
     tagged = graph((node("a", subprocess="off_label", actor="CM360"),), ())
 
-    with pytest.raises(ValueError, match="Acme Corp"):
-        translate(tagged, ("CM360",), phases)
+    assert [lane.actor for lane in translate(tagged, ("CM360",), phases).lanes] == ["Acme Corp"]
 
 
 # --- lanes ---
@@ -499,12 +493,24 @@ def test_lane_order_omits_actors_no_node_uses() -> None:
     assert semantics.lane_order(nodes, ("HCP", "Patient", "PSM", "JCRM")) == ("HCP", "PSM")
 
 
-def test_lane_order_rejects_an_undeclared_actor() -> None:
-    """Stage 1 cannot check this -- the validator never sees metadata.yaml -- so stage 2 must."""
-    nodes = (node("a", actor="HCP"), node("b", actor="Acme Corp"))
+def test_lane_order_draws_an_undeclared_actor_after_the_declared_ones() -> None:
+    """The config is a vocabulary, not a fence: a name the source used is a lane, placed last."""
+    nodes = (
+        node("a", actor="Field Team"),
+        node("b", actor="PSM"),
+        node("c", actor="Acme Corp"),
+        node("d", actor="HCP"),
+    )
 
-    with pytest.raises(ValueError, match="Acme Corp"):
-        semantics.lane_order(nodes, ("HCP", "PSM"))
+    assert semantics.lane_order(nodes, ("HCP", "PSM")) == ("HCP", "PSM", "Field Team", "Acme Corp")
+
+
+def test_an_undeclared_lane_is_logged(caplog: pytest.LogCaptureFixture) -> None:
+    """Drawn rather than refused, but not silently: its appearance should not be a surprise."""
+    with caplog.at_level("WARNING", logger="bpmn.semantics"):
+        semantics.lane_order((node("a", actor="Acme Corp"),), ("HCP",))
+
+    assert "Acme Corp" in caplog.text
 
 
 def test_each_lane_owns_only_its_own_nodes() -> None:
