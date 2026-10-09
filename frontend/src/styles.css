@@ -1,0 +1,573 @@
+:root {
+  --ink: #1f2933;
+  --muted: #6b7785;
+  --line: #d8dee6;
+  --ground: #f6f7f9;
+  --panel: #ffffff;
+  --accent: #2456a6;
+  --accent-soft: #e8eefb;
+  --amber: #b7791f;
+  --amber-soft: #fdf3dc;
+  --danger: #b42318;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+}
+
+h1 {
+  font-size: 22px;
+  margin: 0 0 4px;
+}
+
+h3 {
+  font-size: 15px;
+  margin: 0 0 4px;
+}
+
+h4 {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 16px 0 4px;
+}
+
+p {
+  margin: 0 0 8px;
+  line-height: 1.45;
+}
+
+button,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+button.link {
+  border: 0;
+  background: none;
+  padding: 0 4px;
+  color: var(--accent);
+}
+
+textarea,
+select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px;
+  background: var(--panel);
+  resize: vertical;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.pad {
+  padding: 14px;
+}
+
+.error,
+.error-inline {
+  color: var(--danger);
+}
+
+.error,
+.status,
+.notice {
+  margin: 0;
+  padding: 8px 14px;
+  border-top: 1px solid var(--line);
+}
+
+.status {
+  color: var(--accent);
+}
+
+.notice {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.loading {
+  padding: 40px;
+  color: var(--muted);
+}
+
+/* ── start ───────────────────────────────────────────────────────── */
+
+.start-screen {
+  max-width: 720px;
+  margin: 48px auto;
+  padding: 28px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.start-screen label {
+  display: block;
+  font-weight: 600;
+  margin: 16px 0 6px;
+}
+
+.start-screen .primary {
+  margin-top: 16px;
+}
+
+.start-screen .error {
+  border: 0;
+  padding: 8px 0 0;
+}
+
+/* ── workspace ───────────────────────────────────────────────────── */
+
+.workspace {
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr) 340px;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100vh;
+}
+
+.topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar .link {
+  margin-left: auto;
+}
+
+.chat,
+.side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--panel);
+}
+
+.chat {
+  border-right: 1px solid var(--line);
+}
+
+.side {
+  border-left: 1px solid var(--line);
+  overflow-y: auto;
+}
+
+.flow {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.flow .react-flow {
+  flex: 1;
+}
+
+/* ── tabs ────────────────────────────────────────────────────────── */
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 8px 10px 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  padding: 6px 10px 8px;
+  color: var(--muted);
+}
+
+.tabs button.active {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+
+/* ── chat ────────────────────────────────────────────────────────── */
+
+.transcript {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bubble {
+  max-width: 92%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bubble.user {
+  align-self: flex-end;
+  background: var(--accent-soft);
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.bubble.assistant {
+  align-self: flex-start;
+  background: var(--ground);
+}
+
+.questions {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  white-space: normal;
+}
+
+.questions li {
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.questions li:hover,
+.questions li.chosen {
+  background: var(--accent-soft);
+}
+
+.composer {
+  padding: 10px 14px 14px;
+  border-top: 1px solid var(--line);
+}
+
+.focus-line,
+.answering {
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.answering {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--amber-soft);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.actions .finish {
+  margin-left: auto;
+}
+
+/* ── close-out ───────────────────────────────────────────────────── */
+
+.closeout {
+  max-height: 45%;
+  overflow-y: auto;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+  background: var(--ground);
+}
+
+.closeout h4 {
+  margin-top: 10px;
+}
+
+.closeout ul {
+  margin: 0 0 8px;
+  padding-left: 18px;
+}
+
+.closeout li {
+  margin-bottom: 4px;
+}
+
+.closeout .primary {
+  margin: 4px 0 10px;
+}
+
+.download-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.download-row span {
+  flex: 1 1 100%;
+  font-weight: 600;
+}
+
+.download-row a {
+  color: var(--accent);
+}
+
+/* ── side panel ──────────────────────────────────────────────────── */
+
+.side blockquote {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--accent);
+  background: var(--ground);
+  border-radius: 0 6px 6px 0;
+}
+
+.side blockquote .tag,
+.side blockquote .context {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.side .open {
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.side ul {
+  margin: 0 0 8px;
+  padding-left: 18px;
+}
+
+.side details {
+  margin-bottom: 12px;
+}
+
+.side summary {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.progress {
+  height: 5px;
+  margin: 6px 0;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.progress div {
+  height: 100%;
+  background: var(--accent);
+}
+
+.counts {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.topics li.high {
+  font-weight: 600;
+}
+
+/* ── flow nodes ──────────────────────────────────────────────────── */
+
+.node {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.node .shape {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel);
+  border: 1.5px solid var(--ink);
+  text-align: center;
+}
+
+.node .label {
+  line-height: 1.25;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.node .label.under {
+  margin-top: 4px;
+  max-width: 100%;
+  text-align: center;
+  -webkit-line-clamp: 2;
+}
+
+.node .lane {
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.node.task .shape,
+.node.subprocess .shape {
+  width: 100%;
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 10px;
+}
+
+/* A collapsed subprocess: a box inside a box. */
+.node.subprocess .shape {
+  border-radius: 4px;
+  outline: 1.5px solid var(--ink);
+  outline-offset: 3px;
+  margin: 4px;
+  width: calc(100% - 8px);
+  flex-direction: column;
+  gap: 4px;
+}
+
+.node.start .shape,
+.node.terminal .shape {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.node.terminal .shape {
+  border-width: 3.5px;
+}
+
+.node.gateway .shape {
+  width: 46px;
+  height: 46px;
+  margin: 8px 0 6px;
+  transform: rotate(45deg);
+  flex: none;
+}
+
+.node.gateway .glyph {
+  transform: rotate(-45deg);
+  font-weight: 700;
+}
+
+.node.open .shape {
+  border-style: dashed;
+  border-color: var(--amber);
+  background: var(--amber-soft);
+}
+
+.node.subprocess.open .shape {
+  outline-color: var(--amber);
+  outline-style: dashed;
+}
+
+.node.selected .shape {
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 0 0 4px var(--accent);
+}
+
+.node .marker {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--panel);
+}
+
+.node.gateway .marker {
+  top: -6px;
+  right: 16px;
+}
+
+.node .open-flow {
+  padding: 1px 8px;
+  font-size: 11px;
+}
+
+/* Handles are where arrows attach, not something to grab: nothing here is connectable. */
+.react-flow__handle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.node.start .react-flow__handle,
+.node.terminal .react-flow__handle {
+  top: 20px;
+}
+
+.node.gateway .react-flow__handle {
+  top: 31px;
+}
+
+.react-flow__edge-text {
+  font-size: 11px;
+}

@@ -45,7 +45,7 @@ from session.closeout import DOWNLOADS, NothingToDraw, finalise, list_outputs
 from session.focus import valid_scope
 from session.ledger import coverage, open_items
 from session.models import Phase, Session, TurnStatus
-from session.orchestrator import Progress, TurnInput, TurnRejected, new_session, run_close, run_turn
+from session.orchestrator import NOT_UPDATED, Progress, TurnInput, TurnRejected, new_session, run_close, run_turn
 from session.slicing import SliceError
 from session.store import SessionNotFound, SessionStore
 from session.views import session_views
@@ -408,6 +408,7 @@ def _state(session: Session, domain: DomainKnowledge, store: SessionStore, *, ru
         "status_label": error if status is TurnStatus.FAILED and error else STATUS_LABELS[status],
         "running": running,
         "flow_updated": session.flow_updated,
+        "notice": None if session.flow_updated else NOT_UPDATED,
         "transcript": [message.model_dump(mode="json") for message in session.transcript],
         "pending": [question.model_dump(mode="json") for question in session.pending],
         "quick_replies": [{"id": key, "label": label} for key, (label, _) in QUICK_REPLIES.items()],

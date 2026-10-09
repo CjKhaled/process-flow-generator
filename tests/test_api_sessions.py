@@ -25,7 +25,7 @@ from extractors.conversation import EXTRACTOR, INTERPRETER
 from extractors.errors import ModelUnavailableError, SchemaCallError
 from render.assets import ViewerAssets
 from session.models import TurnStatus
-from session.orchestrator import RESEND
+from session.orchestrator import NOT_UPDATED, RESEND
 from session.store import FileSessionStore
 from tests.conftest import DOMAIN_DIR, DOMAIN_PROCESS, echo_layouter
 from tests.fakes import FakeConversations
@@ -308,6 +308,7 @@ def test_when_the_flow_could_not_be_updated_the_page_is_told(client: TestClient,
     state = send(client, session_id, text="The vendor archives it.")
 
     assert state["flow_updated"] is False
+    assert state["notice"] == NOT_UPDATED
     assert len(state["views"][0]["nodes"]) == 5, "the previous graph is still what is shown"
 
 
