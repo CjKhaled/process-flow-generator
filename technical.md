@@ -77,6 +77,21 @@ subprocess and is drawn step by step. Listing a main-flow phase here would make 
 into a box. Enrollment names four: off-label review, duplicate handling, and two missing-info
 paths.
 
+**The test of that rule is the second process.** `coverage_determination` describes four
+named phases — PAP, shipment, prior authorization and appeals — and declares only the first
+two. The rule that decides it is not "is this a phase?" but **does the source continue past
+it?** Collapsing a box drops the edges leaving it and prunes whatever they alone led to. PAP
+and shipment qualify because the document stops at them. Prior authorization and appeals do
+not: both send a status back and the text runs on for another twelve lines, so collapsing
+either would delete the appeal arc, the retry loop, the affordability checks — and PAP and
+shipment along with them, since the only routes there run through prior authorization. It
+would still validate, because a collapsed box is a legitimate end of a path. That is what
+makes this the easiest field in the project to get quietly wrong.
+
+The collapse pays for itself here. PAP is reached from four points in that document and
+shipment from three; stage 2 re-points every entering edge at the box and de-duplicates, so
+those seven arrows converge on two boxes instead of seven scattered end events.
+
 ### `inputs/` is CLI-only
 
 Worth stating plainly, because it is the easiest thing to misread. `metadata.yaml` and
@@ -267,7 +282,7 @@ what this stage writes and hands to the layouter. Enrollment's finished file has
 
 Stage 2 computes **no geometry** except one deliberate exception, job 6 below.
 
-## 2B. The six jobs, in the order they happen
+## 2B. The seven jobs, in the order they happen
 
 | # | Job | What it does | File |
 | --- | --- | --- | --- |
@@ -276,7 +291,8 @@ Stage 2 computes **no geometry** except one deliberate exception, job 6 below.
 | 3 | **Order** | Everything is sorted, because order is the only control this stage has over the picture | `semantics.py` |
 | 4 | **Write** | The semantic XML, in a child order that is significant and unchecked | `document.py` |
 | 5 | **Place** | A Node library computes every coordinate | `autolayout.py` |
-| 6 | **Fix the diamonds** | Gateways are redrawn so each question sits inside its own shape | `decisions.py` |
+| 6 | **Resize** | Gateways are redrawn to hold their question; events are widened to hold an oval | `decisions.py` |
+| 7 | **Colour** | Events and collapsed subprocesses get fill and stroke written into the file | `colors.py` |
 
 The graph is re-parsed against the schema on load but **not re-validated semantically** —
 stage 1 already guarantees that.
@@ -425,9 +441,9 @@ guard when it is bumped.
 | Empty stdout | `LayoutError` |
 | Warnings on stderr | Logged, never raised — JSON lines saying an element was not drawn. That is the layouter's judgement about a diagram it accepted, not a defect in what we sent |
 
-**This is the only thing in the project that runs under Node.** There is no bundler, no npm
-script, and no JavaScript of ours on disk — except the page script in stage 3, which runs in
-the reader's browser.
+**This is the only thing a *stage* runs under Node.** The other use of Node is the build
+step that produces stage 3's page script (§3B) — which happens once, ahead of time, rather
+than during a run.
 
 ## Job 6 — Fix the diamonds
 
@@ -449,7 +465,7 @@ further along, leaving two arrows sharing a line and three corners of the diamon
 | --- | --- |
 | Diamond grows | 50×50 → **160×120**, about the same centre |
 | Label moves inside | To the largest upright box that fits: 50% of each side, which is the biggest rectangle that fits in a diamond without crossing the slanted edges |
-| Marker dropped | `isMarkerVisible` removed — **in the file**, not hidden in our stylesheet, so any other BPMN tool sees the same shape our page does |
+| Marker turned off | `isMarkerVisible="false"` **written** — in the file, not hidden in our stylesheet, so any other BPMN tool sees the same shape our page does. Written rather than removed, which is not the same thing: bpmn-js's modeler normalises the DI on import and reads a *missing* value as `true`, so deleting the attribute draws the very marker this line removes. Its viewer only ever read the attribute, which is why removal looked correct for as long as the page used one |
 | Arrows re-aimed | Endpoints that met the old boundary are pushed out to the new one, along the axis they already lay on |
 | Branches spread | A branch whose target is below leaves by the bottom point, one above by the top, each rebuilt as the two-segment L the layouter itself draws for that case, with its label brought along |
 
@@ -472,7 +488,53 @@ a gateway's centre, which is what makes 160×120 fit. If a question ever outgrow
 widen the constant rather than making the size depend on the wording.
 
 Gateways are matched on any tag **ending** in `Gateway`, so a parallel gateway added later
-gets the same treatment rather than silently keeping the old one.
+gets the same treatment rather than silently keeping the old one. Events are matched the same
+way on `Event`.
+
+### Events are widened in the same pass
+
+The page draws a start or an end as a **horizontal oval**, and the layouter sizes them 36×36
+— square, with no room to be one. So they are grown about their centre to **80×40**, from the
+same pass and for the same reason as the diamonds: the layouter sized a shape for the way
+BPMN draws it by default, and this project draws it differently.
+
+Events get the resize and the arrow push and nothing else:
+
+- They are kept out of `_spread`, which reroutes *branches*. An event has one way in or one
+  way out, and rerouting it would move a line the layouter had already placed well.
+- Their label is left alone. It sits below the shape and was centred on the shape's centre,
+  and growing about that centre leaves it centred still.
+- The layouter spaces shapes 100px apart horizontally, so 22px added on each side still
+  leaves a comfortable gap. The extra 4px of height is nothing against a vertical gap of 80.
+
+## Job 7 — Colour
+
+Written into the file, not into the page's stylesheet. BPMN carries colour as two
+diagram-interchange attributes in a namespace the spec reserves for it, and
+`getFillColor` consults them before anything else:
+
+```
+color:background-color  →  bioc:fill  →  a default
+```
+
+| Element | Fill | Stroke |
+| --- | --- | --- |
+| Start and end events | `#fde8e8` | `#b91c1c` |
+| Collapsed subprocess | `#f3e8ff` | `#7e22ce` |
+
+Pale fills with saturated strokes, so black label text stays readable on them.
+
+**Why the file and not CSS.** A stylesheet colours our page and nothing else — a colleague
+opening `diagram.bpmn` in Camunda would see plain black and white. bpmn-io's own
+documentation lists CSS among the *non-recommended* ways to do this. An earlier version of
+this project used CSS and was wrong to.
+
+Only events and collapsed subprocesses are coloured. Colouring everything would say nothing;
+the point is to make the entry, the exits, and the handed-off work findable at a glance.
+
+This is deliberately **not** part of `decisions.py`. That module earns its exception to
+"geometry is the layouter's" by being only geometry, and colour is a different concern that
+happens to be written to the same elements.
 
 **Exit codes:** `0` success · `1` layout failed, nothing written · `2` process unreadable,
 including a node attributed to an undeclared actor.
@@ -503,13 +565,75 @@ The element map is **re-derived, not stored** — it is a pure function of the g
 skeleton, both already on disk, and a fourth output file would be one more thing to keep in
 step with the three that matter.
 
-**The viewer** is the **modeler** build, for the page's session-only Edit mode (§3D). It is
-three times the navigated viewer's size — about 570 KB against 190 KB — which is most of why
-a page is nearer 730 KB than 350 KB. The lighter bundle cannot be used instead: the machinery
-for dragging a shape lives in modules it does not contain, and taking only those would need a
-bundler this project does not have. Three
-stylesheets are concatenated in order: `diagram-js.css` (the canvas), `bpmn-js.css` (BPMN's
-own rules), `bpmn-embedded.css` (the icon font).
+**The script is our own bundle**, `js/dist/pfg-viewer.js`, built by esbuild from `js/src/`
+and *not* one of bpmn-js's prebuilt files. The page needs a modeler **and** this project's
+renderer, palette and read-only gate, and those are ES modules registered through
+`additionalModules` — which is how bpmn-io's own examples extend bpmn-js, and it needs a
+build. The prebuilt files are sealed: they reach nothing but the single global they expose.
+
+The bundle is about 563 KB, which is most of why a page is nearer 730 KB than 350 KB.
+
+**The stylesheets are not bundled.** They are read straight from `node_modules` and
+concatenated in order — `diagram-js.css` (the canvas), `bpmn-js.css` (BPMN's own rules),
+`bpmn-embedded.css` (the icon font). They need no compiling, and Python is what assembles
+the page, so esbuild is left doing only the job it is good at.
+
+That means `load_assets` reads from **two roots with two different remedies**: a missing
+bundle means the *build* has not run, which `npm ci` alone will not fix, and that is the
+likeliest mistake after a fresh clone.
+
+### What is in the bundle
+
+| Module | Does |
+| --- | --- |
+| `viewer.js` | The entry point, and the page's whole interface to bpmn-js: `window.PFG.createViewer(container)` and `window.PFG.setEditing(on)`. The page never constructs a modeler itself |
+| `editGate.js` | The read-only state (§3D) |
+| `renderer.js` | The two shapes drawn differently from stock BPMN (below) |
+| `palette.js` | The palette cut down to what these diagrams are made of (below) |
+
+### The two custom shapes
+
+`PfgRenderer extends BaseRenderer` at **priority 1500**, above the default renderer's 1000,
+which is the pattern bpmn-io's custom-rendering example uses.
+
+| Element | Drawn as | Why |
+| --- | --- | --- |
+| Start and end events | A horizontal `<ellipse>` filling the bounds | Reads as a flowchart terminator rather than a small circle |
+| Collapsed subprocess | bpmn-js's own box, plus a vertical bar inside each edge | The long-standing flowchart mark for "this box stands for work described elsewhere" — exactly what a collapsed subprocess is here |
+
+Three details that matter:
+
+- **`getShapePath` is implemented for events.** Without it a connection would be cropped
+  against the bounding *box* rather than the oval, leaving a visible gap on the diagonals.
+  It is bpmn-js's own `getCirclePath` with two radii instead of one.
+- **The bars are inset by exactly 10px**, which is bpmn-js's `TASK_BORDER_RADIUS`. At any
+  smaller inset a bar would meet the rounded corner rather than the straight top and bottom
+  edges, and poke out of the shape at both ends.
+- **`canRender` is deliberately narrow.** Everything else falls through to bpmn-js, which is
+  better at drawing BPMN than we are. It also excludes elements with a `labelTarget` — an
+  event's *label* is an element too, and would otherwise be drawn as a second oval.
+
+Colour is not chosen here. It is read from the diagram with `getFillColor` and
+`getStrokeColor`, so job 7 remains the one place colour is decided.
+
+### The palette
+
+Registered **below** the stock provider's priority so it runs after it, and returns an
+*updater* — diagram-js hands it the entries collected so far, which is the supported way to
+remove entries rather than only add them.
+
+| | Entries |
+| --- | --- |
+| Kept | `start-event`, `end-event`, `task`, `exclusive-gateway`, `subprocess-expanded`, and every tool — hand, lasso, space, global-connect |
+| Removed | `intermediate-event`, `data-object`, `data-store`, `group`, `participant-expanded` |
+| Added | `text-annotation` |
+
+The removals are all elements that would reach `bpmn/semantics.py` as something it has no
+mapping for. The tools are kept because they are ways of working with what is on the canvas
+rather than ways of putting new things on it.
+
+**The text annotation is built, not kept.** bpmn-js never offered one from the palette — it
+is a context-pad entry only — so this is a new entry rather than a survivor of the filter.
 
 ## 3B. Assembly
 
@@ -555,13 +679,28 @@ involved.
 | Empty state | A graph with nothing outstanding says so |
 | Fit | Centred in whatever slack the viewport leaves, and never magnified past life size |
 
-**Restyling is by id prefix**, which is the only handle CSS has on element type:
+**Appearance is decided in three places now**, and which one is right depends on what is
+being changed:
 
-| Prefix | Change | Why |
+| Change | Belongs in | Because |
+| --- | --- | --- |
+| Shape | `js/src/renderer.js` | BPMN cannot express "draw this as an oval" |
+| Colour | `bpmn/colors.py` | It travels in the file, so every tool agrees |
+| Everything else | this stylesheet | Neither of the above can express it |
+
+What is left here is genuinely CSS-shaped:
+
+| Selected by | Change | Why |
 | --- | --- | --- |
 | `Node_sub_` | The `+` marker is hidden | It promises an inside the diagram does not show |
 | `Note_` | Drawn as a filled box | bpmn-js draws an annotation as an open bracket |
 | `Association_` | Solid connector | bpmn-js draws it dotted |
+| `…_label` | A background-coloured halo behind the glyphs | `Yes` and `No` sit on their arrow and are unreadable where the two cross. `_label` is the suffix diagram-js gives an external label, so this reaches text that floats free and never text set inside a box |
+
+There is **no colour rule here**, deliberately. One would override the diagram's own colour
+for our page alone, and the two would drift apart with nothing failing. The flagged-node
+highlight *is* `!important`, so it still beats a colour arriving from the file — being unable
+to see which boxes carry open questions is the one failure this page cannot afford.
 
 The semantic file still says `subProcess` and `textAnnotation` regardless — any BPMN tool
 opening it sees the real thing. This is the drawing only.
@@ -581,8 +720,8 @@ is deliberately not a way to correct the extraction and keep the correction — 
 a diagram → graph reverse mapping, which does not exist in any form.
 
 Because nothing is ever written, **an edited diagram can never disagree with `graph.json`**,
-and the export hazard never arises — no chance of the modeler re-adding the `X` marker
-`bpmn/decisions.py` strips, because there is no export.
+and the export hazard never arises — no chance of the modeler writing back a gateway marker
+`bpmn/decisions.py` turned off, because there is no export.
 
 | Concern | How it is handled |
 | --- | --- |

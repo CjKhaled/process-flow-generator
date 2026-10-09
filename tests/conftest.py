@@ -9,11 +9,13 @@ from bpmn.autolayout import Layouter
 from ir.models import EdgeType, NodeType, ProcessGraph
 from ir.process_config import ProcessConfig, load_process_config
 from ir.skeleton import Skeleton, load_skeleton
-from render.assets import ViewerAssets
+from render.assets import BUNDLE, ViewerAssets
 from tests.builders import branch, edge, graph, node
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-ENROLLMENT_DIR = REPO_ROOT / "processes" / "enrollment"
+PROCESSES_ROOT = REPO_ROOT / "processes"
+ENROLLMENT_DIR = PROCESSES_ROOT / "enrollment"
+COVERAGE_DETERMINATION_DIR = PROCESSES_ROOT / "coverage_determination"
 
 
 def has_node() -> bool:
@@ -22,6 +24,23 @@ def has_node() -> bool:
 
 
 requires_node = pytest.mark.skipif(not has_node(), reason="needs node and `npm ci --prefix js`")
+
+
+def has_bundle() -> bool:
+    """Whether the page's script has been built.
+
+    Separate from :func:`has_node` because the two are separate failures. Stage
+    2 needs the layouter, which an install provides; stage 3 needs our own
+    bundle, which only the build does. Gating both on one check would skip the
+    layouter's tests on a machine that had simply not run the build.
+    """
+    return BUNDLE.is_file()
+
+
+requires_bundle = pytest.mark.skipif(
+    not (has_node() and has_bundle()),
+    reason="needs `npm ci --prefix js` and `npm run build --prefix js`",
+)
 
 
 def echo_layouter(xml: str) -> str:
@@ -77,13 +96,18 @@ def layouter() -> Layouter:
 
 @pytest.fixture
 def viewer_assets() -> ViewerAssets:
-    """Stand-ins for the bpmn-js dist files.
+    """Stand-ins for the built bundle and bpmn-js's stylesheets.
 
-    Short strings rather than the real 300 KB, so the page tests neither need
-    ``npm ci`` nor drown the thing under test in vendor code. What matters to
-    them is that whatever is handed in reaches the page, not what it says.
+    Short strings rather than half a megabyte, so the page tests need neither
+    ``npm ci`` nor the build, and the thing under test is not drowned in vendor
+    code. What matters to them is that whatever is handed in reaches the page,
+    not what it says -- but the stub mirrors the real bundle's shape, since that
+    is the interface ``template.html`` is written against.
     """
-    return ViewerAssets(script="window.BpmnJS = function () {};", styles=".djs-container { outline: none; }")
+    return ViewerAssets(
+        script="window.PFG = { createViewer: function () {}, setEditing: function () {} };",
+        styles=".djs-container { outline: none; }",
+    )
 
 
 @pytest.fixture

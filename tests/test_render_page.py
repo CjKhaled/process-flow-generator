@@ -244,7 +244,13 @@ def test_the_page_offers_edit_and_reset(template: str, viewer_assets: ViewerAsse
 
 
 def test_the_page_starts_with_editing_off(template: str, viewer_assets: ViewerAssets) -> None:
-    """A page that opened mid-edit would let a reader rearrange the result by accident."""
+    """A page that opened mid-edit would let a reader rearrange the result by accident.
+
+    The attribute is also the state itself, not a description of it: the flag lives
+    in the bundle where the page cannot see it, so the Edit button reads this back to
+    know what to flip to. Ship the page without it and the first click has nothing to
+    invert.
+    """
     rendered = page(template, viewer_assets)
 
     assert 'data-editing="off"' in rendered
@@ -259,9 +265,7 @@ def test_the_page_says_edits_are_not_saved(template: str, viewer_assets: ViewerA
     assert "reloading restores the generated diagram" in rendered
 
 
-def test_the_page_warns_that_the_questions_describe_the_original(
-    template: str, viewer_assets: ViewerAssets
-) -> None:
+def test_the_page_warns_that_the_questions_describe_the_original(template: str, viewer_assets: ViewerAssets) -> None:
     """Findings are never recomputed, so an edited diagram outruns its own panel."""
     assert "The open questions still describe the original." in page(template, viewer_assets)
 
@@ -272,6 +276,41 @@ def test_the_hosted_page_offers_editing_too(template: str, viewer_assets: Viewer
 
     assert 'data-action="edit"' in rendered
     assert 'data-editing="off"' in rendered
+
+
+def test_a_floating_label_is_given_a_halo(template: str, viewer_assets: ViewerAssets) -> None:
+    """Yes and No sit on their arrow, and are unreadable where the two cross without one.
+
+    The one piece of appearance still decided in CSS. Colour moved into the
+    diagram file, where bpmn-js's own API puts it, but there is no API for this.
+    """
+    rendered = page(template, viewer_assets)
+
+    assert '[data-element-id$="_label"] .djs-label' in rendered
+    assert "paint-order: stroke" in rendered
+
+
+def test_the_page_does_not_colour_elements_itself(template: str) -> None:
+    """Colour belongs to the diagram now, so the stylesheet must not compete for it.
+
+    ``bpmn/colors.py`` writes the attributes bpmn-js reads, which is what lets
+    Camunda draw the same diagram. A rule here would override that for our page
+    only, and the two would drift apart without anything failing.
+    """
+    assert "--event-fill" not in template
+    assert "--sub-fill" not in template
+    assert "\n  .djs-visual > circle {" not in template
+
+
+def test_the_open_question_highlight_beats_a_colour_from_the_diagram(template: str) -> None:
+    """A flagged box stays amber even though the file now says what colour it is.
+
+    bpmn-js renders a diagram colour as an SVG ``fill`` attribute, and a
+    presentation attribute loses to any stylesheet rule -- but the highlight is
+    forced anyway, because being unable to see which boxes carry open questions
+    is the one failure this page cannot afford.
+    """
+    assert "fill: var(--flag-tint) !important" in template
 
 
 # ---- the payload, which the API returns and the offline page inlines ----------

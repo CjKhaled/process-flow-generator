@@ -21,6 +21,11 @@ RUN uv sync --frozen --no-dev --group api
 COPY js/package.json js/package-lock.json ./js/
 RUN npm ci --prefix js
 
+# Our own browser modules, and the bundle stage 3 inlines. Copied and built
+# before the rest of the source so a Python change does not rebuild them.
+COPY js/src ./js/src
+RUN npm run build --prefix js
+
 COPY . .
 
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1

@@ -1,0 +1,1385 @@
+{
+  "process_name": "Coverage Determination",
+  "nodes": [
+    {
+      "id": "start_bi",
+      "type": "start",
+      "label": "CM360 sends patient data and milestone to QRAL",
+      "actor": "CM360",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "As soon as CM360 sends patient data and milestone to QRAL, Biologics will start the BI process.",
+      "alternatives": []
+    },
+    {
+      "id": "start_bi_process",
+      "type": "task",
+      "label": "Start BI process",
+      "actor": "Biologics",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "Biologics will start the BI process.",
+      "alternatives": []
+    },
+    {
+      "id": "create_bi_case",
+      "type": "task",
+      "label": "Automatically create benefits investigation case",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "Once PSCRM receives it, the benefits investigation case will be automatically created, which creates the tasks Confirm Benefits Details task and Additional Info needed to complete BI automatically",
+      "alternatives": []
+    },
+    {
+      "id": "gw_additional_info",
+      "type": "gateway",
+      "label": "Additional info needed?",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    },
+    {
+      "id": "gather_info",
+      "type": "task",
+      "label": "Gather required information",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If at any point additional info is needed, the PSM will gather the information required.",
+      "alternatives": []
+    },
+    {
+      "id": "close_additional_info",
+      "type": "task",
+      "label": "Manually close additional info task",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "In either case, they will manually close the additional info task",
+      "alternatives": []
+    },
+    {
+      "id": "gw_plan_termed",
+      "type": "gateway",
+      "label": "Active member plan becomes inactive?",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    },
+    {
+      "id": "create_plan_termed_task",
+      "type": "task",
+      "label": "Automatically create BI Completed - Plan Termed task",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If the patient’s active member plan becomes inactive, the BI Completed - Plan Termed task will be automatically created",
+      "alternatives": []
+    },
+    {
+      "id": "discuss_insurance_change",
+      "type": "task",
+      "label": "Reach out to patient and discuss insurance change/coverage status, then close task",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "the PSM will reach out to the patient and discuss the insurance change/coverage status before manually closing the task.",
+      "alternatives": []
+    },
+    {
+      "id": "biologics_send_benefits",
+      "type": "task",
+      "label": "Perform required logic and send benefits details to QRAL",
+      "actor": "Biologics",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "We don’t know exactly when or how the trigger will work yet, but Biologics will perform any logic required and send benefits details to QRAL, who will send them to PSCRM",
+      "alternatives": []
+    },
+    {
+      "id": "ann_bv_substatus",
+      "type": "annotation",
+      "label": "BV Case Substatus = 'BENEFITS INVESTIGATION – COMPLETE'",
+      "actor": "Biologics",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    },
+    {
+      "id": "gw_coverage",
+      "type": "gateway",
+      "label": "Coverage status?",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "not covered/uninsured vs covered or covered with restrictions",
+      "alternatives": []
+    },
+    {
+      "id": "deactivate_plan",
+      "type": "task",
+      "label": "Deactivate active member plan and mark patient uninsured",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If the patient is not covered or uninsured, the active member plan is deactivated and the patient is marked as uninsured.",
+      "alternatives": []
+    },
+    {
+      "id": "psm_begin_pap_uninsured",
+      "type": "task",
+      "label": "PSM notices and begins PAP process",
+      "actor": "PSM",
+      "subprocess": "pap",
+      "status": "stated",
+      "detail": "The PSM will notice this and begin the PAP process.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_commercial",
+      "type": "gateway",
+      "label": "Has commercial insurance?",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If they are covered or covered with restrictions, they check if they have commercial insurance.",
+      "alternatives": []
+    },
+    {
+      "id": "enroll_copay",
+      "type": "task",
+      "label": "Enroll patient into copay",
+      "actor": "Biologics",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If they do, the patient is enrolled into copay.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_pa_required",
+      "type": "gateway",
+      "label": "PA required?",
+      "actor": "Biologics",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "after copay eligibility Biologics will then evaluate if PA is required.",
+      "alternatives": []
+    },
+    {
+      "id": "ann_pa_substatus_init",
+      "type": "annotation",
+      "label": "PA Case Substatus = 'PRIOR AUTHORIZATION INITIATION'",
+      "actor": "Biologics",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    },
+    {
+      "id": "ann_pa_substatus_notreq",
+      "type": "annotation",
+      "label": "PA Case Substatus = 'PA not required'",
+      "actor": "Biologics",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    },
+    {
+      "id": "psrcm_receive_pa",
+      "type": "task",
+      "label": "PSCRM receives PA substatus; parallel actions begin",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "Once this is received by PSCRM a few things will happen in parallel",
+      "alternatives": []
+    },
+    {
+      "id": "close_confirm_benefits",
+      "type": "task",
+      "label": "Automatically close Confirm Benefits Details task; open Communicate Benefits task",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "It closes the Confirm Benefits details task automatically. This opens the ‘Communicate Benefits’ task",
+      "alternatives": []
+    },
+    {
+      "id": "communicate_benefits",
+      "type": "task",
+      "label": "Reach out to patient and manually close Communicate Benefits task",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "the ‘Communicate Benefits’ task that will be manually closed by the PSM after they reach out to the patient.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_no_copay_close_bi",
+      "type": "gateway",
+      "label": "Copay enrollment present?",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If there is no copay enrollment, the benefits investigation case is closed automatically from the last case being closed.",
+      "alternatives": []
+    },
+    {
+      "id": "close_bi_case_nocopay",
+      "type": "task",
+      "label": "Automatically close benefits investigation case",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "the benefits investigation case is closed automatically from the last case being closed.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_insurance_commercial_copay",
+      "type": "gateway",
+      "label": "Insurance type is commercial?",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If insurance type is commercial, the Copay Enrollment task will be created.",
+      "alternatives": []
+    },
+    {
+      "id": "create_copay_task",
+      "type": "task",
+      "label": "Create Copay Enrollment task",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "the Copay Enrollment task will be created.",
+      "alternatives": []
+    },
+    {
+      "id": "biologics_finish_copay",
+      "type": "task",
+      "label": "Finish copay enrollment and send Copay Case Substatus",
+      "actor": "Biologics",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "This will be closed when Biologics finishes copay enrollment and sends back the Copay Case Substatus = ‘COPAY CARD ENROLLMENT’.",
+      "alternatives": []
+    },
+    {
+      "id": "ann_copay_substatus",
+      "type": "annotation",
+      "label": "Copay Case Substatus = 'COPAY CARD ENROLLMENT'",
+      "actor": "Biologics",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    },
+    {
+      "id": "close_copay_and_bi",
+      "type": "task",
+      "label": "Close Copay Enrollment task and close benefits investigation case",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "This closes the Copay enrollment task and then closes the benefits investigation case because the last task is closed",
+      "alternatives": []
+    },
+    {
+      "id": "create_pa_case",
+      "type": "task",
+      "label": "Automatically create PA case",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "The PA case will be created automatically.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_pa_needed",
+      "type": "gateway",
+      "label": "PA needed?",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If PA is needed, the PA Needed task will be created automatically. If PA is not needed, the PA Not Needed task will be created automatically.",
+      "alternatives": []
+    },
+    {
+      "id": "create_pa_needed_task",
+      "type": "task",
+      "label": "Automatically create PA Needed task",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If PA is needed, the PA Needed task will be created automatically.",
+      "alternatives": []
+    },
+    {
+      "id": "create_pa_not_needed_task",
+      "type": "task",
+      "label": "Automatically create PA Not Needed task",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If PA is not needed, the PA Not Needed task will be created automatically.",
+      "alternatives": []
+    },
+    {
+      "id": "create_comm_pa_not_needed",
+      "type": "task",
+      "label": "Create Communicate PA Not Needed to Patient and HCP tasks",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "This will create the Communicate PA Not Needed to Patient and HCP tasks",
+      "alternatives": []
+    },
+    {
+      "id": "close_comm_pa_not_needed",
+      "type": "task",
+      "label": "Contact patient and HCP; manually close tasks",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "which are manually closed by the PSM when they contact both",
+      "alternatives": []
+    },
+    {
+      "id": "close_pa_case_not_needed",
+      "type": "task",
+      "label": "Automatically close PA case",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "This automatically closes the PA case, and we move onto the Shipment process",
+      "alternatives": []
+    },
+    {
+      "id": "shipment_from_pa_not_needed",
+      "type": "subprocess",
+      "label": "Shipment process",
+      "actor": "Biologics",
+      "subprocess": "shipment",
+      "status": "stated",
+      "detail": "we move onto the Shipment process",
+      "alternatives": []
+    },
+    {
+      "id": "biologics_do_pa",
+      "type": "task",
+      "label": "Perform PA process and send PA case status to QRAL",
+      "actor": "Biologics",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "In the meantime, Biologics is going through the process of PA if it’s required. It then will send the PA case status to QRAL, which will go to PSCRM",
+      "alternatives": []
+    },
+    {
+      "id": "gw_pa_substatus",
+      "type": "gateway",
+      "label": "PA substatus?",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "approved vs denied",
+      "alternatives": []
+    },
+    {
+      "id": "create_comm_pa_approval",
+      "type": "task",
+      "label": "Create Communicate PA Approval to Patient and HCP tasks",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If the PA substatus is approved, the Communicate PA Approval To Patient and HCP tasks are created.",
+      "alternatives": []
+    },
+    {
+      "id": "close_comm_pa_approval",
+      "type": "task",
+      "label": "Update patient and HCP; close tasks and PA case",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "The PSM will manually close these tasks after updating the patient and HCP, which closes the PA case automatically.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_medpartd_pa",
+      "type": "gateway",
+      "label": "Patient is Med-Part D?",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If the patient is Med-Part D, the PSM will also try to speak to them regarding affordability.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_afford_pa",
+      "type": "gateway",
+      "label": "Can afford the medicine?",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If they can’t afford to be on the medicine, then the PAP process will begin. Otherwise, shipment process will begin.",
+      "alternatives": []
+    },
+    {
+      "id": "pap_from_pa_approval",
+      "type": "task",
+      "label": "PAP process begins",
+      "actor": "PSM",
+      "subprocess": "pap",
+      "status": "stated",
+      "detail": "If they can’t afford to be on the medicine, then the PAP process will begin.",
+      "alternatives": []
+    },
+    {
+      "id": "shipment_from_pa_approval",
+      "type": "subprocess",
+      "label": "Shipment process",
+      "actor": "Biologics",
+      "subprocess": "shipment",
+      "status": "stated",
+      "detail": "Otherwise, shipment process will begin.",
+      "alternatives": []
+    },
+    {
+      "id": "create_comm_pa_denial",
+      "type": "task",
+      "label": "Create Communicate PA Denial to Patient and HCP tasks",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If the PA substatus is denied, the Communicate PA Denial to Patient and HCP tasks will be created.",
+      "alternatives": []
+    },
+    {
+      "id": "close_comm_pa_denial",
+      "type": "task",
+      "label": "Manually close tasks; close PA case automatically",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "They will then manually close these tasks, which will close the PA case automatically.",
+      "alternatives": []
+    },
+    {
+      "id": "biologics_appeal",
+      "type": "task",
+      "label": "Go through appeal process and send appeal case substatus to QRAL",
+      "actor": "Biologics",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "In the meantime, Biologics is going through the appeal process. They will then send an appeal case substatus to QRAL, which will then be sent to PSCRM",
+      "alternatives": []
+    },
+    {
+      "id": "gw_appeal_available",
+      "type": "gateway",
+      "label": "Appeal case substatus is 'Appeal available'?",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If the appeal case substatus is not ‘Appeal available’, then the PAP process will start. Otherwise, the Appeal Case is created",
+      "alternatives": []
+    },
+    {
+      "id": "pap_no_appeal",
+      "type": "task",
+      "label": "PAP process starts",
+      "actor": "PSM",
+      "subprocess": "pap",
+      "status": "stated",
+      "detail": "If the appeal case substatus is not ‘Appeal available’, then the PAP process will start",
+      "alternatives": []
+    },
+    {
+      "id": "create_appeal_case",
+      "type": "task",
+      "label": "Create Appeal Case and wait for Appeal Case Status",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "the Appeal Case is created and then we wait for the Appeal Case Status to be sent from Biologics through QRAL",
+      "alternatives": []
+    },
+    {
+      "id": "gw_appeal_result",
+      "type": "gateway",
+      "label": "Appeal result?",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "approved vs denied",
+      "alternatives": []
+    },
+    {
+      "id": "create_comm_appeal_approval",
+      "type": "task",
+      "label": "Create Communicate Appeal Approval to Patient and HCP tasks",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If the appeal is approved, the Communicate Appeal Approval to Patient and HCP tasks will be created",
+      "alternatives": []
+    },
+    {
+      "id": "close_comm_appeal_approval",
+      "type": "task",
+      "label": "Contact patient and HCP; manually close tasks and Appeal case",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "the PSM will manually close these are contacting the patient and HCP. This automatically closes the Appeal case",
+      "alternatives": []
+    },
+    {
+      "id": "gw_medpartd_appeal",
+      "type": "gateway",
+      "label": "Patient is Med-Part D?",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If the patient is Med-Part D, the PSM will also try to speak to them regarding affordability.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_afford_appeal",
+      "type": "gateway",
+      "label": "Can afford the medicine?",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If they can’t afford to be on the medicine, then the PAP process will begin. Otherwise, shipment process will begin.",
+      "alternatives": []
+    },
+    {
+      "id": "pap_from_appeal_approval",
+      "type": "task",
+      "label": "PAP process begins",
+      "actor": "PSM",
+      "subprocess": "pap",
+      "status": "stated",
+      "detail": "If they can’t afford to be on the medicine, then the PAP process will begin.",
+      "alternatives": []
+    },
+    {
+      "id": "shipment_from_appeal_approval",
+      "type": "subprocess",
+      "label": "Shipment process",
+      "actor": "Biologics",
+      "subprocess": "shipment",
+      "status": "stated",
+      "detail": "Otherwise, shipment process will begin.",
+      "alternatives": []
+    },
+    {
+      "id": "create_comm_appeal_denial",
+      "type": "task",
+      "label": "Create Communicate Appeal Denial to Patient and HCP tasks",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If the appeal is denied, the Communicate Appeal Denial to Patient and HCP tasks will be created.",
+      "alternatives": []
+    },
+    {
+      "id": "close_comm_appeal_denial",
+      "type": "task",
+      "label": "Manually contact both and close both tasks",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "The PSM will manually contact both and close both tasks.",
+      "alternatives": []
+    },
+    {
+      "id": "gw_another_appeal",
+      "type": "gateway",
+      "label": "Another appeal possible?",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If it’s possible for another appeal to be put in, this will retry. Otherwise, the appeal case will then automatically close, and the PAP process will begin.",
+      "alternatives": []
+    },
+    {
+      "id": "close_appeal_case_denied",
+      "type": "task",
+      "label": "Automatically close appeal case",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "the appeal case will then automatically close",
+      "alternatives": []
+    },
+    {
+      "id": "pap_from_appeal_denial",
+      "type": "task",
+      "label": "PAP process begins",
+      "actor": "PSM",
+      "subprocess": "pap",
+      "status": "stated",
+      "detail": "and the PAP process will begin.",
+      "alternatives": []
+    },
+    {
+      "id": "term_no_copay_task",
+      "type": "terminal",
+      "label": "No copay task path unresolved",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "needs_clarification",
+      "detail": "The source states the Copay Enrollment task is created only if insurance type is commercial, but does not state what happens on this parallel branch when insurance type is not commercial.",
+      "alternatives": []
+    },
+    {
+      "id": "term_bi_closed",
+      "type": "terminal",
+      "label": "Benefits investigation case closed",
+      "actor": "PSCRM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "The benefits investigation case is closed.",
+      "alternatives": []
+    },
+    {
+      "id": "term_shipment_1",
+      "type": "terminal",
+      "label": "Shipment process complete (PA not needed)",
+      "actor": "Biologics",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    },
+    {
+      "id": "term_pap_1",
+      "type": "terminal",
+      "label": "PAP process (PA approval, cannot afford)",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    },
+    {
+      "id": "term_shipment_2",
+      "type": "terminal",
+      "label": "Shipment process complete (PA approval)",
+      "actor": "Biologics",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    },
+    {
+      "id": "term_pap_2",
+      "type": "terminal",
+      "label": "PAP process (no appeal available)",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    },
+    {
+      "id": "term_pap_3",
+      "type": "terminal",
+      "label": "PAP process (appeal approval, cannot afford)",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    },
+    {
+      "id": "term_shipment_3",
+      "type": "terminal",
+      "label": "Shipment process complete (appeal approval)",
+      "actor": "Biologics",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    },
+    {
+      "id": "term_pap_4",
+      "type": "terminal",
+      "label": "PAP process (appeal denied, no further appeal)",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    },
+    {
+      "id": "term_pap_uninsured",
+      "type": "terminal",
+      "label": "PAP process (uninsured/not covered)",
+      "actor": "PSM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": []
+    }
+  ],
+  "edges": [
+    {
+      "from_id": "start_bi",
+      "to_id": "start_bi_process",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "start_bi_process",
+      "to_id": "create_bi_case",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "create_bi_case",
+      "to_id": "gw_additional_info",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_additional_info",
+      "to_id": "gather_info",
+      "type": "branch",
+      "condition": "additional info is needed",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_additional_info",
+      "to_id": "close_additional_info",
+      "type": "branch",
+      "condition": "no additional info needed",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "gather_info",
+      "to_id": "close_additional_info",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "close_additional_info",
+      "to_id": "gw_plan_termed",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_plan_termed",
+      "to_id": "create_plan_termed_task",
+      "type": "branch",
+      "condition": "patient’s active member plan becomes inactive",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_plan_termed",
+      "to_id": "biologics_send_benefits",
+      "type": "branch",
+      "condition": "active member plan remains active",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "create_plan_termed_task",
+      "to_id": "discuss_insurance_change",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "discuss_insurance_change",
+      "to_id": "biologics_send_benefits",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "biologics_send_benefits",
+      "to_id": "gw_coverage",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "ann_bv_substatus",
+      "to_id": "biologics_send_benefits",
+      "type": "annotates",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_coverage",
+      "to_id": "deactivate_plan",
+      "type": "branch",
+      "condition": "patient is not covered or uninsured",
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_coverage",
+      "to_id": "gw_commercial",
+      "type": "branch",
+      "condition": "patient is covered or covered with restrictions",
+      "answer": null,
+      "order": 1
+    },
+    {
+      "from_id": "deactivate_plan",
+      "to_id": "psm_begin_pap_uninsured",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_commercial",
+      "to_id": "enroll_copay",
+      "type": "branch",
+      "condition": "patient has commercial insurance",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_commercial",
+      "to_id": "gw_pa_required",
+      "type": "branch",
+      "condition": "patient does not have commercial insurance; workflow continues",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "enroll_copay",
+      "to_id": "gw_pa_required",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_pa_required",
+      "to_id": "psrcm_receive_pa",
+      "type": "branch",
+      "condition": "PA is required (PA Case Substatus 'PRIOR AUTHORIZATION INITIATION')",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_pa_required",
+      "to_id": "psrcm_receive_pa",
+      "type": "branch",
+      "condition": "PA is not required (PA Case Substatus 'PA not required')",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "ann_pa_substatus_init",
+      "to_id": "gw_pa_required",
+      "type": "annotates",
+      "condition": null,
+      "answer": null,
+      "order": 2
+    },
+    {
+      "from_id": "ann_pa_substatus_notreq",
+      "to_id": "gw_pa_required",
+      "type": "annotates",
+      "condition": null,
+      "answer": null,
+      "order": 3
+    },
+    {
+      "from_id": "psrcm_receive_pa",
+      "to_id": "close_confirm_benefits",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "psrcm_receive_pa",
+      "to_id": "gw_insurance_commercial_copay",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 1
+    },
+    {
+      "from_id": "psrcm_receive_pa",
+      "to_id": "create_pa_case",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 2
+    },
+    {
+      "from_id": "close_confirm_benefits",
+      "to_id": "communicate_benefits",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "communicate_benefits",
+      "to_id": "gw_no_copay_close_bi",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_no_copay_close_bi",
+      "to_id": "close_bi_case_nocopay",
+      "type": "branch",
+      "condition": "there is no copay enrollment",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_no_copay_close_bi",
+      "to_id": "close_copay_and_bi",
+      "type": "branch",
+      "condition": "copay enrollment present; BI case closed via copay path",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "gw_insurance_commercial_copay",
+      "to_id": "create_copay_task",
+      "type": "branch",
+      "condition": "insurance type is commercial",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_insurance_commercial_copay",
+      "to_id": "term_no_copay_task",
+      "type": "branch",
+      "condition": "insurance type is not commercial",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "create_copay_task",
+      "to_id": "biologics_finish_copay",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "biologics_finish_copay",
+      "to_id": "close_copay_and_bi",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "ann_copay_substatus",
+      "to_id": "biologics_finish_copay",
+      "type": "annotates",
+      "condition": null,
+      "answer": null,
+      "order": 1
+    },
+    {
+      "from_id": "close_copay_and_bi",
+      "to_id": "term_bi_closed",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "close_bi_case_nocopay",
+      "to_id": "term_bi_closed",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "create_pa_case",
+      "to_id": "gw_pa_needed",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_pa_needed",
+      "to_id": "create_pa_needed_task",
+      "type": "branch",
+      "condition": "PA is needed",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_pa_needed",
+      "to_id": "create_pa_not_needed_task",
+      "type": "branch",
+      "condition": "PA is not needed",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "create_pa_needed_task",
+      "to_id": "biologics_do_pa",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "create_pa_not_needed_task",
+      "to_id": "create_comm_pa_not_needed",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "create_comm_pa_not_needed",
+      "to_id": "close_comm_pa_not_needed",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "close_comm_pa_not_needed",
+      "to_id": "close_pa_case_not_needed",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "close_pa_case_not_needed",
+      "to_id": "shipment_from_pa_not_needed",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "shipment_from_pa_not_needed",
+      "to_id": "term_shipment_1",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "biologics_do_pa",
+      "to_id": "gw_pa_substatus",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_pa_substatus",
+      "to_id": "create_comm_pa_approval",
+      "type": "branch",
+      "condition": "PA substatus is approved",
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_pa_substatus",
+      "to_id": "create_comm_pa_denial",
+      "type": "branch",
+      "condition": "PA substatus is denied",
+      "answer": null,
+      "order": 1
+    },
+    {
+      "from_id": "create_comm_pa_approval",
+      "to_id": "close_comm_pa_approval",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "close_comm_pa_approval",
+      "to_id": "gw_medpartd_pa",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_medpartd_pa",
+      "to_id": "gw_afford_pa",
+      "type": "branch",
+      "condition": "patient is Med-Part D",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_medpartd_pa",
+      "to_id": "shipment_from_pa_approval",
+      "type": "branch",
+      "condition": "patient is not Med-Part D",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "gw_afford_pa",
+      "to_id": "pap_from_pa_approval",
+      "type": "branch",
+      "condition": "patient can’t afford the medicine",
+      "answer": "no",
+      "order": 0
+    },
+    {
+      "from_id": "gw_afford_pa",
+      "to_id": "shipment_from_pa_approval",
+      "type": "branch",
+      "condition": "patient can afford the medicine",
+      "answer": "yes",
+      "order": 1
+    },
+    {
+      "from_id": "pap_from_pa_approval",
+      "to_id": "term_pap_1",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "shipment_from_pa_approval",
+      "to_id": "term_shipment_2",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "create_comm_pa_denial",
+      "to_id": "close_comm_pa_denial",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "close_comm_pa_denial",
+      "to_id": "biologics_appeal",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "biologics_appeal",
+      "to_id": "gw_appeal_available",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_appeal_available",
+      "to_id": "create_appeal_case",
+      "type": "branch",
+      "condition": "appeal case substatus is 'Appeal available'",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_appeal_available",
+      "to_id": "pap_no_appeal",
+      "type": "branch",
+      "condition": "appeal case substatus is not 'Appeal available'",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "pap_no_appeal",
+      "to_id": "term_pap_2",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "create_appeal_case",
+      "to_id": "gw_appeal_result",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_appeal_result",
+      "to_id": "create_comm_appeal_approval",
+      "type": "branch",
+      "condition": "appeal is approved",
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_appeal_result",
+      "to_id": "create_comm_appeal_denial",
+      "type": "branch",
+      "condition": "appeal is denied",
+      "answer": null,
+      "order": 1
+    },
+    {
+      "from_id": "create_comm_appeal_approval",
+      "to_id": "close_comm_appeal_approval",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "close_comm_appeal_approval",
+      "to_id": "gw_medpartd_appeal",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_medpartd_appeal",
+      "to_id": "gw_afford_appeal",
+      "type": "branch",
+      "condition": "patient is Med-Part D",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_medpartd_appeal",
+      "to_id": "shipment_from_appeal_approval",
+      "type": "branch",
+      "condition": "patient is not Med-Part D",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "gw_afford_appeal",
+      "to_id": "pap_from_appeal_approval",
+      "type": "branch",
+      "condition": "patient can’t afford the medicine",
+      "answer": "no",
+      "order": 0
+    },
+    {
+      "from_id": "gw_afford_appeal",
+      "to_id": "shipment_from_appeal_approval",
+      "type": "branch",
+      "condition": "patient can afford the medicine",
+      "answer": "yes",
+      "order": 1
+    },
+    {
+      "from_id": "pap_from_appeal_approval",
+      "to_id": "term_pap_3",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "shipment_from_appeal_approval",
+      "to_id": "term_shipment_3",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "create_comm_appeal_denial",
+      "to_id": "close_comm_appeal_denial",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "close_comm_appeal_denial",
+      "to_id": "gw_another_appeal",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "gw_another_appeal",
+      "to_id": "biologics_appeal",
+      "type": "branch",
+      "condition": "possible for another appeal to be put in (retry)",
+      "answer": "yes",
+      "order": 0
+    },
+    {
+      "from_id": "gw_another_appeal",
+      "to_id": "close_appeal_case_denied",
+      "type": "branch",
+      "condition": "no further appeal possible",
+      "answer": "no",
+      "order": 1
+    },
+    {
+      "from_id": "close_appeal_case_denied",
+      "to_id": "pap_from_appeal_denial",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "pap_from_appeal_denial",
+      "to_id": "term_pap_4",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    },
+    {
+      "from_id": "psm_begin_pap_uninsured",
+      "to_id": "term_pap_uninsured",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0
+    }
+  ]
+}

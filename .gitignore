@@ -6,6 +6,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 node_modules/
+js/dist/
 
 # Stage 3 regenerates this in a second, and it is 90% vendored viewer.
 processes/*/outputs/diagram.html

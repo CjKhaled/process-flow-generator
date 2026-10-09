@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_enrollment" targetNamespace="http://process-flow-generator/bpmn">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_enrollment" targetNamespace="http://process-flow-generator/bpmn">
   <bpmn:collaboration id="Collaboration_enrollment">
     <bpmn:participant id="Participant_enrollment" name="Intake &amp; Enrollment" processRef="Process_enrollment" />
   </bpmn:collaboration>
@@ -109,8 +109,8 @@
       <bpmndi:BPMNShape id="BPMNShape_Lane_PSCRM" bpmnElement="Lane_PSCRM" isHorizontal="true">
         <dc:Bounds x="110" y="1316" width="3502" height="400" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_Node_start_pef" bpmnElement="Node_start_pef">
-        <dc:Bounds x="150" y="160" width="36" height="36" />
+      <bpmndi:BPMNShape id="BPMNShape_Node_start_pef" bpmnElement="Node_start_pef" color:background-color="#fde8e8" color:border-color="#b91c1c">
+        <dc:Bounds x="128" y="158" width="80" height="40" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="124" y="201" width="89" height="56" />
         </bpmndi:BPMNLabel>
@@ -124,22 +124,22 @@
       <bpmndi:BPMNShape id="BPMNShape_Node_create_enrollment_record" bpmnElement="Node_create_enrollment_record">
         <dc:Bounds x="686" y="356" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_Node_gw_off_label" bpmnElement="Node_gw_off_label">
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_off_label" bpmnElement="Node_gw_off_label" isMarkerVisible="false">
         <dc:Bounds x="831" y="336" width="160" height="120" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="871" y="366" width="80" height="60" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_Node_sub_off_label" bpmnElement="Node_sub_off_label">
+      <bpmndi:BPMNShape id="BPMNShape_Node_sub_off_label" bpmnElement="Node_sub_off_label" color:background-color="#f3e8ff" color:border-color="#7e22ce">
         <dc:Bounds x="1036" y="516" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_Node_gw_duplicate" bpmnElement="Node_gw_duplicate">
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_duplicate" bpmnElement="Node_gw_duplicate" isMarkerVisible="false">
         <dc:Bounds x="1181" y="336" width="160" height="120" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="1221" y="366" width="80" height="60" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_Node_sub_duplicate" bpmnElement="Node_sub_duplicate">
+      <bpmndi:BPMNShape id="BPMNShape_Node_sub_duplicate" bpmnElement="Node_sub_duplicate" color:background-color="#f3e8ff" color:border-color="#7e22ce">
         <dc:Bounds x="1386" y="516" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_Node_create_patient_record" bpmnElement="Node_create_patient_record">
@@ -157,7 +157,7 @@
       <bpmndi:BPMNShape id="BPMNShape_Node_assign_psm" bpmnElement="Node_assign_psm">
         <dc:Bounds x="2186" y="1396" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_Node_gw_missing_info" bpmnElement="Node_gw_missing_info">
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_missing_info" bpmnElement="Node_gw_missing_info" isMarkerVisible="false">
         <dc:Bounds x="2331" y="1376" width="160" height="120" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="2371" y="1406" width="80" height="60" />
@@ -166,10 +166,10 @@
       <bpmndi:BPMNShape id="BPMNShape_Node_create_collect_mi" bpmnElement="Node_create_collect_mi">
         <dc:Bounds x="2536" y="1556" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_Node_sub_cm360_missing_info" bpmnElement="Node_sub_cm360_missing_info">
+      <bpmndi:BPMNShape id="BPMNShape_Node_sub_cm360_missing_info" bpmnElement="Node_sub_cm360_missing_info" color:background-color="#f3e8ff" color:border-color="#7e22ce">
         <dc:Bounds x="2736" y="516" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_Node_sub_psm_missing_info" bpmnElement="Node_sub_psm_missing_info">
+      <bpmndi:BPMNShape id="BPMNShape_Node_sub_psm_missing_info" bpmnElement="Node_sub_psm_missing_info" color:background-color="#f3e8ff" color:border-color="#7e22ce">
         <dc:Bounds x="2936" y="916" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_Node_cm360_send_activated_milestone" bpmnElement="Node_cm360_send_activated_milestone">
@@ -187,8 +187,8 @@
       <bpmndi:BPMNShape id="BPMNShape_Node_create_careplan" bpmnElement="Node_create_careplan">
         <dc:Bounds x="3336" y="356" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_Node_term_enrolled" bpmnElement="Node_term_enrolled">
-        <dc:Bounds x="3536" y="778" width="36" height="36" />
+      <bpmndi:BPMNShape id="BPMNShape_Node_term_enrolled" bpmnElement="Node_term_enrolled" color:background-color="#fde8e8" color:border-color="#b91c1c">
+        <dc:Bounds x="3514" y="776" width="80" height="40" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="3524" y="819" width="60" height="28" />
         </bpmndi:BPMNLabel>
@@ -197,7 +197,7 @@
         <dc:Bounds x="1546" y="456" width="180" height="62" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="BPMNEdge_Flow_0" bpmnElement="Flow_0">
-        <di:waypoint x="186" y="178" />
+        <di:waypoint x="208" y="178" />
         <di:waypoint x="336" y="178" />
         <di:waypoint x="336" y="356" />
       </bpmndi:BPMNEdge>
@@ -277,7 +277,7 @@
       <bpmndi:BPMNEdge id="BPMNEdge_Flow_70" bpmnElement="Flow_70">
         <di:waypoint x="3436" y="396" />
         <di:waypoint x="3554" y="396" />
-        <di:waypoint x="3554" y="778" />
+        <di:waypoint x="3554" y="776" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="BPMNEdge_Flow_4" bpmnElement="Flow_4">
         <di:waypoint x="911" y="456" /><di:waypoint x="911" y="556" /><di:waypoint x="1036" y="556" /><bpmndi:BPMNLabel>

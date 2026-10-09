@@ -1,0 +1,46 @@
+# Per-process settings. Data only -- the engine reads this, it is never imported.
+process_name: coverage_determination
+display_name: Coverage Determination
+
+# The swimlanes of the diagram, and what each one is. Every box sits in exactly one of
+# these -- a step in the lane that performs it, a terminal in the lane that owns the
+# outcome, an annotation in the lane of the box it describes. A bare name is not enough
+# for the extractor to place a box: knowing PSCRM runs the automations is what lets an
+# automated step land in that lane.
+#
+# Deliberately shorter than enrollment's list. PSM Manager and HAS are not here because
+# this source never mentions them, and a declared lane the text never uses is a lane the
+# extractor may reach for.
+# Listed in roughly the order they appear; that order is preserved into the prompt.
+actors:
+  CM360: an external hub that performs some enrollment activities
+  Biologics: >-
+    the specialty pharmacy that runs the benefits investigation, copay enrollment,
+    prior authorization and appeal work; the enrollment documents call the same
+    organisation SP Biologics
+  QRAL: an integration layer used by the hub to transmit information to the Salesforce platform
+  PSCRM: the Salesforce platform, which runs automations
+  PSM: a patient service manager, assigned to patients to help them through the patient journey
+  Patient: the patient
+  HCP: the provider who wrote the prescription
+
+# The lane a box falls to when the source does not say who performs it. This source is
+# full of work described without an actor ("the PA case will be created automatically"),
+# which would otherwise leave the box without a lane.
+# Must be one of the actors above.
+default_actor: PSCRM
+
+# Domain shorthand the source text uses without expanding. Given to the extractor
+# so it does not mistake an acronym for an actor or invent a meaning for it.
+# Anything that performs work belongs in actors above, not here.
+glossary:
+  BI: Benefits Investigation
+  BV: Benefits Verification
+  PA: Prior Authorization
+  PAP: Patient Assistance Program
+  Med-Part D: Medicare Part D
+  active member plan: the insurance coverage record on the patient, which can be deactivated
+  copay: the commercial-insurance cost-support program a patient is enrolled into
+
+# Optional override of the model used for this process. Null uses the global default.
+model_id: null

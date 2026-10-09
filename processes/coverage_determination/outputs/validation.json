@@ -1,0 +1,12 @@
+{
+  "findings": [
+    {
+      "code": "needs_clarification",
+      "severity": "resolution",
+      "message": "node 'term_no_copay_task' (No copay task path unresolved) needs human confirmation: The source states the Copay Enrollment task is created only if insurance type is commercial, but does not state what happens on this parallel branch when insurance type is not commercial.",
+      "node_ids": [
+        "term_no_copay_task"
+      ]
+    }
+  ]
+}

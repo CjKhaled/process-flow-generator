@@ -4,9 +4,15 @@ import pytest
 from pydantic import ValidationError
 
 from ir.models import BranchAnswer, Edge, EdgeType, Node, NodeStatus, NodeType, ProcessGraph
-from ir.process_config import ProcessConfig, load_process_config
+from ir.process_config import (
+    SKELETON_FILENAME,
+    Process,
+    ProcessConfig,
+    list_processes,
+    load_process_config,
+)
 from ir.skeleton import load_skeleton
-from tests.conftest import ENROLLMENT_DIR
+from tests.conftest import COVERAGE_DETERMINATION_DIR, ENROLLMENT_DIR, PROCESSES_ROOT
 
 
 def test_process_graph_round_trips_through_json(valid_graph: ProcessGraph) -> None:
@@ -125,17 +131,37 @@ def test_enrollment_skeleton_lists_only_the_work_the_process_hands_off() -> None
     assert [spec.name for spec in skeleton.subprocesses] == expected
 
 
-def test_every_enrollment_subprocess_is_drawn_in_a_declared_lane() -> None:
-    """A collapsed box takes its lane from here, and nothing checks an undrawn one.
+def test_coverage_determination_skeleton_collapses_only_the_handoffs() -> None:
+    """Prior authorization and appeals are absent by decision, not by oversight.
 
-    Stage 2 rejects a bad lane only on a box it actually draws, so a subprocess
-    this source never mentions would slip through. For enrollment specifically,
-    this test is the guard.
+    A collapsed box ends the path: stage 2 drops the edges leaving it and prunes
+    whatever they alone led to. PAP and shipment survive that because the source
+    stops at them. PA and appeals do not -- both send a status back and the source
+    runs on for another twelve lines, so collapsing either would delete the appeal
+    arc, the retry loop, the Med-Part D checks, and PAP and shipment with them,
+    since the only routes to those run through PA. Do not "complete" this list.
     """
-    skeleton = load_skeleton(ENROLLMENT_DIR / "skeleton.json")
-    config = load_process_config(ENROLLMENT_DIR)
+    skeleton = load_skeleton(COVERAGE_DETERMINATION_DIR / SKELETON_FILENAME)
 
-    assert all(spec.actor in config.actors for spec in skeleton.subprocesses)
+    assert [spec.name for spec in skeleton.subprocesses] == ["pap", "shipment"]
+
+
+@pytest.mark.parametrize("process", list_processes(PROCESSES_ROOT), ids=lambda p: p.name)
+def test_every_subprocess_is_drawn_in_a_declared_lane(process: Process) -> None:
+    """A collapsed box takes its lane from the skeleton, and nothing checks an undrawn one.
+
+    Stage 2 rejects a bad lane only on a box it actually draws, so a subprocess the
+    source never mentions would slip through to a diagram missing a swimlane. This
+    is the guard, and it runs over every process folder on disk rather than a named
+    one, so a process added later is covered by existing.
+    """
+    directory = PROCESSES_ROOT / process.name
+    skeleton = load_skeleton(directory / SKELETON_FILENAME)
+    config = load_process_config(directory)
+
+    undeclared = [spec.name for spec in skeleton.subprocesses if spec.actor not in config.actors]
+
+    assert not undeclared, f"{process.name}: subprocess lane(s) not in actors: {undeclared}"
 
 
 def test_enrollment_metadata_loads() -> None:
@@ -147,6 +173,21 @@ def test_enrollment_metadata_loads() -> None:
     assert "hub" in config.actors["CM360"]
     assert config.default_actor == "PSCRM"
     assert config.glossary["PEF"] == "Patient Enrollment Form"
+
+
+def test_coverage_determination_metadata_loads() -> None:
+    """The second process parses the same way, with its own vocabulary.
+
+    Biologics is one actor here even though enrollment's documents call the same
+    organisation SP Biologics, so the description carries both names for the
+    extractor to match against.
+    """
+    config = load_process_config(COVERAGE_DETERMINATION_DIR)
+
+    assert config.process_name == "coverage_determination"
+    assert "SP Biologics" in config.actors["Biologics"]
+    assert config.default_actor == "PSCRM"
+    assert config.glossary["PAP"] == "Patient Assistance Program"
     assert config.model_id is None
 
 

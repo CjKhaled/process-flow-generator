@@ -1,4 +1,11 @@
-"""Everything stage 3 reads from disk: the viewer's files, and the page shell.
+"""Everything stage 3 reads from disk: the built bundle, the stylesheets, the shell.
+
+Two different roots, for two different reasons. The script is **ours**, built
+from ``js/src/`` by esbuild, because the page needs bpmn-js plus this project's
+own modules compiled together. The stylesheets are bpmn-js's, read straight from
+``node_modules`` -- they need no compiling, and Python is what assembles the
+page.
+
 
 The page is written as a **single self-contained file**, so the viewer bundle and
 its stylesheets are inlined rather than linked. That is not a preference for big
@@ -8,7 +15,7 @@ path is broken by a different choice of root. Inlining removes the question.
 
 It is affordable because the icon font is already a base64 data URI inside
 ``bpmn-embedded.css`` -- so nothing else has to be embedded by hand, and the
-whole page lands around 730 KB, most of it :data:`VIEWER_JS`.
+whole page lands around 730 KB, most of it :data:`BUNDLE`.
 
 This module holds stage 3's only file reads. :mod:`render.page` is pure string
 assembly, and stays that way by being handed what it needs.
@@ -17,22 +24,28 @@ assembly, and stays that way by being handed what it needs.
 from dataclasses import dataclass
 from pathlib import Path
 
-DIST = Path(__file__).resolve().parent.parent / "js" / "node_modules" / "bpmn-js" / "dist"
-"""The vendored bpmn-js distribution, installed by ``npm ci --prefix js``."""
+JS_ROOT = Path(__file__).resolve().parent.parent / "js"
 
-JS_ROOT = DIST.parents[2]
+BUNDLE = JS_ROOT / "dist" / "pfg-viewer.js"
+"""Our own bundle: bpmn-js plus the modules in ``js/src/``, built by esbuild.
 
-VIEWER_JS = "bpmn-modeler.production.min.js"
-"""The modeler, for the page's session-only Edit mode.
+Not one of bpmn-js's prebuilt files. The page needs a modeler *and* this
+project's own renderer, palette and read-only gate, and those are ES modules
+that have to be compiled in -- which is what the build step exists for. The
+prebuilt files are sealed, and reach nothing but what their single global
+exposes.
 
-Three times the navigated viewer's size -- about 570 KB against 190 KB, which is
-most of why a page is now nearer 730 KB than 350 KB. The viewer bundle cannot be
-used instead: the machinery for dragging a shape lives in modules it does not
-contain, and taking only those would need a bundler this project does not have.
+Built rather than committed, because it is derived from ``package-lock.json``
+and ``src/`` and would otherwise be a large binary artifact to keep in step by
+hand.
+"""
 
-The page opens with editing off and builds that state itself, since a modeler is
-live from construction. Nothing it produces is ever saved, so an edited diagram
-can never disagree with ``graph.json`` on disk.
+STYLES_DIR = JS_ROOT / "node_modules" / "bpmn-js" / "dist"
+"""Where the stylesheets come from: bpmn-js as installed, not as bundled.
+
+The CSS is not part of the bundle. Python assembles the page, so Python reads
+the stylesheets and inlines them, and esbuild is left doing only the job it is
+good at.
 """
 
 STYLESHEETS = (
@@ -57,22 +70,26 @@ class ViewerAssets:
     styles: str
 
 
-def load_assets(dist: Path = DIST) -> ViewerAssets:
-    """Read the bpmn-js distribution.
+def load_assets(bundle: Path = BUNDLE, styles_dir: Path = STYLES_DIR) -> ViewerAssets:
+    """Read the built bundle and bpmn-js's stylesheets.
 
     Args:
-        dist: The ``dist/`` directory of an installed bpmn-js. Overridden in
-            tests, which inline stubs rather than 300 KB of vendor code.
+        bundle: Our esbuild output. Overridden in tests, which inline a stub
+            rather than half a megabyte of vendor code.
+        styles_dir: The ``dist/`` directory of an installed bpmn-js.
 
     Returns:
         The script and the concatenated stylesheets.
 
     Raises:
-        AssetError: If any of them is missing, naming the command that installs them.
+        AssetError: If either is missing. The two carry different remedies on
+            purpose -- a missing bundle means the *build* has not been run,
+            which ``npm ci`` alone will not fix, and that is the mistake most
+            likely to be made after a fresh clone.
     """
+    script = _read(bundle, f"run `npm ci --prefix {JS_ROOT}` then `npm run build --prefix {JS_ROOT}`")
     install = f"run `npm ci --prefix {JS_ROOT}`"
-    script = _read(dist / VIEWER_JS, install)
-    styles = "\n".join(_read(dist / name, install) for name in STYLESHEETS)
+    styles = "\n".join(_read(styles_dir / name, install) for name in STYLESHEETS)
     return ViewerAssets(script=script, styles=styles)
 
 

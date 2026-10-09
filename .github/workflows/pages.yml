@@ -43,6 +43,7 @@ jobs:
         run: |
           uv sync --frozen
           npm ci --prefix js
+          npm run build --prefix js
 
       # The page inlines bpmn-js, which is why the npm install above is not
       # optional here.

@@ -2,11 +2,17 @@
   "name": "pfg-js",
   "version": "1.0.0",
   "private": true,
-  "description": "The project's npm dependencies: the BPMN layouter (stage 2) and the viewer bundle inlined into the rendered page (stage 3). No project JavaScript lives here.",
+  "description": "The project's npm dependencies and the browser modules built from them: the BPMN layouter (stage 2, run as a CLI) and the viewer bundle inlined into the rendered page (stage 3, built from src/ by esbuild).",
   "type": "module",
   "license": "MIT",
+  "scripts": {
+    "build": "esbuild src/viewer.js --bundle --minify --format=iife --outfile=dist/pfg-viewer.js"
+  },
   "dependencies": {
     "bpmn-auto-layout": "2.0.0-alpha.2",
     "bpmn-js": "18.24.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }

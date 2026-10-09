@@ -39,6 +39,7 @@ pythonpath = ["."]
 testpaths = ["tests"]
 markers = [
     "requires_node: needs Node and an installed js/; skipped when absent.",
+    "requires_bundle: also needs `npm run build --prefix js`; skipped when absent.",
 ]
 
 # pyproject.toml

@@ -19,7 +19,7 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 
-from bpmn import decisions, document, semantics
+from bpmn import colors, decisions, document, semantics
 from bpmn.autolayout import Layouter, subprocess_layouter
 from extractors.model import build_model_call
 from extractors.process import DEFAULT_MAX_ATTEMPTS, ModelCall, extract
@@ -100,7 +100,7 @@ def run(
 
     _say(progress, LAYING_OUT)
     definitions = semantics.translate(result.graph, config, skeleton)
-    laid_out = decisions.widen(layout(document.render(definitions)))
+    laid_out = colors.apply(decisions.widen(layout(document.render(definitions))))
 
     _say(progress, RENDERING)
     return page.payload(

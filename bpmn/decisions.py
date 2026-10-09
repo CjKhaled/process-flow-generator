@@ -1,8 +1,15 @@
-"""Redrawing a decision so it carries its own question.
+"""Redrawing a decision so it carries its own question, and widening events.
 
 This is the **one** place in the project that computes geometry. Everywhere else
 coordinates are the layouter's alone, and that is still the rule; what follows is
-a stated exception to it, kept to one element type and one operation.
+a stated exception to it, kept to two element types and one operation on each.
+
+Both are the same shape of problem: the layouter sizes a shape for the way BPMN
+draws it by default, and this project draws it differently. A gateway needs room
+for the question that belongs inside it; an event is drawn as a horizontal oval
+by ``js/src/renderer.js`` and a 36x36 square has no room to be one. Neither is
+something the layouter could have known, and both have to be settled before the
+arrows are re-aimed -- which is why they share a pass.
 
 The reason it has to exist: BPMN puts a gateway's name on an *external* label,
 and bpmn-js hard-codes the list of types whose label is external, so no styling
@@ -13,8 +20,14 @@ question with the shape it belongs to.
 
 So after the layout is computed, every gateway is redrawn: the diamond grows
 about its own centre until the question fits inside it, the label is moved into
-it, the ``X`` is dropped, and the arrows that met the old boundary are pushed out
-to the new one.
+it, the ``X`` is turned off, and the arrows that met the old boundary are pushed
+out to the new one.
+
+"Turned off" means ``isMarkerVisible="false"``, written rather than removed. The
+two are not the same to bpmn-js: its viewer only reads the attribute, so absence
+was enough, but its modeler normalises the DI on import and treats a *missing*
+value as true. Deleting the attribute therefore draws the marker in exactly the
+build the page now uses.
 
 The same pass fixes a second thing about how the layouter draws a decision: it
 runs every branch out of the *same* vertex and separates them further along,
@@ -23,8 +36,13 @@ branch whose target is below is sent out of the bottom point and one whose
 target is above out of the top, each rebuilt as the two-segment L the layouter
 itself draws for that case. See :func:`_spread`.
 
+Events get the simpler treatment: grown about their own centre to :data:`EVENT`
+and nothing more. They keep the layouter's label, which sits below the shape and
+stays centred because the centre does not move, and they are kept out of
+:func:`_spread`, which reroutes *branches* -- something an event does not have.
+
 Nothing else in the document is touched -- other shapes, their labels, and every
-connection that does not touch a gateway are written back as they arrived.
+connection that does not touch a resized shape are written back as they arrived.
 
 The size is a constant rather than a measurement of the text. Decisions that are
 all one size read as one kind of thing, and the layouter leaves enough room
@@ -55,6 +73,15 @@ Point = tuple[float, float]
 
 DIAMOND = (160.0, 120.0)
 """The width and height every decision is redrawn at, in place of the layouter's 50x50."""
+
+EVENT = (80.0, 40.0)
+"""The width and height every start and end event is widened to, from 36x36.
+
+Wider than tall, because the page draws these as horizontal ovals and a square
+cannot hold one. The layouter spaces shapes 100px apart horizontally, so growing
+22px each side still leaves a comfortable gap; the extra 4px of height is
+nothing against a ``VERTICAL_GAP`` of 80.
+"""
 
 _LABEL_FRACTION = 0.5
 """How much of the diamond the text may use.
@@ -90,18 +117,27 @@ def widen(xml: str) -> str:
     root = ET.fromstring(xml)  # noqa: S314  # our own layouter's output, not untrusted input
 
     gateways = _gateway_ids(root)
+    events = _event_ids(root)
+
     resized: dict[str, tuple[Rect, Rect]] = {}
     for shape in root.iter(_di("BPMNShape")):
         element_id = shape.get("bpmnElement", "")
-        if element_id not in gateways:
+        if element_id in gateways:
+            sizes = _redraw(shape)
+        elif element_id in events:
+            sizes = _resize(shape, EVENT)
+        else:
             continue
-        sizes = _redraw(shape)
         if sizes is not None:
             resized[element_id] = sizes
 
     if resized:
+        # Every resized shape has arrows to push out to its new boundary, but
+        # only a gateway has branches to spread across corners -- an event has
+        # one way in or one way out, and rerouting that would move a line the
+        # layouter had already placed well.
         _reaim(root, resized)
-        _spread(root, resized)
+        _spread(root, {name: sizes for name, sizes in resized.items() if name in gateways})
 
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(root, encoding="unicode") + "\n"
 
@@ -155,8 +191,46 @@ def _gateway_ids(root: ET.Element) -> frozenset[str]:
     )
 
 
+def _resize(shape: ET.Element, size: tuple[float, float]) -> tuple[Rect, Rect] | None:
+    """Grow or shrink one shape about its own centre.
+
+    Keeping the centre is what lets everything else stay where it is: a label
+    the layouter centred on the shape is still centred, and a neighbour is
+    crowded evenly on both sides rather than shoved one way.
+
+    Args:
+        shape: A ``bpmndi:BPMNShape``.
+        size: The width and height to draw it at.
+
+    Returns:
+        The bounds before and after, or None if the shape carries none.
+    """
+    bounds = shape.find(_dc("Bounds"))
+    old = _read(bounds)
+    if bounds is None or old is None:
+        return None
+
+    new = old.about(*size)
+    _write(bounds, new)
+    return old, new
+
+
+def _event_ids(root: ET.Element) -> frozenset[str]:
+    """The ids of every start and end event in the semantic tree.
+
+    Matched on the tag ending in ``Event`` rather than on the two this project
+    emits, so an intermediate event added later is widened the same way instead
+    of being drawn as a small circle among ovals.
+    """
+    return frozenset(
+        element.get("id", "")
+        for element in root.iter()
+        if element.tag.startswith(f"{{{BPMN_NS}}}") and element.tag.endswith("Event") and element.get("id")
+    )
+
+
 def _redraw(shape: ET.Element) -> tuple[Rect, Rect] | None:
-    """Resize one gateway's shape, move its label inside, and drop its marker.
+    """Resize one gateway's shape, move its label inside, and turn its marker off.
 
     Args:
         shape: A ``bpmndi:BPMNShape`` standing for a gateway.
@@ -165,25 +239,28 @@ def _redraw(shape: ET.Element) -> tuple[Rect, Rect] | None:
         The bounds before and after, or None if the shape carries none and there
         is nothing to redraw.
     """
-    bounds = shape.find(_dc("Bounds"))
-    old = _read(bounds)
-    if bounds is None or old is None:
+    sizes = _resize(shape, DIAMOND)
+    if sizes is None:
         return None
-
-    new = old.about(*DIAMOND)
-    _write(bounds, new)
+    new = sizes[1]
 
     # The X promises a reader something the shape no longer has room to say, and
-    # it is dropped in the file rather than hidden in our viewer's stylesheet:
+    # it is turned off in the file rather than hidden in our viewer's stylesheet:
     # BPMN allows an exclusive gateway to be drawn without the marker, so any
     # tool opening this document sees the same shape our page does.
-    shape.attrib.pop("isMarkerVisible", None)
+    #
+    # Written false rather than removed, which is not the same thing to bpmn-js.
+    # Its modeler normalises the DI on import and reads a *missing* attribute as
+    # true, so deleting this draws the very marker the line is here to remove.
+    # Its viewer only ever read the attribute, which is why removing it looked
+    # correct for as long as the page used one.
+    shape.set("isMarkerVisible", "false")
 
     label = shape.find(f"{_di('BPMNLabel')}/{_dc('Bounds')}")
     if label is not None:
         _write(label, new.about(new.width * _LABEL_FRACTION, new.height * _LABEL_FRACTION))
 
-    return old, new
+    return sizes
 
 
 def _reaim(root: ET.Element, resized: dict[str, tuple[Rect, Rect]]) -> None:

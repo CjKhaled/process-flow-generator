@@ -16,15 +16,20 @@ import pytest
 from pipelines.stage2 import DIAGRAM_FILENAME
 from pipelines.stage3 import PAGE_FILENAME, run
 from render.assets import load_assets
-from tests.conftest import ENROLLMENT_DIR, requires_node
+from tests.conftest import ENROLLMENT_DIR, requires_bundle
 
-pytestmark = requires_node
+pytestmark = requires_bundle
 
 
 def test_the_real_assets_load() -> None:
+    """The built bundle and the installed stylesheets, from their two different roots."""
     assets = load_assets()
 
-    assert "BpmnJS" in assets.script
+    # The interface template.html is written against. Asserted on the built
+    # output rather than on the source, because a bundle that compiled but
+    # exposed nothing would leave the page with no viewer and no error.
+    assert "window.PFG" in assets.script
+    assert "createViewer" in assets.script
     assert "@font-face" in assets.styles
     assert "data:application/octet-stream;" in assets.styles, "the icon font should be inlined, not linked"
 

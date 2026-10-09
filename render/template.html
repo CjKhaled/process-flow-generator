@@ -373,8 +373,9 @@
 
   /* A note is a box, not an open bracket. bpmn-js draws a textAnnotation as an
      invisible rect plus a bracket path; the rect is given the border and the
-     bracket is dropped, so the note reads as the box of context it is. Ids are
-     the only handle CSS has on element type, which is why annotations carry a
+     bracket is dropped, so the note reads as the box of context it is. An id
+     prefix is the handle here because the SVG element cannot distinguish these:
+     a textAnnotation is a rect like a task is, which is why annotations carry a
      prefix of their own. */
   #canvas [data-element-id^="Note_"] .djs-visual > rect {
     stroke: var(--line) !important;
@@ -390,6 +391,21 @@
   #canvas [data-element-id^="Association_"] .djs-visual > path {
     stroke-dasharray: none !important;
     stroke: var(--muted) !important;
+  }
+
+  /* ---- labels on top of lines ------------------------------------------
+
+     A Yes or No sitting on its arrow is unreadable where the two cross. Painting
+     the stroke first and the fill over it gives each glyph a background-coloured
+     halo, which is how every other diagramming tool solves this. `_label` is the
+     suffix diagram-js gives an external label element, so this reaches labels
+     that float free -- on flows and gateways -- and never text set inside a box,
+     which needs no halo and would look bruised by one. */
+  [data-element-id$="_label"] .djs-label {
+    paint-order: stroke;
+    stroke: var(--panel);
+    stroke-width: 3px;
+    stroke-linejoin: round;
   }
 
   /* Boxes a human still has to settle. The first child of a shape's visual is
@@ -490,45 +506,10 @@
   var progress = document.getElementById('progress');
   var errorBox = document.getElementById('error');
 
-  // Every command that changes the diagram rather than the view. Refused while
-  // editing is off, which is how this page has a read-only state at all: a
-  // modeler is live from construction and bpmn-js offers no switch.
-  var MUTATIONS = [
-    'shape.create', 'shape.append', 'shape.delete', 'shape.move', 'shape.resize',
-    'shape.attach', 'shape.replace', 'shape.toggleCollapse',
-    'elements.create', 'elements.delete', 'elements.move',
-    'connection.create', 'connection.delete', 'connection.reconnect',
-    'connection.updateWaypoints', 'bendpoint.move',
-    'element.updateLabel', 'label.create'
-  ];
-
-  // Above the 1000 bpmn-js registers its own rules at, so this answers first and
-  // its refusal is the one that stands. Only the named commands are touched --
-  // a blanket veto would also catch the layout and resize work that importing a
-  // diagram does for itself.
-  var RULE_PRIORITY = 2000;
-
-  var editing = false;
-
-  function EditGate(eventBus) {
-    function veto() {
-      // undefined is "no opinion", which lets bpmn-js's own rules decide.
-      return editing ? undefined : false;
-    }
-    MUTATIONS.forEach(function (command) {
-      eventBus.on('commandStack.' + command + '.canExecute', RULE_PRIORITY, veto);
-    });
-    // Renaming is refused above, but direct editing opens on a double-click
-    // rather than through a rule, so without this the box would appear and then
-    // silently decline to save what was typed into it.
-    eventBus.on('element.dblclick', RULE_PRIORITY, veto);
-  }
-  EditGate.$inject = ['eventBus'];
-
-  var viewer = new BpmnJS({
-    container: '#canvas',
-    additionalModules: [{ __init__: ['pfgEditGate'], pfgEditGate: ['type', EditGate] }]
-  });
+  // Everything about how a diagram is drawn -- the modules, the read-only
+  // state, the shapes -- lives in js/src/ and arrives as one bundle. This
+  // script's job is the page around it.
+  var viewer = PFG.createViewer('#canvas');
   var canvas = viewer.get('canvas');
   var registry = viewer.get('elementRegistry');
   var edit = document.querySelector('.edit');
@@ -545,7 +526,7 @@
     } else if (action === 'restart') {
       toLanding();
     } else if (action === 'edit') {
-      setEditing(!editing);
+      setEditing(body.getAttribute('data-editing') !== 'on');
     } else if (action === 'reset') {
       // Re-imports the diagram as it was generated. `shown` is never written to,
       // so it is still the original however much the canvas has been rearranged.
@@ -703,11 +684,16 @@
     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
   }
 
-  // The flag the rules read, plus the attribute the stylesheet reads. Nothing
-  // is re-imported on the way in or out: turning editing off leaves whatever was
-  // rearranged on screen, and Reset is what puts it back.
+  // The flag the rules read, plus the attribute on `body`. That attribute is the
+  // page's record of the state and has three readers -- the stylesheet, which
+  // hides the palette and the context pad; the button, which reads it back to
+  // know what to flip to; and a person with the inspector open. The flag itself
+  // lives in `js/src/editGate.js` and is not visible from here, which is why the
+  // button asks the attribute rather than keeping a second copy that could drift.
+  // Nothing is re-imported on the way in or out: turning editing off leaves
+  // whatever was rearranged on screen, and Reset is what puts it back.
   function setEditing(on) {
-    editing = on;
+    PFG.setEditing(on);
     body.setAttribute('data-editing', on ? 'on' : 'off');
     edit.setAttribute('aria-pressed', on ? 'true' : 'false');
     edit.textContent = on ? 'Done' : 'Edit';

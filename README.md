@@ -110,7 +110,10 @@ write the file (no positions yet)
 work out where everything goes
       │
       ▼
-make the decisions readable
+resize what needs more room
+      │
+      ▼
+colour it in
       │
       ▼
 a real BPMN diagram
@@ -129,7 +132,7 @@ Because the positions are somebody else's job, the only influence this stage has
 final picture looks is **the order it lists things in** — the library breaks ties that way. So
 the sorting is doing real work, not tidying.
 
-Two things get special treatment.
+Three things get special treatment.
 
 ### Subprocesses fold into one box
 
@@ -163,12 +166,30 @@ diagram that's confidently backwards is worse than one that's wordy, and guessin
 wording works right up until it meets "unless the prescriber declines".
 
 This redrawing is careful about what it touches. If moving an arrow would send it through
-another box, the change is abandoned and the library's version is kept. Nothing but the
-decisions is altered.
+another box, the change is abandoned and the library's version is kept.
+
+Start and end points are widened in the same pass, for the same kind of reason: they're drawn
+as horizontal ovals, and the layout library sized them as small squares because that's how
+BPMN normally draws them.
+
+### Colour goes into the file, not into the web page
+
+Start and end points come out red, and the folded-up subprocess boxes purple — pale enough
+that black text on them stays readable.
+
+Those colours are written into the diagram file itself rather than applied by the web page.
+It would have been less work to do it in the page's stylesheet, but then the colours would
+only exist *in our page*: a colleague opening the file in Camunda or any other BPMN tool
+would see plain black and white. Putting them in the file means every tool shows the same
+diagram. (An earlier version of this project did use the stylesheet, and was wrong to.)
+
+Only those two get colour. Colouring everything would say nothing — the point is to make the
+start, the ends and the handed-off work findable at a glance.
 
 *In the code: `bpmn/semantics.py` decides what each thing is and folds the subprocesses,
-`bpmn/document.py` writes the file, `bpmn/autolayout.py` calls the layout library, and
-`bpmn/decisions.py` redraws the diamonds.*
+`bpmn/document.py` writes the file, `bpmn/autolayout.py` calls the layout library,
+`bpmn/decisions.py` resizes the diamonds and the start/end points, and `bpmn/colors.py`
+colours them.*
 
 ## Stage 3 — making it viewable
 
@@ -210,8 +231,30 @@ One consequence worth knowing: the open questions are worked out before you star
 and never recalculated. If you delete a box that had a question against it, the question
 stays in the list, now pointing at nothing. The page says as much while you're editing.
 
-*In the code: `render/page.py` assembles the page, `render/template.html` is the shell —
-where the diagram's appearance is decided, and where editing is switched on and off.*
+The toolbar on the left offers only the pieces these diagrams are made of — a start, an end,
+a step, a decision, a folded-up subprocess and a note. The diagram library ships fifteen
+tools covering the whole of BPMN, and most of them would let you add something no later part
+of the pipeline understands.
+
+### A note on how the page is built
+
+The page needs the diagram library *plus* this project's own additions — the custom shapes,
+the trimmed toolbar, the switch that makes Edit mode possible. Those have to be compiled
+together into a single file, which is what `npm run build --prefix js` does. So a fresh
+clone needs three commands, not two:
+
+```bash
+uv sync
+npm ci --prefix js
+npm run build --prefix js
+```
+
+Forgetting the last one is the most likely reason stage 3 fails on a new machine, and the
+error says so.
+
+*In the code: `render/page.py` assembles the page, `render/template.html` is the shell, and
+`js/src/` holds the browser modules — `renderer.js` for the custom shapes, `palette.js` for
+the toolbar, `editGate.js` for the Edit switch.*
 
 ## The hosted demo
 
@@ -254,7 +297,8 @@ progress, `api/app.py` is the web endpoint.*
 
 ```bash
 uv sync
-npm ci --prefix js               # the BPMN layouter and viewer
+npm ci --prefix js               # the BPMN layouter and the diagram library
+npm run build --prefix js        # the page's script; stage 3 fails without it
 echo "ANTHROPIC_API_KEY=sk-..." > .env
 uv run python -m pipelines.stage1 --process enrollment
 uv run python -m pipelines.stage2 --process enrollment
@@ -305,6 +349,11 @@ first run rather than crash-looping.
 
 Copy `processes/enrollment/`, then swap the data — no code changes:
 
+`processes/coverage_determination/` is the worked example, added exactly this way: three
+data files and nothing else. It picks up the pipeline, the validator and the demo dropdown
+on its own, because a process is discovered by having a `metadata.yaml`, never by being
+named anywhere in the code.
+
 - `metadata.yaml` — machine name, display name, the swimlanes and
   what each one *is*, the default lane, domain shorthand, optional model override.
   Nothing enforces that the machine name matches the folder, but every id in the generated
@@ -348,12 +397,16 @@ one box get a lane, so declaring one the source never uses costs nothing.
 - `bpmn/` — stage 2. `semantics.py` decides what each element *is* and the order it is
   declared in; `document.py` writes the semantic XML and no diagram interchange;
   `autolayout.py` is the sole boundary to the layouter; `decisions.py` redraws each gateway
-  afterwards, and is the only geometry this project owns. The project contains no JavaScript;
-  `js/` at the repo root holds the pinned npm dependencies.
-- `render/` — stage 3, and the hosted page. `assets.py` holds every file read: the vendored
-  viewer, and the page shell; `template.html` is that shell, filled by plain string
-  replacement over comment sentinels; `page.py` assembles both pages from one payload and
-  touches no disk.
+  and widens each event afterwards, and is the only geometry this project owns; `colors.py`
+  writes fill and stroke into the file so every BPMN tool shows the same diagram.
+- `render/` — stage 3, and the hosted page. `assets.py` holds every file read: our built
+  bundle, the diagram library's stylesheets, and the page shell; `template.html` is that
+  shell, filled by plain string replacement over comment sentinels; `page.py` assembles both
+  pages from one payload and touches no disk.
+- `js/` — the npm dependencies, and `src/`: the browser modules bundled into the page by
+  esbuild. `renderer.js` draws the custom shapes, `palette.js` trims the toolbar,
+  `editGate.js` is the Edit switch, and `viewer.js` ties them together. Built output goes to
+  `js/dist/` and is not committed.
 - `api/` — the hosted demo's service. `pipeline.py` composes stages 1–3 in memory from the
   same functions the CLI calls; `runs.py` holds runs in flight; `app.py` is the HTTP
   surface, with the model and the layouter as constructor arguments so it can be tested
@@ -361,7 +414,8 @@ one box get a lane, so declaring one the source never uses costs nothing.
 - `pipelines/` — orchestrators. `stage1.py`, `stage2.py` and `stage3.py` each compose one
   run end to end; `site.py` builds the hosted page.
 - `utils/` — IO helpers and typed environment settings.
-- `processes/<name>/` — data only, no code.
+- `processes/<name>/` — data only, no code. Two of them: `enrollment` and
+  `coverage_determination`.
 - `tests/` — schema, validator, retry loop, IO, prompt, the BPMN mapping and document, the
   page builder, the service, and every orchestrator. Geometry is asserted only in the
   integration suite, against the file the layouter produced. No test drives a browser: the

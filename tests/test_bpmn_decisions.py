@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from bpmn.decisions import DIAMOND, widen
+from bpmn.decisions import DIAMOND, EVENT, widen
 
 BPMN_NS = "http://www.omg.org/spec/BPMN/20100524/MODEL"
 BPMNDI_NS = "http://www.omg.org/spec/BPMN/20100524/DI"
@@ -146,11 +146,18 @@ def test_the_label_stays_within_the_slanted_edges(redrawn: ET.Element) -> None:
     assert (label[2], label[3]) == (box[2] / 2, box[3] / 2)
 
 
-def test_the_marker_is_dropped(redrawn: ET.Element) -> None:
-    """The X is removed in the file, not hidden in our stylesheet: BPMN permits a gateway without it."""
+def test_the_marker_is_turned_off(redrawn: ET.Element) -> None:
+    """The X is switched off in the file, not hidden in our stylesheet.
+
+    Asserted as an explicit ``false`` rather than as an absence, because to
+    bpmn-js those mean opposite things: its modeler normalises the DI on import
+    and reads a missing value as *true*. An earlier version of this test checked
+    the attribute had been removed, which stayed green while the page drew a
+    large X over every question.
+    """
     shape = next(item for item in redrawn.iter(f"{{{BPMNDI_NS}}}BPMNShape") if item.get("bpmnElement") == "Node_gw")
 
-    assert "isMarkerVisible" not in shape.attrib
+    assert shape.get("isMarkerVisible") == "false"
 
 
 def test_an_arrow_arriving_meets_the_new_boundary(redrawn: ET.Element) -> None:
@@ -179,15 +186,31 @@ def test_the_waypoints_in_between_are_left_alone(redrawn: ET.Element) -> None:
 
 
 def test_every_other_shape_keeps_the_geometry_the_layouter_gave_it(redrawn: ET.Element) -> None:
-    """Only decisions are redrawn. A task moving would be this module exceeding its remit."""
+    """Only decisions and events are touched. A task moving would exceed this module's remit."""
     assert bounds_of(redrawn, "Node_transcribe") == (286, 356, 100, 80)
     assert bounds_of(redrawn, "Node_next") == (1036, 356, 100, 80)
     assert bounds_of(redrawn, "Node_sub_off_label") == (861, 596, 100, 80)
-    assert bounds_of(redrawn, "Node_start") == (150, 378, 36, 36)
+
+
+def test_an_event_is_widened_about_its_centre(redrawn: ET.Element) -> None:
+    """The page draws these as horizontal ovals, and 36x36 has no room to be one.
+
+    Grown about the centre rather than from a corner, which is what leaves the
+    layouter's spacing even on both sides and the label still centred under it.
+    """
+    x, y, width, height = bounds_of(redrawn, "Node_start")
+
+    assert (width, height) == EVENT
+    # The layouter placed it at (150, 378, 36, 36), centred on (168, 396).
+    assert (x + width / 2, y + height / 2) == (168, 396)
 
 
 def test_an_external_label_that_is_not_a_decisions_is_left_where_it_was(redrawn: ET.Element) -> None:
-    """An event's name belongs outside it; only a gateway's had nowhere useful to go."""
+    """An event's name belongs outside it; only a gateway's had nowhere useful to go.
+
+    Untouched even though the event around it grew: the label was centred on the
+    shape's centre, and widening about that centre leaves it centred still.
+    """
     assert label_of(redrawn, "Node_start") == (136, 419, 65, 28)
 
 

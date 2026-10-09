@@ -1,0 +1,943 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_coverage_determination" targetNamespace="http://process-flow-generator/bpmn">
+  <bpmn:collaboration id="Collaboration_coverage_determination">
+    <bpmn:participant id="Participant_coverage_determination" name="Coverage Determination" processRef="Process_coverage_determination" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_coverage_determination" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Process_coverage_determination">
+      <bpmn:lane id="Lane_CM360" name="CM360">
+        <bpmn:flowNodeRef>Node_start_bi</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Biologics" name="Biologics">
+        <bpmn:flowNodeRef>Node_start_bi_process</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_biologics_send_benefits</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_enroll_copay</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_pa_required</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_biologics_finish_copay</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_sub_shipment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_biologics_do_pa</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_biologics_appeal</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_PSCRM" name="PSCRM">
+        <bpmn:flowNodeRef>Node_create_bi_case</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_plan_termed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_create_plan_termed_task</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_coverage</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_deactivate_plan</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_commercial</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_psrcm_receive_pa</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_close_confirm_benefits</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_no_copay_close_bi</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_close_bi_case_nocopay</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_insurance_commercial_copay</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_create_copay_task</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_close_copay_and_bi</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_create_pa_case</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_pa_needed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_create_pa_needed_task</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_create_pa_not_needed_task</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_create_comm_pa_not_needed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_close_pa_case_not_needed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_pa_substatus</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_create_comm_pa_approval</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_create_comm_pa_denial</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_appeal_available</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_create_appeal_case</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_appeal_result</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_create_comm_appeal_approval</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_create_comm_appeal_denial</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_close_appeal_case_denied</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_term_no_copay_task</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_term_bi_closed</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_PSM" name="PSM">
+        <bpmn:flowNodeRef>Node_gw_additional_info</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gather_info</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_close_additional_info</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_discuss_insurance_change</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_sub_pap</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_communicate_benefits</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_close_comm_pa_not_needed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_close_comm_pa_approval</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_medpartd_pa</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_afford_pa</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_close_comm_pa_denial</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_close_comm_appeal_approval</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_medpartd_appeal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_afford_appeal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_close_comm_appeal_denial</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_another_appeal</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Node_start_bi" name="CM360 sends patient data and milestone to QRAL" />
+    <bpmn:task id="Node_start_bi_process" name="Start BI process" />
+    <bpmn:task id="Node_create_bi_case" name="Automatically create benefits investigation case" />
+    <bpmn:exclusiveGateway id="Node_gw_additional_info" name="Additional info needed?" />
+    <bpmn:task id="Node_gather_info" name="Gather required information" />
+    <bpmn:task id="Node_close_additional_info" name="Manually close additional info task" />
+    <bpmn:exclusiveGateway id="Node_gw_plan_termed" name="Active member plan becomes inactive?" />
+    <bpmn:task id="Node_create_plan_termed_task" name="Automatically create BI Completed - Plan Termed task" />
+    <bpmn:task id="Node_discuss_insurance_change" name="Reach out to patient and discuss insurance change/coverage status, then close task" />
+    <bpmn:task id="Node_biologics_send_benefits" name="Perform required logic and send benefits details to QRAL" />
+    <bpmn:exclusiveGateway id="Node_gw_coverage" name="Coverage status?" />
+    <bpmn:task id="Node_deactivate_plan" name="Deactivate active member plan and mark patient uninsured" />
+    <bpmn:subProcess id="Node_sub_pap" name="PAP Process" />
+    <bpmn:exclusiveGateway id="Node_gw_commercial" name="Has commercial insurance?" />
+    <bpmn:task id="Node_enroll_copay" name="Enroll patient into copay" />
+    <bpmn:exclusiveGateway id="Node_gw_pa_required" name="PA required?" />
+    <bpmn:task id="Node_psrcm_receive_pa" name="PSCRM receives PA substatus; parallel actions begin" />
+    <bpmn:task id="Node_close_confirm_benefits" name="Automatically close Confirm Benefits Details task; open Communicate Benefits task" />
+    <bpmn:task id="Node_communicate_benefits" name="Reach out to patient and manually close Communicate Benefits task" />
+    <bpmn:exclusiveGateway id="Node_gw_no_copay_close_bi" name="Copay enrollment present?" />
+    <bpmn:task id="Node_close_bi_case_nocopay" name="Automatically close benefits investigation case" />
+    <bpmn:exclusiveGateway id="Node_gw_insurance_commercial_copay" name="Insurance type is commercial?" />
+    <bpmn:task id="Node_create_copay_task" name="Create Copay Enrollment task" />
+    <bpmn:task id="Node_biologics_finish_copay" name="Finish copay enrollment and send Copay Case Substatus" />
+    <bpmn:task id="Node_close_copay_and_bi" name="Close Copay Enrollment task and close benefits investigation case" />
+    <bpmn:task id="Node_create_pa_case" name="Automatically create PA case" />
+    <bpmn:exclusiveGateway id="Node_gw_pa_needed" name="PA needed?" />
+    <bpmn:task id="Node_create_pa_needed_task" name="Automatically create PA Needed task" />
+    <bpmn:task id="Node_create_pa_not_needed_task" name="Automatically create PA Not Needed task" />
+    <bpmn:task id="Node_create_comm_pa_not_needed" name="Create Communicate PA Not Needed to Patient and HCP tasks" />
+    <bpmn:task id="Node_close_comm_pa_not_needed" name="Contact patient and HCP; manually close tasks" />
+    <bpmn:task id="Node_close_pa_case_not_needed" name="Automatically close PA case" />
+    <bpmn:subProcess id="Node_sub_shipment" name="Shipment Process" />
+    <bpmn:task id="Node_biologics_do_pa" name="Perform PA process and send PA case status to QRAL" />
+    <bpmn:exclusiveGateway id="Node_gw_pa_substatus" name="PA substatus?" />
+    <bpmn:task id="Node_create_comm_pa_approval" name="Create Communicate PA Approval to Patient and HCP tasks" />
+    <bpmn:task id="Node_close_comm_pa_approval" name="Update patient and HCP; close tasks and PA case" />
+    <bpmn:exclusiveGateway id="Node_gw_medpartd_pa" name="Patient is Med-Part D?" />
+    <bpmn:exclusiveGateway id="Node_gw_afford_pa" name="Can afford the medicine?" />
+    <bpmn:task id="Node_create_comm_pa_denial" name="Create Communicate PA Denial to Patient and HCP tasks" />
+    <bpmn:task id="Node_close_comm_pa_denial" name="Manually close tasks; close PA case automatically" />
+    <bpmn:task id="Node_biologics_appeal" name="Go through appeal process and send appeal case substatus to QRAL" />
+    <bpmn:exclusiveGateway id="Node_gw_appeal_available" name="Appeal case substatus is 'Appeal available'?" />
+    <bpmn:task id="Node_create_appeal_case" name="Create Appeal Case and wait for Appeal Case Status" />
+    <bpmn:exclusiveGateway id="Node_gw_appeal_result" name="Appeal result?" />
+    <bpmn:task id="Node_create_comm_appeal_approval" name="Create Communicate Appeal Approval to Patient and HCP tasks" />
+    <bpmn:task id="Node_close_comm_appeal_approval" name="Contact patient and HCP; manually close tasks and Appeal case" />
+    <bpmn:exclusiveGateway id="Node_gw_medpartd_appeal" name="Patient is Med-Part D?" />
+    <bpmn:exclusiveGateway id="Node_gw_afford_appeal" name="Can afford the medicine?" />
+    <bpmn:task id="Node_create_comm_appeal_denial" name="Create Communicate Appeal Denial to Patient and HCP tasks" />
+    <bpmn:task id="Node_close_comm_appeal_denial" name="Manually contact both and close both tasks" />
+    <bpmn:exclusiveGateway id="Node_gw_another_appeal" name="Another appeal possible?" />
+    <bpmn:task id="Node_close_appeal_case_denied" name="Automatically close appeal case" />
+    <bpmn:endEvent id="Node_term_no_copay_task" name="No copay task path unresolved" />
+    <bpmn:endEvent id="Node_term_bi_closed" name="Benefits investigation case closed" />
+    <bpmn:sequenceFlow id="Flow_0" sourceRef="Node_start_bi" targetRef="Node_start_bi_process" />
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="Node_start_bi_process" targetRef="Node_create_bi_case" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Node_create_bi_case" targetRef="Node_gw_additional_info" />
+    <bpmn:sequenceFlow id="Flow_3" name="Yes" sourceRef="Node_gw_additional_info" targetRef="Node_gather_info" />
+    <bpmn:sequenceFlow id="Flow_4" name="No" sourceRef="Node_gw_additional_info" targetRef="Node_close_additional_info" />
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="Node_gather_info" targetRef="Node_close_additional_info" />
+    <bpmn:sequenceFlow id="Flow_6" sourceRef="Node_close_additional_info" targetRef="Node_gw_plan_termed" />
+    <bpmn:sequenceFlow id="Flow_7" name="Yes" sourceRef="Node_gw_plan_termed" targetRef="Node_create_plan_termed_task" />
+    <bpmn:sequenceFlow id="Flow_8" name="No" sourceRef="Node_gw_plan_termed" targetRef="Node_biologics_send_benefits" />
+    <bpmn:sequenceFlow id="Flow_9" sourceRef="Node_create_plan_termed_task" targetRef="Node_discuss_insurance_change" />
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="Node_discuss_insurance_change" targetRef="Node_biologics_send_benefits" />
+    <bpmn:sequenceFlow id="Flow_11" sourceRef="Node_biologics_send_benefits" targetRef="Node_gw_coverage" />
+    <bpmn:sequenceFlow id="Flow_13" name="patient is not covered or uninsured" sourceRef="Node_gw_coverage" targetRef="Node_deactivate_plan" />
+    <bpmn:sequenceFlow id="Flow_14" name="patient is covered or covered with restrictions" sourceRef="Node_gw_coverage" targetRef="Node_gw_commercial" />
+    <bpmn:sequenceFlow id="Flow_15" sourceRef="Node_deactivate_plan" targetRef="Node_sub_pap" />
+    <bpmn:sequenceFlow id="Flow_16" name="Yes" sourceRef="Node_gw_commercial" targetRef="Node_enroll_copay" />
+    <bpmn:sequenceFlow id="Flow_17" name="No" sourceRef="Node_gw_commercial" targetRef="Node_gw_pa_required" />
+    <bpmn:sequenceFlow id="Flow_18" sourceRef="Node_enroll_copay" targetRef="Node_gw_pa_required" />
+    <bpmn:sequenceFlow id="Flow_19" name="Yes" sourceRef="Node_gw_pa_required" targetRef="Node_psrcm_receive_pa" />
+    <bpmn:sequenceFlow id="Flow_20" name="No" sourceRef="Node_gw_pa_required" targetRef="Node_psrcm_receive_pa" />
+    <bpmn:sequenceFlow id="Flow_23" sourceRef="Node_psrcm_receive_pa" targetRef="Node_close_confirm_benefits" />
+    <bpmn:sequenceFlow id="Flow_24" sourceRef="Node_psrcm_receive_pa" targetRef="Node_gw_insurance_commercial_copay" />
+    <bpmn:sequenceFlow id="Flow_25" sourceRef="Node_psrcm_receive_pa" targetRef="Node_create_pa_case" />
+    <bpmn:sequenceFlow id="Flow_26" sourceRef="Node_close_confirm_benefits" targetRef="Node_communicate_benefits" />
+    <bpmn:sequenceFlow id="Flow_27" sourceRef="Node_communicate_benefits" targetRef="Node_gw_no_copay_close_bi" />
+    <bpmn:sequenceFlow id="Flow_28" name="Yes" sourceRef="Node_gw_no_copay_close_bi" targetRef="Node_close_bi_case_nocopay" />
+    <bpmn:sequenceFlow id="Flow_29" name="No" sourceRef="Node_gw_no_copay_close_bi" targetRef="Node_close_copay_and_bi" />
+    <bpmn:sequenceFlow id="Flow_36" sourceRef="Node_close_bi_case_nocopay" targetRef="Node_term_bi_closed" />
+    <bpmn:sequenceFlow id="Flow_30" name="Yes" sourceRef="Node_gw_insurance_commercial_copay" targetRef="Node_create_copay_task" />
+    <bpmn:sequenceFlow id="Flow_31" name="No" sourceRef="Node_gw_insurance_commercial_copay" targetRef="Node_term_no_copay_task" />
+    <bpmn:sequenceFlow id="Flow_32" sourceRef="Node_create_copay_task" targetRef="Node_biologics_finish_copay" />
+    <bpmn:sequenceFlow id="Flow_33" sourceRef="Node_biologics_finish_copay" targetRef="Node_close_copay_and_bi" />
+    <bpmn:sequenceFlow id="Flow_35" sourceRef="Node_close_copay_and_bi" targetRef="Node_term_bi_closed" />
+    <bpmn:sequenceFlow id="Flow_37" sourceRef="Node_create_pa_case" targetRef="Node_gw_pa_needed" />
+    <bpmn:sequenceFlow id="Flow_38" name="Yes" sourceRef="Node_gw_pa_needed" targetRef="Node_create_pa_needed_task" />
+    <bpmn:sequenceFlow id="Flow_39" name="No" sourceRef="Node_gw_pa_needed" targetRef="Node_create_pa_not_needed_task" />
+    <bpmn:sequenceFlow id="Flow_40" sourceRef="Node_create_pa_needed_task" targetRef="Node_biologics_do_pa" />
+    <bpmn:sequenceFlow id="Flow_41" sourceRef="Node_create_pa_not_needed_task" targetRef="Node_create_comm_pa_not_needed" />
+    <bpmn:sequenceFlow id="Flow_42" sourceRef="Node_create_comm_pa_not_needed" targetRef="Node_close_comm_pa_not_needed" />
+    <bpmn:sequenceFlow id="Flow_43" sourceRef="Node_close_comm_pa_not_needed" targetRef="Node_close_pa_case_not_needed" />
+    <bpmn:sequenceFlow id="Flow_44" sourceRef="Node_close_pa_case_not_needed" targetRef="Node_sub_shipment" />
+    <bpmn:sequenceFlow id="Flow_46" sourceRef="Node_biologics_do_pa" targetRef="Node_gw_pa_substatus" />
+    <bpmn:sequenceFlow id="Flow_47" name="PA substatus is approved" sourceRef="Node_gw_pa_substatus" targetRef="Node_create_comm_pa_approval" />
+    <bpmn:sequenceFlow id="Flow_48" name="PA substatus is denied" sourceRef="Node_gw_pa_substatus" targetRef="Node_create_comm_pa_denial" />
+    <bpmn:sequenceFlow id="Flow_49" sourceRef="Node_create_comm_pa_approval" targetRef="Node_close_comm_pa_approval" />
+    <bpmn:sequenceFlow id="Flow_50" sourceRef="Node_close_comm_pa_approval" targetRef="Node_gw_medpartd_pa" />
+    <bpmn:sequenceFlow id="Flow_51" name="Yes" sourceRef="Node_gw_medpartd_pa" targetRef="Node_gw_afford_pa" />
+    <bpmn:sequenceFlow id="Flow_52" name="No" sourceRef="Node_gw_medpartd_pa" targetRef="Node_sub_shipment" />
+    <bpmn:sequenceFlow id="Flow_53" name="No" sourceRef="Node_gw_afford_pa" targetRef="Node_sub_pap" />
+    <bpmn:sequenceFlow id="Flow_54" name="Yes" sourceRef="Node_gw_afford_pa" targetRef="Node_sub_shipment" />
+    <bpmn:sequenceFlow id="Flow_57" sourceRef="Node_create_comm_pa_denial" targetRef="Node_close_comm_pa_denial" />
+    <bpmn:sequenceFlow id="Flow_58" sourceRef="Node_close_comm_pa_denial" targetRef="Node_biologics_appeal" />
+    <bpmn:sequenceFlow id="Flow_59" sourceRef="Node_biologics_appeal" targetRef="Node_gw_appeal_available" />
+    <bpmn:sequenceFlow id="Flow_60" name="Yes" sourceRef="Node_gw_appeal_available" targetRef="Node_create_appeal_case" />
+    <bpmn:sequenceFlow id="Flow_61" name="No" sourceRef="Node_gw_appeal_available" targetRef="Node_sub_pap" />
+    <bpmn:sequenceFlow id="Flow_63" sourceRef="Node_create_appeal_case" targetRef="Node_gw_appeal_result" />
+    <bpmn:sequenceFlow id="Flow_64" name="appeal is approved" sourceRef="Node_gw_appeal_result" targetRef="Node_create_comm_appeal_approval" />
+    <bpmn:sequenceFlow id="Flow_65" name="appeal is denied" sourceRef="Node_gw_appeal_result" targetRef="Node_create_comm_appeal_denial" />
+    <bpmn:sequenceFlow id="Flow_66" sourceRef="Node_create_comm_appeal_approval" targetRef="Node_close_comm_appeal_approval" />
+    <bpmn:sequenceFlow id="Flow_67" sourceRef="Node_close_comm_appeal_approval" targetRef="Node_gw_medpartd_appeal" />
+    <bpmn:sequenceFlow id="Flow_68" name="Yes" sourceRef="Node_gw_medpartd_appeal" targetRef="Node_gw_afford_appeal" />
+    <bpmn:sequenceFlow id="Flow_69" name="No" sourceRef="Node_gw_medpartd_appeal" targetRef="Node_sub_shipment" />
+    <bpmn:sequenceFlow id="Flow_70" name="No" sourceRef="Node_gw_afford_appeal" targetRef="Node_sub_pap" />
+    <bpmn:sequenceFlow id="Flow_71" name="Yes" sourceRef="Node_gw_afford_appeal" targetRef="Node_sub_shipment" />
+    <bpmn:sequenceFlow id="Flow_74" sourceRef="Node_create_comm_appeal_denial" targetRef="Node_close_comm_appeal_denial" />
+    <bpmn:sequenceFlow id="Flow_75" sourceRef="Node_close_comm_appeal_denial" targetRef="Node_gw_another_appeal" />
+    <bpmn:sequenceFlow id="Flow_76" name="Yes" sourceRef="Node_gw_another_appeal" targetRef="Node_biologics_appeal" />
+    <bpmn:sequenceFlow id="Flow_77" name="No" sourceRef="Node_gw_another_appeal" targetRef="Node_close_appeal_case_denied" />
+    <bpmn:sequenceFlow id="Flow_78" sourceRef="Node_close_appeal_case_denied" targetRef="Node_sub_pap" />
+    <bpmn:textAnnotation id="Note_ann_bv_substatus">
+      <bpmn:text>BV Case Substatus = 'BENEFITS INVESTIGATION – COMPLETE'</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_ann_pa_substatus_init">
+      <bpmn:text>PA Case Substatus = 'PRIOR AUTHORIZATION INITIATION'</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_ann_pa_substatus_notreq">
+      <bpmn:text>PA Case Substatus = 'PA not required'</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_ann_copay_substatus">
+      <bpmn:text>Copay Case Substatus = 'COPAY CARD ENROLLMENT'</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_12" associationDirection="None" sourceRef="Node_biologics_send_benefits" targetRef="Note_ann_bv_substatus" />
+    <bpmn:association id="Association_34" associationDirection="None" sourceRef="Node_biologics_finish_copay" targetRef="Note_ann_copay_substatus" />
+    <bpmn:association id="Association_21" associationDirection="None" sourceRef="Node_gw_pa_required" targetRef="Note_ann_pa_substatus_init" />
+    <bpmn:association id="Association_22" associationDirection="None" sourceRef="Node_gw_pa_required" targetRef="Note_ann_pa_substatus_notreq" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Collaboration_coverage_determination">
+    <bpmndi:BPMNPlane id="BPMNPlane_Collaboration_coverage_determination" bpmnElement="Collaboration_coverage_determination">
+      <bpmndi:BPMNShape id="BPMNShape_Participant_coverage_determination" bpmnElement="Participant_coverage_determination" isHorizontal="true">
+        <dc:Bounds x="80" y="80" width="5946" height="2996" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Lane_CM360" bpmnElement="Lane_CM360" isHorizontal="true">
+        <dc:Bounds x="110" y="80" width="5916" height="196" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Lane_Biologics" bpmnElement="Lane_Biologics" isHorizontal="true">
+        <dc:Bounds x="110" y="276" width="5916" height="720" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Lane_PSCRM" bpmnElement="Lane_PSCRM" isHorizontal="true">
+        <dc:Bounds x="110" y="996" width="5916" height="1200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Lane_PSM" bpmnElement="Lane_PSM" isHorizontal="true">
+        <dc:Bounds x="110" y="2196" width="5916" height="880" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_start_bi" bpmnElement="Node_start_bi" color:background-color="#fde8e8" color:border-color="#b91c1c">
+        <dc:Bounds x="128" y="158" width="80" height="40" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="144" y="201" width="88" height="70" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_start_bi_process" bpmnElement="Node_start_bi_process">
+        <dc:Bounds x="286" y="516" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_create_bi_case" bpmnElement="Node_create_bi_case">
+        <dc:Bounds x="486" y="1236" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_additional_info" bpmnElement="Node_gw_additional_info" isMarkerVisible="false">
+        <dc:Bounds x="631" y="2416" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="671" y="2446" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gather_info" bpmnElement="Node_gather_info">
+        <dc:Bounds x="836" y="2436" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_close_additional_info" bpmnElement="Node_close_additional_info">
+        <dc:Bounds x="1036" y="2436" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_plan_termed" bpmnElement="Node_gw_plan_termed" isMarkerVisible="false">
+        <dc:Bounds x="1181" y="1216" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1221" y="1246" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_create_plan_termed_task" bpmnElement="Node_create_plan_termed_task">
+        <dc:Bounds x="1386" y="1236" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_discuss_insurance_change" bpmnElement="Node_discuss_insurance_change">
+        <dc:Bounds x="1586" y="2436" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_biologics_send_benefits" bpmnElement="Node_biologics_send_benefits">
+        <dc:Bounds x="1786" y="516" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_coverage" bpmnElement="Node_gw_coverage" isMarkerVisible="false">
+        <dc:Bounds x="1931" y="1216" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1971" y="1246" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_deactivate_plan" bpmnElement="Node_deactivate_plan">
+        <dc:Bounds x="2136" y="2036" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_sub_pap" bpmnElement="Node_sub_pap" color:background-color="#f3e8ff" color:border-color="#7e22ce">
+        <dc:Bounds x="5886" y="2276" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_commercial" bpmnElement="Node_gw_commercial" isMarkerVisible="false">
+        <dc:Bounds x="2281" y="1216" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2321" y="1246" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_enroll_copay" bpmnElement="Node_enroll_copay">
+        <dc:Bounds x="2486" y="516" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_pa_required" bpmnElement="Node_gw_pa_required" isMarkerVisible="false">
+        <dc:Bounds x="2631" y="496" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2671" y="526" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_psrcm_receive_pa" bpmnElement="Node_psrcm_receive_pa">
+        <dc:Bounds x="2836" y="1236" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_close_confirm_benefits" bpmnElement="Node_close_confirm_benefits">
+        <dc:Bounds x="3036" y="1236" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_communicate_benefits" bpmnElement="Node_communicate_benefits">
+        <dc:Bounds x="3236" y="2436" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_no_copay_close_bi" bpmnElement="Node_gw_no_copay_close_bi" isMarkerVisible="false">
+        <dc:Bounds x="3406" y="1216" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3446" y="1246" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_close_bi_case_nocopay" bpmnElement="Node_close_bi_case_nocopay">
+        <dc:Bounds x="3636" y="1236" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_insurance_commercial_copay" bpmnElement="Node_gw_insurance_commercial_copay" isMarkerVisible="false">
+        <dc:Bounds x="3006" y="1536" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3046" y="1566" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_create_copay_task" bpmnElement="Node_create_copay_task">
+        <dc:Bounds x="3236" y="1556" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_biologics_finish_copay" bpmnElement="Node_biologics_finish_copay">
+        <dc:Bounds x="3436" y="836" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_close_copay_and_bi" bpmnElement="Node_close_copay_and_bi">
+        <dc:Bounds x="3636" y="1396" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_create_pa_case" bpmnElement="Node_create_pa_case">
+        <dc:Bounds x="3036" y="1076" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_pa_needed" bpmnElement="Node_gw_pa_needed" isMarkerVisible="false">
+        <dc:Bounds x="3206" y="1056" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3246" y="1086" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_create_pa_needed_task" bpmnElement="Node_create_pa_needed_task">
+        <dc:Bounds x="3436" y="1076" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_create_pa_not_needed_task" bpmnElement="Node_create_pa_not_needed_task">
+        <dc:Bounds x="3436" y="1876" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_create_comm_pa_not_needed" bpmnElement="Node_create_comm_pa_not_needed">
+        <dc:Bounds x="3636" y="1876" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_close_comm_pa_not_needed" bpmnElement="Node_close_comm_pa_not_needed">
+        <dc:Bounds x="3836" y="2916" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_close_pa_case_not_needed" bpmnElement="Node_close_pa_case_not_needed">
+        <dc:Bounds x="4036" y="1876" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_sub_shipment" bpmnElement="Node_sub_shipment" color:background-color="#f3e8ff" color:border-color="#7e22ce">
+        <dc:Bounds x="5886" y="676" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_biologics_do_pa" bpmnElement="Node_biologics_do_pa">
+        <dc:Bounds x="3636" y="356" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_pa_substatus" bpmnElement="Node_gw_pa_substatus" isMarkerVisible="false">
+        <dc:Bounds x="3806" y="1056" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3846" y="1086" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_create_comm_pa_approval" bpmnElement="Node_create_comm_pa_approval">
+        <dc:Bounds x="4036" y="1076" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_close_comm_pa_approval" bpmnElement="Node_close_comm_pa_approval">
+        <dc:Bounds x="4236" y="2276" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_medpartd_pa" bpmnElement="Node_gw_medpartd_pa" isMarkerVisible="false">
+        <dc:Bounds x="4406" y="2256" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4446" y="2286" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_afford_pa" bpmnElement="Node_gw_afford_pa" isMarkerVisible="false">
+        <dc:Bounds x="4581" y="2256" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4621" y="2286" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_create_comm_pa_denial" bpmnElement="Node_create_comm_pa_denial">
+        <dc:Bounds x="4036" y="1556" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_close_comm_pa_denial" bpmnElement="Node_close_comm_pa_denial">
+        <dc:Bounds x="4236" y="2596" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_biologics_appeal" bpmnElement="Node_biologics_appeal">
+        <dc:Bounds x="4436" y="836" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_appeal_available" bpmnElement="Node_gw_appeal_available" isMarkerVisible="false">
+        <dc:Bounds x="4581" y="1536" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4621" y="1566" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_create_appeal_case" bpmnElement="Node_create_appeal_case">
+        <dc:Bounds x="4786" y="1556" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_appeal_result" bpmnElement="Node_gw_appeal_result" isMarkerVisible="false">
+        <dc:Bounds x="4931" y="1536" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4971" y="1566" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_create_comm_appeal_approval" bpmnElement="Node_create_comm_appeal_approval">
+        <dc:Bounds x="5136" y="1556" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_close_comm_appeal_approval" bpmnElement="Node_close_comm_appeal_approval">
+        <dc:Bounds x="5336" y="2596" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_medpartd_appeal" bpmnElement="Node_gw_medpartd_appeal" isMarkerVisible="false">
+        <dc:Bounds x="5481" y="2576" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5521" y="2606" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_afford_appeal" bpmnElement="Node_gw_afford_appeal" isMarkerVisible="false">
+        <dc:Bounds x="5656" y="2576" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5696" y="2606" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_create_comm_appeal_denial" bpmnElement="Node_create_comm_appeal_denial">
+        <dc:Bounds x="5136" y="1716" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_close_comm_appeal_denial" bpmnElement="Node_close_comm_appeal_denial">
+        <dc:Bounds x="5336" y="2756" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_another_appeal" bpmnElement="Node_gw_another_appeal" isMarkerVisible="false">
+        <dc:Bounds x="5481" y="2736" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5521" y="2766" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_close_appeal_case_denied" bpmnElement="Node_close_appeal_case_denied">
+        <dc:Bounds x="5686" y="1716" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_term_no_copay_task" bpmnElement="Node_term_no_copay_task" color:background-color="#fde8e8" color:border-color="#b91c1c">
+        <dc:Bounds x="3246" y="1416" width="80" height="40" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3249" y="1459" width="74" height="42" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_term_bi_closed" bpmnElement="Node_term_bi_closed" color:background-color="#fde8e8" color:border-color="#b91c1c">
+        <dc:Bounds x="3846" y="1256" width="80" height="40" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3822" y="1299" width="89" height="42" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Note_ann_bv_substatus" bpmnElement="Note_ann_bv_substatus">
+        <dc:Bounds x="1726" y="434" width="220" height="62" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Note_ann_pa_substatus_init" bpmnElement="Note_ann_pa_substatus_init">
+        <dc:Bounds x="2621" y="449" width="180" height="62" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Note_ann_copay_substatus" bpmnElement="Note_ann_copay_substatus">
+        <dc:Bounds x="3196" y="852" width="220" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Note_ann_pa_substatus_notreq" bpmnElement="Note_ann_pa_substatus_notreq">
+        <dc:Bounds x="2756" y="578" width="100" height="76" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_0" bpmnElement="Flow_0">
+        <di:waypoint x="208" y="178" />
+        <di:waypoint x="336" y="178" />
+        <di:waypoint x="336" y="516" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_1" bpmnElement="Flow_1">
+        <di:waypoint x="386" y="556" />
+        <di:waypoint x="536" y="556" />
+        <di:waypoint x="536" y="1236" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_2" bpmnElement="Flow_2">
+        <di:waypoint x="586" y="1276" />
+        <di:waypoint x="711" y="1276" />
+        <di:waypoint x="711" y="2416" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_3" bpmnElement="Flow_3">
+        <di:waypoint x="791" y="2476" />
+        <di:waypoint x="836" y="2476" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="773" y="2454" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_5" bpmnElement="Flow_5">
+        <di:waypoint x="936" y="2476" />
+        <di:waypoint x="1036" y="2476" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_6" bpmnElement="Flow_6">
+        <di:waypoint x="1136" y="2476" />
+        <di:waypoint x="1261" y="2476" />
+        <di:waypoint x="1261" y="1336" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_7" bpmnElement="Flow_7">
+        <di:waypoint x="1341" y="1276" />
+        <di:waypoint x="1386" y="1276" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1323" y="1254" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_9" bpmnElement="Flow_9">
+        <di:waypoint x="1486" y="1276" />
+        <di:waypoint x="1636" y="1276" />
+        <di:waypoint x="1636" y="2436" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_10" bpmnElement="Flow_10">
+        <di:waypoint x="1686" y="2476" />
+        <di:waypoint x="1836" y="2476" />
+        <di:waypoint x="1836" y="596" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_11" bpmnElement="Flow_11">
+        <di:waypoint x="1886" y="556" />
+        <di:waypoint x="2011" y="556" />
+        <di:waypoint x="2011" y="1216" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_14" bpmnElement="Flow_14">
+        <di:waypoint x="2091" y="1276" />
+        <di:waypoint x="2281" y="1276" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2217" y="1215" width="88" height="56" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_16" bpmnElement="Flow_16">
+        <di:waypoint x="2361" y="1216" /><di:waypoint x="2361" y="556" /><di:waypoint x="2486" y="556" /><bpmndi:BPMNLabel>
+          <dc:Bounds x="2367" y="879" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_18" bpmnElement="Flow_18">
+        <di:waypoint x="2586" y="556" />
+        <di:waypoint x="2631" y="556" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_19" bpmnElement="Flow_19">
+        <di:waypoint x="2711" y="616" /><di:waypoint x="2711" y="1276" /><di:waypoint x="2836" y="1276" /><bpmndi:BPMNLabel>
+          <dc:Bounds x="2717" y="939" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_23" bpmnElement="Flow_23">
+        <di:waypoint x="2936" y="1276" />
+        <di:waypoint x="3036" y="1276" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_26" bpmnElement="Flow_26">
+        <di:waypoint x="3136" y="1276" />
+        <di:waypoint x="3211" y="1276" />
+        <di:waypoint x="3211" y="2456" />
+        <di:waypoint x="3236" y="2456" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_27" bpmnElement="Flow_27">
+        <di:waypoint x="3336" y="2476" />
+        <di:waypoint x="3356" y="2476" />
+        <di:waypoint x="3356" y="1276" />
+        <di:waypoint x="3406" y="1276" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_28" bpmnElement="Flow_28">
+        <di:waypoint x="3566" y="1276" />
+        <di:waypoint x="3636" y="1276" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3560" y="1254" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_36" bpmnElement="Flow_36">
+        <di:waypoint x="3736" y="1276" />
+        <di:waypoint x="3846" y="1276" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_30" bpmnElement="Flow_30">
+        <di:waypoint x="3086" y="1621" />
+        <di:waypoint x="3086" y="1641" />
+        <di:waypoint x="3111" y="1641" />
+        <di:waypoint x="3111" y="2521" />
+        <di:waypoint x="3924" y="2521" />
+        <di:waypoint x="3924" y="1231" />
+        <di:waypoint x="3216" y="1231" />
+        <di:waypoint x="3216" y="1576" />
+        <di:waypoint x="3236" y="1576" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3929" y="1776" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_32" bpmnElement="Flow_32">
+        <di:waypoint x="3331" y="1556" />
+        <di:waypoint x="3331" y="936" />
+        <di:waypoint x="3456" y="936" />
+        <di:waypoint x="3456" y="916" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_33" bpmnElement="Flow_33">
+        <di:waypoint x="3536" y="876" />
+        <di:waypoint x="3931" y="876" />
+        <di:waypoint x="3931" y="1376" />
+        <di:waypoint x="3716" y="1376" />
+        <di:waypoint x="3716" y="1396" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_35" bpmnElement="Flow_35">
+        <di:waypoint x="3736" y="1436" />
+        <di:waypoint x="3956" y="1436" />
+        <di:waypoint x="3956" y="1294" />
+        <di:waypoint x="3924" y="1294" />
+        <di:waypoint x="3924" y="1276" />
+        <di:waypoint x="3904" y="1276" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_38" bpmnElement="Flow_38">
+        <di:waypoint x="3366" y="1116" />
+        <di:waypoint x="3436" y="1116" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3360" y="1094" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_40" bpmnElement="Flow_40">
+        <di:waypoint x="3536" y="1116" />
+        <di:waypoint x="3686" y="1116" />
+        <di:waypoint x="3686" y="436" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_46" bpmnElement="Flow_46">
+        <di:waypoint x="3736" y="396" />
+        <di:waypoint x="3956" y="396" />
+        <di:waypoint x="3956" y="1091" />
+        <di:waypoint x="3931" y="1091" />
+        <di:waypoint x="3931" y="1116" />
+        <di:waypoint x="3911" y="1116" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_47" bpmnElement="Flow_47">
+        <di:waypoint x="3966" y="1116" />
+        <di:waypoint x="4036" y="1116" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3939" y="1121" width="89" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_49" bpmnElement="Flow_49">
+        <di:waypoint x="4136" y="1116" />
+        <di:waypoint x="4286" y="1116" />
+        <di:waypoint x="4286" y="2276" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_50" bpmnElement="Flow_50">
+        <di:waypoint x="4336" y="2316" />
+        <di:waypoint x="4406" y="2316" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_51" bpmnElement="Flow_51">
+        <di:waypoint x="4566" y="2316" />
+        <di:waypoint x="4581" y="2316" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4560" y="2294" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_53" bpmnElement="Flow_53">
+        <di:waypoint x="4741" y="2316" />
+        <di:waypoint x="5886" y="2316" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5276" y="2294" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_59" bpmnElement="Flow_59">
+        <di:waypoint x="4536" y="876" />
+        <di:waypoint x="4661" y="876" />
+        <di:waypoint x="4661" y="1536" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_60" bpmnElement="Flow_60">
+        <di:waypoint x="4741" y="1596" />
+        <di:waypoint x="4786" y="1596" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4723" y="1574" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_63" bpmnElement="Flow_63">
+        <di:waypoint x="4886" y="1596" />
+        <di:waypoint x="4931" y="1596" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_64" bpmnElement="Flow_64">
+        <di:waypoint x="5091" y="1596" />
+        <di:waypoint x="5136" y="1596" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5054" y="1563" width="64" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_66" bpmnElement="Flow_66">
+        <di:waypoint x="5236" y="1596" />
+        <di:waypoint x="6006" y="1596" />
+        <di:waypoint x="6006" y="2576" />
+        <di:waypoint x="5416" y="2576" />
+        <di:waypoint x="5416" y="2596" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_67" bpmnElement="Flow_67">
+        <di:waypoint x="5436" y="2636" />
+        <di:waypoint x="5481" y="2636" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_68" bpmnElement="Flow_68">
+        <di:waypoint x="5641" y="2636" />
+        <di:waypoint x="5656" y="2636" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5615" y="2614" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_70" bpmnElement="Flow_70">
+        <di:waypoint x="5736" y="2576" /><di:waypoint x="5736" y="2316" /><di:waypoint x="5886" y="2316" /><bpmndi:BPMNLabel>
+          <dc:Bounds x="5742" y="2439" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_76" bpmnElement="Flow_76">
+        <di:waypoint x="5561" y="2771" />
+        <di:waypoint x="5561" y="2751" />
+        <di:waypoint x="4216" y="2751" />
+        <di:waypoint x="4216" y="1216" />
+        <di:waypoint x="3848" y="1216" />
+        <di:waypoint x="3848" y="936" />
+        <di:waypoint x="4456" y="936" />
+        <di:waypoint x="4456" y="916" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4039" y="1224" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_4" bpmnElement="Flow_4">
+        <di:waypoint x="711" y="2501" />
+        <di:waypoint x="711" y="2536" />
+        <di:waypoint x="1086" y="2536" />
+        <di:waypoint x="1086" y="2516" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="889" y="2544" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_8" bpmnElement="Flow_8">
+        <di:waypoint x="1261" y="1216" />
+        <di:waypoint x="1261" y="556" />
+        <di:waypoint x="1786" y="556" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1266" y="897" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_13" bpmnElement="Flow_13">
+        <di:waypoint x="2011" y="1336" /><di:waypoint x="2011" y="2076" /><di:waypoint x="2136" y="2076" /><bpmndi:BPMNLabel>
+          <dc:Bounds x="2017" y="1685" width="85" height="42" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_15" bpmnElement="Flow_15">
+        <di:waypoint x="2236" y="2096" />
+        <di:waypoint x="2256" y="2096" />
+        <di:waypoint x="2256" y="2536" />
+        <di:waypoint x="3931" y="2536" />
+        <di:waypoint x="3931" y="2256" />
+        <di:waypoint x="5906" y="2256" />
+        <di:waypoint x="5906" y="2276" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_17" bpmnElement="Flow_17">
+        <di:waypoint x="2441" y="1276" />
+        <di:waypoint x="2711" y="1276" />
+        <di:waypoint x="2711" y="616" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2614" y="1254" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_20" bpmnElement="Flow_20">
+        <di:waypoint x="2791" y="556" />
+        <di:waypoint x="2886" y="556" />
+        <di:waypoint x="2886" y="1236" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2841" y="534" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_24" bpmnElement="Flow_24">
+        <di:waypoint x="2886" y="1316" />
+        <di:waypoint x="2886" y="1596" />
+        <di:waypoint x="3006" y="1596" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_25" bpmnElement="Flow_25">
+        <di:waypoint x="2886" y="1236" />
+        <di:waypoint x="2886" y="1116" />
+        <di:waypoint x="3036" y="1116" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_29" bpmnElement="Flow_29">
+        <di:waypoint x="3486" y="1336" />
+        <di:waypoint x="3486" y="1436" />
+        <di:waypoint x="3636" y="1436" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3491" y="1362" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_31" bpmnElement="Flow_31">
+        <di:waypoint x="3086" y="1536" /><di:waypoint x="3086" y="1436" /><di:waypoint x="3246" y="1436" /><bpmndi:BPMNLabel>
+          <dc:Bounds x="3092" y="1479" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_37" bpmnElement="Flow_37">
+        <di:waypoint x="3136" y="1116" />
+        <di:waypoint x="3206" y="1116" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_39" bpmnElement="Flow_39">
+        <di:waypoint x="3286" y="1141" />
+        <di:waypoint x="3286" y="1161" />
+        <di:waypoint x="3311" y="1161" />
+        <di:waypoint x="4156" y="1161" />
+        <di:waypoint x="4156" y="1856" />
+        <di:waypoint x="3516" y="1856" />
+        <di:waypoint x="3516" y="1876" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3589" y="1139" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_41" bpmnElement="Flow_41">
+        <di:waypoint x="3536" y="1916" />
+        <di:waypoint x="3636" y="1916" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_42" bpmnElement="Flow_42">
+        <di:waypoint x="3736" y="1916" />
+        <di:waypoint x="3886" y="1916" />
+        <di:waypoint x="3886" y="2916" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_43" bpmnElement="Flow_43">
+        <di:waypoint x="3936" y="2956" />
+        <di:waypoint x="4086" y="2956" />
+        <di:waypoint x="4086" y="1956" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_44" bpmnElement="Flow_44">
+        <di:waypoint x="4136" y="1916" />
+        <di:waypoint x="5936" y="1916" />
+        <di:waypoint x="5936" y="756" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_48" bpmnElement="Flow_48">
+        <di:waypoint x="3886" y="1141" />
+        <di:waypoint x="3886" y="1161" />
+        <di:waypoint x="3911" y="1161" />
+        <di:waypoint x="3911" y="1176" />
+        <di:waypoint x="4086" y="1176" />
+        <di:waypoint x="4086" y="1556" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3954" y="1181" width="89" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_52" bpmnElement="Flow_52">
+        <di:waypoint x="4486" y="2341" />
+        <di:waypoint x="4486" y="2361" />
+        <di:waypoint x="4511" y="2361" />
+        <di:waypoint x="4511" y="3016" />
+        <di:waypoint x="130" y="3016" />
+        <di:waypoint x="130" y="140" />
+        <di:waypoint x="5936" y="140" />
+        <di:waypoint x="5936" y="676" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4516" y="2682" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_54" bpmnElement="Flow_54">
+        <di:waypoint x="4661" y="2341" />
+        <di:waypoint x="4661" y="2361" />
+        <di:waypoint x="4686" y="2361" />
+        <di:waypoint x="4686" y="3016" />
+        <di:waypoint x="130" y="3016" />
+        <di:waypoint x="130" y="140" />
+        <di:waypoint x="5936" y="140" />
+        <di:waypoint x="5936" y="676" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4691" y="2682" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_57" bpmnElement="Flow_57">
+        <di:waypoint x="4136" y="1596" />
+        <di:waypoint x="4216" y="1596" />
+        <di:waypoint x="4216" y="2636" />
+        <di:waypoint x="4236" y="2636" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_58" bpmnElement="Flow_58">
+        <di:waypoint x="4336" y="2636" />
+        <di:waypoint x="4416" y="2636" />
+        <di:waypoint x="4416" y="876" />
+        <di:waypoint x="4436" y="876" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_61" bpmnElement="Flow_61">
+        <di:waypoint x="4661" y="1656" />
+        <di:waypoint x="4661" y="2256" />
+        <di:waypoint x="5936" y="2256" />
+        <di:waypoint x="5936" y="2276" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5911" y="2234" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_65" bpmnElement="Flow_65">
+        <di:waypoint x="5011" y="1656" />
+        <di:waypoint x="5011" y="1756" />
+        <di:waypoint x="5136" y="1756" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5016" y="1675" width="64" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_69" bpmnElement="Flow_69">
+        <di:waypoint x="5561" y="2576" /><di:waypoint x="5561" y="716" /><di:waypoint x="5886" y="716" /><bpmndi:BPMNLabel>
+          <dc:Bounds x="5567" y="1639" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_71" bpmnElement="Flow_71">
+        <di:waypoint x="5736" y="2661" />
+        <di:waypoint x="5736" y="2681" />
+        <di:waypoint x="5761" y="2681" />
+        <di:waypoint x="5761" y="3016" />
+        <di:waypoint x="130" y="3016" />
+        <di:waypoint x="130" y="140" />
+        <di:waypoint x="5936" y="140" />
+        <di:waypoint x="5936" y="676" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5660" y="2994" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_74" bpmnElement="Flow_74">
+        <di:waypoint x="5186" y="1796" />
+        <di:waypoint x="5186" y="2796" />
+        <di:waypoint x="5336" y="2796" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_75" bpmnElement="Flow_75">
+        <di:waypoint x="5436" y="2796" />
+        <di:waypoint x="5481" y="2796" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_77" bpmnElement="Flow_77">
+        <di:waypoint x="5641" y="2796" />
+        <di:waypoint x="5666" y="2796" />
+        <di:waypoint x="5666" y="1756" />
+        <di:waypoint x="5686" y="1756" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5671" y="2269" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_78" bpmnElement="Flow_78">
+        <di:waypoint x="5786" y="1756" />
+        <di:waypoint x="5936" y="1756" />
+        <di:waypoint x="5936" y="2276" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Association_12" bpmnElement="Association_12">
+        <di:waypoint x="1836" y="516" />
+        <di:waypoint x="1836" y="496" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Association_21" bpmnElement="Association_21">
+        <di:waypoint x="2711" y="496" /><di:waypoint x="2711" y="511" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Association_34" bpmnElement="Association_34">
+        <di:waypoint x="3436" y="876" />
+        <di:waypoint x="3416" y="876" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Association_22" bpmnElement="Association_22">
+        <di:waypoint x="2736" y="556" />
+        <di:waypoint x="2756" y="616" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Node_sub_pap">
+    <bpmndi:BPMNPlane id="BPMNPlane_Node_sub_pap" bpmnElement="Node_sub_pap" />
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Node_sub_shipment">
+    <bpmndi:BPMNPlane id="BPMNPlane_Node_sub_shipment" bpmnElement="Node_sub_shipment" />
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

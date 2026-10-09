@@ -1,0 +1,6 @@
+{
+  "subprocesses": [
+    { "name": "pap", "label": "PAP Process", "actor": "PSM" },
+    { "name": "shipment", "label": "Shipment Process", "actor": "Biologics" }
+  ]
+}
