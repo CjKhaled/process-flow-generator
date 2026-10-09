@@ -19,11 +19,11 @@ const OPTIONS = {
 
 /** The box each kind of node occupies. The shape is drawn inside it; the label may sit under it. */
 export const SIZES: Record<ViewNode["kind"], { width: number; height: number }> = {
-  start: { width: 150, height: 96 },
-  terminal: { width: 150, height: 96 },
-  task: { width: 190, height: 72 },
-  gateway: { width: 170, height: 124 },
-  subprocess: { width: 200, height: 84 },
+  start: { width: 160, height: 100 },
+  terminal: { width: 160, height: 100 },
+  task: { width: 240, height: 118 },
+  gateway: { width: 180, height: 128 },
+  subprocess: { width: 250, height: 148 },
 };
 
 export type Positions = Record<string, { x: number; y: number }>;

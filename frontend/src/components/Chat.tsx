@@ -133,7 +133,7 @@ export function Chat({ state, onChanged, onViewDiagrams }: Props) {
           }}
         />
         <div className="actions">
-          <button className="primary" disabled={busy || !draft.trim()} onClick={() => void send({ text: draft })}>
+          <button className="accent" disabled={busy || !draft.trim()} onClick={() => void send({ text: draft })}>
             Send
           </button>
           {state.quick_replies.map((reply) => (
@@ -143,7 +143,7 @@ export function Chat({ state, onChanged, onViewDiagrams }: Props) {
           ))}
           {state.phase !== "closing" && !finished && (
             <button
-              className="finish"
+              className="finish primary"
               disabled={busy || state.turn === 0}
               onClick={() => void act(() => closeSession(state.id))}
             >

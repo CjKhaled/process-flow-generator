@@ -30,10 +30,10 @@ ET.register_namespace("color", COLOR_NS)
 FILL = "background-color"
 STROKE = "border-color"
 
-EVENT = ("#fde8e8", "#b91c1c")
+EVENT = ("#E3F3E7", "#1A1628")
 """Start and end alike: the process's entry and its exits, in the same colour."""
 
-SUBPROCESS = ("#f3e8ff", "#7e22ce")
+SUBPROCESS = ("#EEEDF3", "#3A3650")
 """Work the source hands off, drawn as one box."""
 
 _BY_TAG: dict[str, tuple[str, str]] = {

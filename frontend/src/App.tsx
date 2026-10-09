@@ -132,7 +132,11 @@ export function App() {
         <span className="muted">Turn {state.turn}</span>
         {error && <span className="error-inline">{error}</span>}
         <span className="spacer" />
-        {state.outputs.length > 0 && <button onClick={() => setScreen("diagrams")}>View diagrams</button>}
+        {state.outputs.length > 0 && (
+          <button className="accent" onClick={() => setScreen("diagrams")}>
+            View diagrams
+          </button>
+        )}
         <button className="link" onClick={newSession}>
           New session
         </button>

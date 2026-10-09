@@ -251,7 +251,7 @@ point at, and any link to a neighbouring file breaks the moment they choose a di
 The cost is about 730 KB a page, which is why it's generated rather than kept in the repo.
 
 This is where the open questions finally become visible. Every box that has one is outlined
-in dashed amber, and the questions are listed beside the diagram rather than left in a file
+in orange, and the questions are listed beside the diagram rather than left in a file
 next to it. Select a question and it finds the box; select a marked box and it finds the
 question. A diagram with nothing outstanding says so.
 

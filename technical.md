@@ -881,8 +881,8 @@ color:background-color  →  bioc:fill  →  a default
 
 | Element | Fill | Stroke |
 | --- | --- | --- |
-| Start and end events | `#fde8e8` | `#b91c1c` |
-| Collapsed subprocess | `#f3e8ff` | `#7e22ce` |
+| Start and end events | `#E3F3E7` (the Moss tint) | `#1A1628` (Mirage) |
+| Collapsed subprocess | `#EEEDF3` | `#3A3650` (Ink 2) |
 
 Pale fills with saturated strokes, so black label text stays readable on them.
 
@@ -1034,7 +1034,7 @@ page's tests can assert what it says by reading it, with no browser involved.
 
 | Behaviour | Detail |
 | --- | --- |
-| Flagging | Every node a finding names gets an amber dashed outline |
+| Flagging | Every node a finding names gets a Mango outline and a faint orange tint |
 | Two-way selection | Selecting a question scrolls the canvas to its box; selecting a marked box opens the panel and selects its question |
 | The panel | A drawer floating **over** the canvas, not a column beside it, so showing or hiding it never resizes the diagram or moves a single box. A fit made while it is open fits to the part of the canvas still visible |
 | Empty state | A graph with nothing outstanding says so |

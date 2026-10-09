@@ -40,11 +40,11 @@ export function SidePanel({ state, view, selected }: Props) {
 
       {tab === "rationale" && rationale && (
         <div className="pad">
-          <h3>{rationale.label}</h3>
-          <p className="muted">
+          <p className="eyebrow">
             {words(rationale.kind)}
             {rationale.lane ? ` · ${rationale.lane}` : ""}
           </p>
+          <h3>{rationale.label}</h3>
 
           {rationale.entry && (
             <>

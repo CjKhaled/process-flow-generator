@@ -15,7 +15,7 @@ export function CloseOut({ state, busy, onAnswer, onAccept, onViewDiagrams }: Pr
     return (
       <div className="closeout">
         <h3>Finished</h3>
-        <button className="primary" onClick={onViewDiagrams}>
+        <button className="accent" onClick={onViewDiagrams}>
           View diagrams
         </button>
         {state.outputs.map((output) => (

@@ -39,7 +39,8 @@ export function StartScreen({ onStarted }: Props) {
 
   return (
     <main className="start-screen">
-      <h1>Process Flow Generator</h1>
+      <p className="eyebrow">Process Flow Generator</p>
+      <h1>Describe the process</h1>
       <p className="muted">
         Describe how the process runs today. You will be asked a few questions at a time, and the flow is drawn as
         you answer.
@@ -64,7 +65,7 @@ export function StartScreen({ onStarted }: Props) {
       />
 
       {error && <p className="error">{error}</p>}
-      <button className="primary" disabled={busy || !processId || !description.trim()} onClick={() => void start()}>
+      <button className="accent" disabled={busy || !processId || !description.trim()} onClick={() => void start()}>
         {busy ? "Starting…" : "Start"}
       </button>
     </main>

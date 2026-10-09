@@ -21,6 +21,7 @@ This module holds stage 3's only file reads. :mod:`render.page` is pure string
 assembly, and stays that way by being handed what it needs.
 """
 
+import base64
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -55,6 +56,20 @@ STYLESHEETS = (
 )
 """Concatenated in this order: the canvas, then BPMN's own rules, then the icon font."""
 
+FONTS_DIR = JS_ROOT / "node_modules" / "@fontsource-variable"
+"""Where the two typefaces come from: installed with the viewer, never fetched by the page."""
+
+FONTS = (
+    ("Figtree", "figtree/files/figtree-latin-wght-normal.woff2", "300 900"),
+    ("JetBrains Mono", "jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2", "100 800"),
+)
+"""Family name, file under :data:`FONTS_DIR`, and the weight range the variable file covers.
+
+The Latin subset only. The page is one self-contained file, so each typeface is
+inlined as a data URI, and the full character set would cost several times as
+much for glyphs a process diagram's chrome never uses.
+"""
+
 TEMPLATE = Path(__file__).resolve().parent / "template.html"
 
 
@@ -70,16 +85,18 @@ class ViewerAssets:
     styles: str
 
 
-def load_assets(bundle: Path = BUNDLE, styles_dir: Path = STYLES_DIR) -> ViewerAssets:
-    """Read the built bundle and bpmn-js's stylesheets.
+def load_assets(bundle: Path = BUNDLE, styles_dir: Path = STYLES_DIR, fonts_dir: Path = FONTS_DIR) -> ViewerAssets:
+    """Read the built bundle, bpmn-js's stylesheets and the page's two typefaces.
 
     Args:
         bundle: Our esbuild output. Overridden in tests, which inline a stub
             rather than half a megabyte of vendor code.
         styles_dir: The ``dist/`` directory of an installed bpmn-js.
+        fonts_dir: The installed ``@fontsource-variable`` packages.
 
     Returns:
-        The script and the concatenated stylesheets.
+        The script, and one stylesheet: the typefaces as ``@font-face`` rules
+        with the files inlined, then bpmn-js's own.
 
     Raises:
         AssetError: If either is missing. The two carry different remedies on
@@ -89,8 +106,25 @@ def load_assets(bundle: Path = BUNDLE, styles_dir: Path = STYLES_DIR) -> ViewerA
     """
     script = _read(bundle, f"run `npm ci --prefix {JS_ROOT}` then `npm run build --prefix {JS_ROOT}`")
     install = f"run `npm ci --prefix {JS_ROOT}`"
-    styles = "\n".join(_read(styles_dir / name, install) for name in STYLESHEETS)
+    faces = [_font_face(family, fonts_dir / name, weights, install) for family, name, weights in FONTS]
+    styles = "\n".join([*faces, *(_read(styles_dir / name, install) for name in STYLESHEETS)])
     return ViewerAssets(script=script, styles=styles)
+
+
+def _font_face(family: str, path: Path, weights: str, remedy: str) -> str:
+    """One typeface as a rule the page can use with nothing to download.
+
+    Inlined for the reason everything else is: the page is opened from wherever
+    the reader keeps it, with no server beside it to ask for a font file.
+    """
+    try:
+        encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+    except OSError as error:
+        raise AssetError(f"cannot read {path}; {remedy}") from error
+    return (
+        f"@font-face {{ font-family: '{family}'; font-style: normal; font-weight: {weights}; "
+        f"font-display: swap; src: url(data:font/woff2;base64,{encoded}) format('woff2-variations'); }}"
+    )
 
 
 def load_template(path: Path = TEMPLATE) -> str:

@@ -309,3 +309,27 @@ complete answer `409`: nothing has been said, so the result would be the same fi
 **A flow that no longer has steps keeps its old folder on disk.** If a reopened session
 removes a subprocess's only steps and is finished again, that subprocess is no longer listed
 or shown, but its folder from the earlier finish is not deleted.
+
+## Styling
+
+**The ZS theme, applied to every view.** The conversation page, the diagrams view, and stage
+3's own page (which the diagrams view shows in a frame) share one palette and two typefaces.
+The guide was followed for colour and type exactly and for components where the page has the
+component; it has no step chips under replies, so those were not invented.
+
+**How the three step statuses map onto what the flow knows.** *Needs your input* is a step
+with an open question. *Inferred* is a step code added to complete a flow — the synthesised
+start and returns of a subprocess view. *From you* is everything else, since every other step
+is backed by a quote that was checked. The tool never fills a gap with a guess, so "inferred"
+here is narrower than the guide's wording suggests.
+
+**Fonts are bundled, not fetched.** Figtree and JetBrains Mono come from
+`@fontsource-variable`, built into `frontend/dist` and inlined as data URIs into stage 3's
+page. A link to a font service would have been the first thing either page loads from
+somewhere else, and stage 3's page is meant to open from a folder with no network.
+
+**The diagram's own colours changed too.** `bpmn/colors.py` writes two colours into the BPMN
+file: events are now the Moss tint with a Mirage outline, collapsed subprocesses a neutral
+tint with an Ink 2 outline, where they were red and purple. Flagged elements are outlined in
+Mango, solid, where they were dashed amber, to match "needs your input". A diagram finished
+before this change keeps its old colours until it is finished again.

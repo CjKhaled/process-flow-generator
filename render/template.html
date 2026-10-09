@@ -18,17 +18,26 @@
 <!--PFG:STYLES-->
 </style>
 <style>
+  /* The palette and the two typefaces are the conversation page's, so a finished
+     diagram shown inside it reads as the same product. Orange text on white is
+     the deep orange, never Mango itself, which is only 3:1 there. */
   :root {
-    --ink: #1a1d21;
-    --muted: #6b7280;
-    --line: #e3e6ea;
-    --panel: #ffffff;
-    --page: #f4f5f7;
-    --flag: #b45309;
-    --flag-soft: #fef3c7;
-    --flag-tint: #fffbeb;
-    --accent: #1f2937;
+    --ink: #1A1628;
+    --ink-2: #3A3650;
+    --muted: #5C5970;
+    --line: #E3E1EA;
+    --line-strong: #CFCCD9;
+    --panel: #FFFFFF;
+    --page: #F5F4F7;
+    --mango: #EC7700;
+    --flag: #A85400;
+    --flag-soft: #FFF1E3;
+    --flag-tint: #FFF8F0;
+    --flag-line: #F5C08A;
+    --accent: #1A1628;
     --danger: #b91c1c;
+    --sans: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
   * { box-sizing: border-box; }
@@ -47,7 +56,7 @@
     flex-direction: column;
     background: var(--page);
     color: var(--ink);
-    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font: 15px/24px var(--sans);
   }
 
   header {
@@ -62,7 +71,8 @@
 
   header h1 {
     margin: 0;
-    font-size: 15px;
+    font-size: 16px;
+    line-height: 22px;
     font-weight: 600;
   }
 
@@ -73,23 +83,24 @@
   button {
     height: 28px;
     padding: 0 10px;
-    border: 1px solid var(--line);
+    border: 1px solid var(--line-strong);
     border-radius: 6px;
     background: var(--panel);
     color: var(--ink);
     font: inherit;
     font-size: 13px;
+    font-weight: 500;
     cursor: pointer;
   }
 
-  button:hover { background: var(--page); }
+  button:hover { background: var(--page); border-color: var(--ink-2); }
   button[disabled] { opacity: 0.5; cursor: default; }
 
   .controls button { min-width: 32px; }
 
   .controls .toggle[aria-expanded="true"] {
-    border-color: var(--flag);
-    background: var(--flag-tint);
+    border-color: var(--flag-line);
+    background: var(--flag-soft);
     color: var(--flag);
   }
 
@@ -177,17 +188,17 @@
 
   aside h2 {
     margin: 0 0 4px;
-    font-size: 13px;
-    font-weight: 600;
+    font: 500 12px/16px var(--mono);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--muted);
+    letter-spacing: 0.08em;
+    color: var(--ink-2);
   }
 
   aside .lede {
     margin: 0 0 14px;
     color: var(--muted);
-    font-size: 12px;
+    font-size: 13px;
+    line-height: 20px;
   }
 
   .questions {
@@ -201,29 +212,30 @@
 
   .question {
     padding: 10px 12px;
-    border: 1px solid var(--line);
-    border-left: 3px solid var(--flag);
+    border: 1px solid var(--flag-line);
+    border-left: 3px solid var(--mango);
     border-radius: 6px;
-    background: var(--flag-tint);
+    background: var(--flag-soft);
+    font-size: 13px;
+    line-height: 20px;
   }
 
   .question[data-elements] { cursor: pointer; }
 
-  .question:hover { border-color: var(--flag); }
+  .question:hover { border-color: var(--mango); }
 
+  /* Selection never rests on colour alone: a dark ring, set off from the card by a white gap. */
   .question.active {
-    background: var(--flag-soft);
-    box-shadow: 0 0 0 2px var(--flag-soft);
+    box-shadow: 0 0 0 3px var(--panel), 0 0 0 5px var(--ink);
   }
 
   .question .code {
     display: inline-block;
     margin-bottom: 4px;
-    font-size: 11px;
-    font-weight: 600;
+    font: 500 11px/16px var(--mono);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--flag);
+    letter-spacing: 0.08em;
+    color: #8A4300;
   }
 
   .question .message {
@@ -290,15 +302,14 @@
      its outline -- rect, circle or polygon -- so this reaches every element type
      without knowing which one it is. */
   .pfg-flagged .djs-visual > :nth-child(1) {
-    stroke: var(--flag) !important;
+    stroke: var(--mango) !important;
     stroke-width: 2px !important;
-    stroke-dasharray: 6 4 !important;
     fill: var(--flag-tint) !important;
   }
 
   .pfg-active .djs-visual > :nth-child(1) {
+    stroke: var(--ink) !important;
     stroke-width: 3px !important;
-    stroke-dasharray: none !important;
     fill: var(--flag-soft) !important;
   }
 

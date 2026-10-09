@@ -1,17 +1,50 @@
+/* The ZS theme.
+
+   Three brand colours and a short list of neutrals, all named once here. Two rules are
+   worth knowing before changing anything:
+
+   - Mango is a fill, never text. On white it is only about 3:1. Orange text on white is
+     Deep orange; orange text on Mirage is Light orange.
+   - Selection is a dark ring set off by a white gap, so it never depends on colour alone,
+     and the three step statuses differ in border style and lightness as well as hue. */
 :root {
-  --ink: #1f2933;
-  --muted: #6b7785;
-  --line: #d8dee6;
-  --ground: #f6f7f9;
-  --panel: #ffffff;
-  --accent: #2456a6;
-  --accent-soft: #e8eefb;
-  --amber: #b7791f;
-  --amber-soft: #fdf3dc;
+  --mango: #ec7700;
+  --mirage: #1a1628;
+  --moss: #a8d6b2;
+  --deep-orange: #a85400;
+  --light-orange: #f5a54d;
+
+  --ink-2: #3a3650;
+  --muted: #5c5970;
+  --line-strong: #cfccd9;
+  --line: #e3e1ea;
+  --ground: #f5f4f7;
+  --surface: #ffffff;
+
+  --from-you-line: #3e8a55;
+  --from-you-bg: #e3f3e7;
+  --from-you-ink: #1d4d2b;
+  --inferred-line: #6b6880;
+  --inferred-bg: #eeedf3;
+  --inferred-ink: #3f3b57;
+  --input-tint: #fff8f0;
+  --input-bg: #fff1e3;
+  --input-ink: #8a4300;
+  --input-line: #f5c08a;
+
   --danger: #b42318;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  font-size: 14px;
-  color: var(--ink);
+
+  --sans: "Figtree Variable", "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius: 6px;
+  --radius-panel: 10px;
+  --shadow: 0 1px 2px rgb(26 22 40 / 6%);
+
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--mirage);
 }
 
 * {
@@ -24,26 +57,37 @@ body {
 }
 
 h1 {
-  font-size: 22px;
-  margin: 0 0 4px;
+  margin: 0 0 8px;
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
 h3 {
-  font-size: 15px;
   margin: 0 0 4px;
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
-h4 {
-  font-size: 11px;
-  letter-spacing: 0.04em;
+/* Labels: mono, capitals, tracked out. */
+h4,
+.eyebrow {
+  margin: 20px 0 6px;
+  font: 500 11px/16px var(--mono);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
-  margin: 16px 0 4px;
+  color: var(--ink-2);
+}
+
+.eyebrow {
+  margin: 0 0 6px;
 }
 
 p {
   margin: 0 0 8px;
-  line-height: 1.45;
 }
 
 button,
@@ -53,44 +97,73 @@ textarea {
   color: inherit;
 }
 
+/* Secondary is the default: white, with the stronger line. */
 button {
-  border: 1px solid var(--line);
-  background: var(--panel);
-  border-radius: 6px;
-  padding: 6px 12px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-weight: 600;
   cursor: pointer;
 }
 
 button:hover:not(:disabled) {
-  border-color: var(--accent);
+  border-color: var(--mirage);
+}
+
+button:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--mirage);
+  outline-offset: 2px;
 }
 
 button:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: default;
 }
 
+/* Accent: the one main action in an area. Mango fill, Mirage text. */
+button.accent {
+  border-color: var(--mango);
+  background: var(--mango);
+  color: var(--mirage);
+}
+
+button.accent:hover:not(:disabled) {
+  border-color: var(--mirage);
+}
+
+/* Primary: confirming. Mirage fill, white text. */
 button.primary {
-  background: var(--accent);
-  border-color: var(--accent);
+  border-color: var(--mirage);
+  background: var(--mirage);
   color: #fff;
 }
 
 button.link {
+  min-height: 0;
+  padding: 0 4px;
   border: 0;
   background: none;
-  padding: 0 4px;
-  color: var(--accent);
+  font-weight: 500;
+  color: var(--deep-orange);
+  text-decoration: underline;
 }
 
 textarea,
 select {
   width: 100%;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 8px;
-  background: var(--panel);
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
   resize: vertical;
+}
+
+a {
+  color: var(--deep-orange);
 }
 
 .muted {
@@ -98,7 +171,7 @@ select {
 }
 
 .pad {
-  padding: 14px;
+  padding: 24px;
 }
 
 .error,
@@ -110,118 +183,137 @@ select {
 .status,
 .notice {
   margin: 0;
-  padding: 8px 14px;
+  padding: 10px 24px;
   border-top: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 20px;
 }
 
 .status {
-  color: var(--accent);
+  color: var(--ink-2);
+  font-family: var(--mono);
+  font-size: 12px;
 }
 
+/* Waiting on the user, or something they should know before going on: the Mango tint. */
 .notice {
-  background: var(--amber-soft);
-  color: var(--amber);
+  border-top-color: var(--input-line);
+  background: var(--input-bg);
+  color: var(--input-ink);
 }
 
 .loading {
-  padding: 40px;
+  padding: 56px 32px;
   color: var(--muted);
 }
 
 /* ── start ───────────────────────────────────────────────────────── */
 
 .start-screen {
-  max-width: 720px;
-  margin: 48px auto;
-  padding: 28px;
-  background: var(--panel);
+  max-width: 760px;
+  margin: 56px auto;
+  padding: 32px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-top: 4px solid var(--mango);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.start-screen h1 {
+  font-size: 40px;
+  line-height: 46px;
+  letter-spacing: -0.02em;
 }
 
 .start-screen label {
   display: block;
-  font-weight: 600;
-  margin: 16px 0 6px;
+  margin: 24px 0 6px;
+  font: 500 11px/16px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
 }
 
-.start-screen .primary {
-  margin-top: 16px;
+.start-screen button {
+  margin-top: 24px;
 }
 
 .start-screen .error {
+  padding: 12px 0 0;
   border: 0;
-  padding: 8px 0 0;
 }
 
-/* ── workspace ───────────────────────────────────────────────────── */
-
-.workspace {
-  display: grid;
-  grid-template-columns: 380px minmax(0, 1fr) 340px;
-  grid-template-rows: auto minmax(0, 1fr);
-  height: 100vh;
-}
+/* ── the top bar ─────────────────────────────────────────────────── */
 
 .topbar {
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 10px 16px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--line);
+  min-height: 60px;
+  padding: 8px 24px;
+  border-bottom: 3px solid var(--mango);
+  background: var(--mirage);
+  color: #fff;
+}
+
+.topbar strong {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 700;
+}
+
+.topbar .muted {
+  font: 500 11px/16px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--light-orange);
 }
 
 .topbar .spacer {
   flex: 1;
 }
 
-/* ── the finished diagrams ───────────────────────────────────────── */
+.topbar .error-inline {
+  color: var(--light-orange);
+}
 
-.diagrams {
-  display: flex;
-  flex-direction: column;
+/* On the dark band a secondary button is an outline, and orange text is the light orange. */
+.topbar button {
+  min-height: 40px;
+  border-color: rgb(255 255 255 / 40%);
+  background: transparent;
+  color: #fff;
+}
+
+.topbar button:hover:not(:disabled) {
+  border-color: #fff;
+}
+
+.topbar button.accent {
+  border-color: var(--mango);
+  background: var(--mango);
+  color: var(--mirage);
+}
+
+.topbar button.link {
+  min-height: 0;
+  border: 0;
+  color: var(--light-orange);
+}
+
+.topbar button:focus-visible {
+  outline-color: #fff;
+}
+
+/* ── workspace ───────────────────────────────────────────────────── */
+
+.workspace {
+  display: grid;
+  grid-template-columns: 400px minmax(0, 1fr) 360px;
+  grid-template-rows: auto minmax(0, 1fr);
   height: 100vh;
-}
-
-.diagrams iframe {
-  flex: 1;
-  width: 100%;
-  border: 0;
-  background: var(--panel);
-}
-
-.flow-tabs {
-  display: flex;
-  flex: 1;
-  flex-wrap: wrap;
-  gap: 2px;
-}
-
-.flow-tabs button {
-  border: 0;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  background: none;
-  padding: 4px 10px;
-  color: var(--muted);
-}
-
-.flow-tabs button.active {
-  color: var(--ink);
-  border-bottom-color: var(--accent);
-  font-weight: 600;
-}
-
-.downloads {
-  display: flex;
-  gap: 10px;
-  font-size: 12px;
-}
-
-.downloads a {
-  color: var(--accent);
 }
 
 .chat,
@@ -229,7 +321,7 @@ select {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: var(--panel);
+  background: var(--surface);
 }
 
 .chat {
@@ -250,6 +342,7 @@ select {
 
 .flow .react-flow {
   flex: 1;
+  background: var(--ground);
 }
 
 /* ── tabs ────────────────────────────────────────────────────────── */
@@ -257,34 +350,65 @@ select {
 .tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px;
-  padding: 8px 10px 0;
+  gap: 4px;
+  padding: 8px 16px 0;
   border-bottom: 1px solid var(--line);
-  background: var(--panel);
+  background: var(--surface);
 }
 
-.tabs button {
+.tabs button,
+.flow-tabs button {
+  min-height: 40px;
+  padding: 0 12px;
   border: 0;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
   border-radius: 0;
   background: none;
-  padding: 6px 10px 8px;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
   color: var(--muted);
 }
 
 .tabs button.active {
-  color: var(--ink);
-  border-bottom-color: var(--accent);
+  border-bottom-color: var(--mango);
   font-weight: 600;
+  color: var(--mirage);
 }
 
 .dot {
   display: inline-block;
-  width: 7px;
-  height: 7px;
-  margin-left: 6px;
+  width: 8px;
+  height: 8px;
+  margin-left: 8px;
   border-radius: 50%;
-  background: var(--amber);
+  background: var(--mango);
+}
+
+/* The reasoning panel's header: a Mirage band with Light orange labels. */
+.side .tabs {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 8px 16px 0;
+  border-bottom: 0;
+  background: var(--mirage);
+}
+
+.side .tabs button {
+  font: 500 12px/16px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 70%);
+}
+
+.side .tabs button.active {
+  border-bottom-color: var(--mango);
+  color: var(--light-orange);
+}
+
+.side .tabs button:hover:not(:disabled) {
+  color: #fff;
 }
 
 /* ── chat ────────────────────────────────────────────────────────── */
@@ -292,72 +416,103 @@ select {
 .transcript {
   flex: 1;
   overflow-y: auto;
-  padding: 14px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
 }
 
 .bubble {
   max-width: 92%;
-  padding: 9px 12px;
-  border-radius: 10px;
-  line-height: 1.45;
+  padding: 12px 16px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
+/* Yours: Mirage, rounded except the corner nearest you. */
 .bubble.user {
   align-self: flex-end;
-  background: var(--accent-soft);
-  max-height: 180px;
+  max-height: 200px;
   overflow-y: auto;
+  border-radius: 14px 14px 4px 14px;
+  background: var(--mirage);
+  color: #fff;
 }
 
+/* The tool's: Ground with a line, rounded except the corner it speaks from. */
 .bubble.assistant {
   align-self: flex-start;
+  border: 1px solid var(--line);
+  border-radius: 4px 14px 14px 14px;
   background: var(--ground);
 }
 
 .questions {
-  margin: 10px 0 0;
-  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: question;
   white-space: normal;
 }
 
 .questions li {
-  padding: 4px 6px;
-  border-radius: 6px;
+  position: relative;
+  padding: 10px 12px 10px 40px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 14px;
+  line-height: 22px;
   cursor: pointer;
+  counter-increment: question;
 }
 
-.questions li:hover,
+.questions li::before {
+  content: counter(question);
+  position: absolute;
+  left: 12px;
+  top: 11px;
+  font: 500 12px/20px var(--mono);
+  color: var(--deep-orange);
+}
+
+.questions li:hover {
+  border-color: var(--mirage);
+}
+
 .questions li.chosen {
-  background: var(--accent-soft);
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--mirage);
 }
 
 .composer {
-  padding: 10px 14px 14px;
+  padding: 16px 24px 24px;
   border-top: 1px solid var(--line);
 }
 
 .focus-line,
 .answering {
-  font-size: 12px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ink-2);
 }
 
 .answering {
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: var(--amber-soft);
+  padding: 8px 12px;
+  border: 1px solid var(--input-line);
+  border-radius: var(--radius);
+  background: var(--input-bg);
+  color: var(--input-ink);
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .actions .finish {
@@ -369,34 +524,38 @@ select {
 .closeout {
   max-height: 45%;
   overflow-y: auto;
-  padding: 12px 14px;
+  padding: 16px 24px;
   border-top: 1px solid var(--line);
   background: var(--ground);
 }
 
 .closeout h4 {
-  margin-top: 10px;
+  margin-top: 16px;
 }
 
 .closeout ul {
   margin: 0 0 8px;
   padding-left: 18px;
+  font-size: 13px;
+  line-height: 20px;
 }
 
 .closeout li {
   margin-bottom: 4px;
 }
 
-.closeout .primary {
-  margin: 4px 0 10px;
+.closeout > button {
+  margin: 8px 0 12px;
 }
 
 .download-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  padding: 5px 0;
+  gap: 12px;
+  padding: 8px 0;
   border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 20px;
 }
 
 .download-row span {
@@ -404,33 +563,57 @@ select {
   font-weight: 600;
 }
 
-.download-row a {
-  color: var(--accent);
+/* ── the reasoning panel ─────────────────────────────────────────── */
+
+.side h3 {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
-/* ── side panel ──────────────────────────────────────────────────── */
+.side p,
+.side li {
+  font-size: 13px;
+  line-height: 20px;
+}
 
+/* Your own words: on the Moss tint. */
 .side blockquote {
-  margin: 0 0 10px;
-  padding: 8px 10px;
-  border-left: 3px solid var(--accent);
-  background: var(--ground);
-  border-radius: 0 6px 6px 0;
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid var(--moss);
+  border-left: 3px solid var(--from-you-line);
+  border-radius: var(--radius);
+  background: var(--from-you-bg);
+  color: var(--from-you-ink);
+  font-size: 14px;
+  line-height: 22px;
 }
 
-.side blockquote .tag,
+.side blockquote .tag {
+  display: block;
+  margin-top: 8px;
+  font: 500 11px/16px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .side blockquote .context {
   display: block;
   margin-top: 4px;
-  font-size: 12px;
-  color: var(--muted);
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ink-2);
 }
 
+/* What is still open: on the Mango tint. */
 .side .open {
-  padding: 8px 10px;
-  border-radius: 6px;
-  background: var(--amber-soft);
-  color: var(--amber);
+  padding: 12px;
+  border: 1px solid var(--input-line);
+  border-radius: var(--radius);
+  background: var(--input-bg);
+  color: var(--input-ink);
 }
 
 .side ul {
@@ -439,7 +622,9 @@ select {
 }
 
 .side details {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
 }
 
 .side summary {
@@ -449,21 +634,26 @@ select {
   cursor: pointer;
 }
 
+.side summary .muted {
+  font: 500 12px/24px var(--mono);
+}
+
 .progress {
-  height: 5px;
-  margin: 6px 0;
-  border-radius: 3px;
+  height: 6px;
+  margin: 8px 0;
+  border-radius: 999px;
   background: var(--line);
   overflow: hidden;
 }
 
 .progress div {
   height: 100%;
-  background: var(--accent);
+  background: var(--from-you-line);
 }
 
 .counts {
   font-size: 12px;
+  line-height: 16px;
   color: var(--muted);
 }
 
@@ -471,7 +661,51 @@ select {
   font-weight: 600;
 }
 
-/* ── flow nodes ──────────────────────────────────────────────────── */
+/* ── the finished diagrams ───────────────────────────────────────── */
+
+.diagrams {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.diagrams iframe {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: var(--surface);
+}
+
+.flow-tabs {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.topbar .flow-tabs button {
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: rgb(255 255 255 / 70%);
+}
+
+.topbar .flow-tabs button.active {
+  border-bottom-color: var(--mango);
+  font-weight: 600;
+  color: #fff;
+}
+
+.downloads {
+  display: flex;
+  gap: 12px;
+  font: 500 12px/16px var(--mono);
+}
+
+.downloads a {
+  color: var(--light-orange);
+}
+
+/* ── step cards and shapes ───────────────────────────────────────── */
 
 .node {
   position: relative;
@@ -481,7 +715,8 @@ select {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 18px;
   cursor: pointer;
 }
 
@@ -490,114 +725,166 @@ select {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--panel);
-  border: 1.5px solid var(--ink);
-  text-align: center;
+  border: 2px solid var(--from-you-line);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+/* Status: border style and lightness change with the hue, so the three read apart in grey. */
+.node.inferred .shape {
+  border-style: dashed;
+  border-color: var(--inferred-line);
+}
+
+.node.needs-input .shape {
+  border-color: var(--mango);
+  background: var(--input-tint);
+}
+
+/* A card: kind at the top left, status at the top right, then the title. */
+.node.task .shape,
+.node.subprocess .shape {
+  flex: 1;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  text-align: left;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card-head .kind {
+  font: 500 10px/16px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.pill {
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--from-you-bg);
+  color: var(--from-you-ink);
+  font-size: 11px;
+  line-height: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.node.inferred .pill {
+  background: var(--inferred-bg);
+  color: var(--inferred-ink);
+}
+
+.node.needs-input .pill {
+  background: var(--input-bg);
+  color: var(--input-ink);
 }
 
 .node .label {
-  line-height: 1.25;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
+  font-size: 14px;
+  line-height: 19px;
+  font-weight: 600;
 }
 
 .node .label.under {
-  margin-top: 4px;
+  margin-top: 6px;
   max-width: 100%;
   text-align: center;
+  font-size: 13px;
+  line-height: 18px;
   -webkit-line-clamp: 2;
 }
 
 .node .lane {
-  margin-top: 2px;
-  font-size: 10px;
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-top: 4px;
   max-width: 100%;
+  overflow: hidden;
+  font: 500 10px/14px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
 }
 
-.node.task .shape,
+/* A collapsed subprocess: a card inside a frame, so it reads as holding something. */
 .node.subprocess .shape {
-  width: 100%;
-  flex: 1;
-  padding: 6px 10px;
-  border-radius: 10px;
-}
-
-/* A collapsed subprocess: a box inside a box. */
-.node.subprocess .shape {
-  border-radius: 4px;
-  outline: 1.5px solid var(--ink);
+  width: calc(100% - 10px);
+  margin: 5px;
+  outline: 2px solid var(--mirage);
   outline-offset: 3px;
-  margin: 4px;
-  width: calc(100% - 8px);
-  flex-direction: column;
-  gap: 4px;
+}
+
+.node .open-flow {
+  align-self: flex-start;
+  min-height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
 }
 
 .node.start .shape,
 .node.terminal .shape {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
   flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
 }
 
 .node.terminal .shape {
-  border-width: 3.5px;
+  border-width: 4px;
 }
 
 .node.gateway .shape {
-  width: 46px;
-  height: 46px;
-  margin: 8px 0 6px;
-  transform: rotate(45deg);
   flex: none;
+  width: 48px;
+  height: 48px;
+  margin: 10px 0 8px;
+  transform: rotate(45deg);
 }
 
 .node.gateway .glyph {
   transform: rotate(-45deg);
+  font-family: var(--mono);
   font-weight: 700;
 }
 
-.node.open .shape {
-  border-style: dashed;
-  border-color: var(--amber);
-  background: var(--amber-soft);
-}
-
-.node.subprocess.open .shape {
-  outline-color: var(--amber);
-  outline-style: dashed;
-}
-
+/* Selection: a 2px Mirage ring, held off the card by a 3px white gap. Never colour alone. */
 .node.selected .shape {
-  box-shadow: 0 0 0 3px var(--accent-soft), 0 0 0 4px var(--accent);
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--mirage);
+}
+
+.node.subprocess.selected .shape {
+  outline-color: transparent;
 }
 
 .node .marker {
   position: absolute;
-  top: -5px;
-  right: -5px;
-  width: 10px;
-  height: 10px;
+  top: -6px;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--surface);
   border-radius: 50%;
-  background: var(--accent);
-  border: 2px solid var(--panel);
+  background: var(--mirage);
 }
 
 .node.gateway .marker {
-  top: -6px;
-  right: 16px;
-}
-
-.node .open-flow {
-  padding: 1px 8px;
-  font-size: 11px;
+  top: -7px;
+  right: 17px;
 }
 
 /* Handles are where arrows attach, not something to grab: nothing here is connectable. */
@@ -608,13 +895,23 @@ select {
 
 .node.start .react-flow__handle,
 .node.terminal .react-flow__handle {
-  top: 20px;
+  top: 22px;
 }
 
 .node.gateway .react-flow__handle {
-  top: 31px;
+  top: 34px;
+}
+
+.react-flow__edge-path {
+  stroke: var(--ink-2);
 }
 
 .react-flow__edge-text {
-  font-size: 11px;
+  font-family: var(--sans);
+  font-size: 12px;
+  fill: var(--ink-2);
+}
+
+.react-flow__controls button {
+  min-height: 0;
 }
