@@ -1,0 +1,141 @@
+# Intake & Enrollment: the process definition.
+#
+# Read by code. The `subprocesses` list is the only directive knowledge in the domain
+# folder: it says which subprocesses exist, which the extractor may tag, which the live view
+# can open as their own flows, and which are sliced out at close-out. Everything else here
+# is scope and completion bookkeeping.
+
+schema_version: 2
+id: enrollment_and_intake
+display_name: "Intake & Enrollment"
+
+description: "Everything from the moment an enrollment submission arrives until the patient is enrolled in the program (or closed as not enrolled) and handed off to benefits investigation. Pharmacy-dispensed products only."
+
+scope:
+  starts_at: "An enrollment submission or referral is received through any channel"
+  ends_at: [handoff_benefits_investigation, closed_not_enrolled, routed_off_label_pathway]
+  in_scope:
+    - "Submission receipt across all channels, including specialty pharmacy and patient self-enrollment"
+    - "The unassigned work pool and claiming of work"
+    - "Form keying, including OCR or document AI with human review"
+    - "Lead or patient record creation, and data moving between vendor systems and the CRM"
+    - "Duplicate detection, and routing returning, restarting and switching patients"
+    - "Prescriber lookup and linking"
+    - "Eligibility screening and off-label review"
+    - "Missing information outreach to the HCP office and to the patient"
+    - "Consent capture and gating; validity, expiry and renewal only where they touch intake"
+    - "Territory routing and care team assignment"
+    - "Lead conversion, product-level enrollment records, and partial enrollment"
+    - "Nurse or clinical educator program enrollment"
+    - "Welcome outreach"
+    - "The hand-off to benefits investigation"
+  out_of_scope:
+    - "Benefits investigation, prior authorization and appeals (coverage determination)"
+    - "Copay, free drug, bridge and quick-start processing (the hand-off to them is in scope)"
+    - "The re-enrollment, reopen and program-transfer processes themselves (detecting and routing them is in scope)"
+    - "Adverse event and product complaint handling"
+    - "Communication templates and service-level commitments"
+    - "Buy-and-bill products"
+
+# The persona whose lane takes work the user describes without naming who does it.
+# The session resolves it to a learned lane; until the user names that system, the
+# session uses a placeholder lane and asks.
+default_persona: crm_automation
+
+# Personas this process typically involves. Used for lane ordering in the final BPMN
+# when the session doesn't establish its own order.
+typical_personas:
+  - hcp_office
+  - patient_caregiver
+  - specialty_pharmacy
+  - external_vendor
+  - intake_keying
+  - document_ai
+  - hub_case_owner
+  - manager
+  - clinical_educator
+  - field_reimbursement
+  - integration_layer
+  - crm_automation
+
+# The subprocesses that should exist. Each is tagged on the master graph, drawn as one box
+# on the main flow, and viewable as its own flow.
+#   persona     the lane its collapsed box is drawn in until the session learns better
+#               (the lane of whoever owns the work the gateway hands off)
+#   knowledge   the topic file the navigator reads about it
+#   entry       what hands work into it; labels the synthesised start of its own flow
+#   exits       the outcomes it returns with; return = back to the main flow,
+#               boundary = ends the process at one of `boundaries`
+subprocesses:
+
+  - id: duplicate_handling
+    label: "Duplicate handling"
+    persona: intake_keying
+    knowledge: duplicate_handling.md
+    entry: "A possible match with an existing patient is found"
+    exits:
+      - {id: new_patient, label: "Not a match: continue as a new patient", kind: return}
+      - {id: attached_to_existing, label: "Attached to the existing patient or case", kind: return}
+      - {id: closed_not_enrolled, label: "Closed, not enrolled", kind: boundary}
+
+  - id: off_label_review
+    label: "Off-label review"
+    persona: intake_keying
+    knowledge: diagnosis.md
+    entry: "The submission doesn't clearly meet the eligibility criteria"
+    exits:
+      - {id: confirmed_eligible, label: "Confirmed eligible: continue enrollment", kind: return}
+      - {id: routed_off_label_pathway, label: "Routed to an off-label pathway", kind: boundary}
+      - {id: closed_not_enrolled, label: "Closed, not enrolled", kind: boundary}
+
+  - id: missing_info_hcp
+    label: "Missing information outreach (HCP)"
+    persona: hub_case_owner
+    knowledge: missing_information_outreach.md
+    entry: "Required items from the HCP office are missing"
+    exits:
+      - {id: information_received, label: "Information received", kind: return}
+      - {id: proceed_partial, label: "Proceed with partial enrollment", kind: return}
+      - {id: closed_not_enrolled, label: "Closed, not enrolled", kind: boundary}
+
+  - id: missing_info_patient
+    label: "Missing information outreach (patient)"
+    persona: hub_case_owner
+    knowledge: missing_information_outreach.md
+    entry: "Required items from the patient, often consent, are missing"
+    exits:
+      - {id: information_received, label: "Information received", kind: return}
+      - {id: proceed_partial, label: "Proceed with partial enrollment", kind: return}
+      - {id: closed_not_enrolled, label: "Closed, not enrolled", kind: boundary}
+
+# Canonical end points, shared with neighbouring processes so flows can be stitched later.
+boundaries:
+
+  - id: handoff_benefits_investigation
+    label: "Handed off to benefits investigation"
+    kind: handoff
+    next_process: coverage_determination
+    note: "Some programs create this at conversion and run it in parallel with the rest of enrollment rather than as a gate at the end. See topic exit.bi_overlap."
+
+  - id: closed_not_enrolled
+    label: "Closed, not enrolled"
+    kind: terminal
+    note: "Every non-enrollment outcome: never started, cancelled for missing information or consent, unable to reach, declined, ineligible and not redirected."
+
+  - id: routed_off_label_pathway
+    label: "Routed to an off-label pathway"
+    kind: handoff
+    next_process: null
+    note: "Where the program sends ineligible patients somewhere else rather than closing them, for example to a specialty pharmacy or a separate account type. Reached from off_label_review."
+
+# When a scope (the main flow, or one subprocess) is complete:
+#   every applicable topic of a required priority has an accepted status, and
+#   every needs_clarification terminal created by a rule has been accepted by the user.
+completion:
+  scopes:
+    required_priorities: [high]
+    accepted_statuses: [present, confirmed_absent, deferred, not_applicable]
+    rule_terminals_must_be_accepted: true
+  session:
+    require_all_scopes_complete: true
+    user_may_close_early: true

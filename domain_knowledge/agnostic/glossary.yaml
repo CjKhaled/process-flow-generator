@@ -1,0 +1,252 @@
+# Domain shorthand and documents that are NOT actors.
+#
+# Read by code. Role titles and abbreviations (PSM, PAM, FRM...) live in personas.yaml, so a
+# role is never mistaken for a term or a term for a role. Terms a session learns from the user
+# (a client's own system names and nicknames) live in that session, never here.
+#
+# category: process | coverage | clinical | consent | record | platform | document | regulatory
+# aliases: optional other names for the same thing
+
+schema_version: 2
+
+terms:
+
+  # ── Process ─────────────────────────────────────────────
+  BI:
+    meaning: "Benefits investigation: checking the patient's insurance coverage for the drug"
+    category: process
+  BV:
+    meaning: "Benefits verification, used interchangeably with BI"
+    category: process
+  MI:
+    meaning: "Missing information"
+    category: process
+  NIGO:
+    meaning: "Not in good order: a submission missing required items"
+    category: process
+  IGO:
+    meaning: "In good order: a complete submission"
+    category: process
+  Hub:
+    meaning: "The patient support operation that runs intake and case management, in-house or outsourced"
+    category: process
+  Welcome Call:
+    meaning: "First outreach to a newly enrolled patient"
+    category: process
+  Welcome Pack:
+    meaning: "Welcome materials sent to a newly enrolled patient"
+    category: process
+    aliases: ["welcome kit", "welcome materials"]
+  Never Start:
+    meaning: "Status for a patient who was referred but never began therapy or enrollment"
+    category: process
+  Restart:
+    meaning: "A patient resuming therapy after stopping"
+    category: process
+  Switch:
+    meaning: "A patient changing product or formulation"
+    category: process
+  Re-enrollment:
+    meaning: "A previously enrolled patient enrolling again"
+    category: process
+  Lead conversion:
+    meaning: "Turning a lead into an enrolled patient record"
+    category: process
+  Unassigned queue:
+    meaning: "Shared pool where new work waits until someone claims it"
+    category: process
+  Territory alignment:
+    meaning: "The mapping of ZIP codes to territories and their staff"
+    category: process
+  TTRY letter:
+    meaning: "Tried-to-reach-you letter sent to an unreachable patient"
+    category: process
+  Milestone:
+    meaning: "A tracked stage on an enrollment or care plan record, such as onboarding or coverage determination"
+    category: process
+  Quick Start:
+    meaning: "Free supply shipped while coverage is being determined"
+    category: process
+    aliases: ["QS"]
+  Bridge:
+    meaning: "Free supply while a coverage delay or gap is resolved"
+    category: process
+
+  # ── Coverage ────────────────────────────────────────────
+  PA:
+    meaning: "Prior authorization"
+    category: coverage
+  ePA:
+    meaning: "Electronic prior authorization"
+    category: coverage
+  EOB:
+    meaning: "Explanation of benefits from the insurer"
+    category: coverage
+  PAP:
+    meaning: "Patient assistance program: free drug for eligible uninsured or underinsured patients"
+    category: coverage
+  BIN/PCN:
+    meaning: "Pharmacy benefit identifiers on an insurance card"
+    category: coverage
+
+  # ── Clinical ────────────────────────────────────────────
+  ICD-10:
+    meaning: "Diagnosis code system used to judge eligibility"
+    category: clinical
+  Rx:
+    meaning: "Prescription"
+    category: clinical
+    aliases: ["script", "eRx"]
+  On-label:
+    meaning: "Use within the product's approved indications"
+    category: clinical
+  Off-label:
+    meaning: "Use outside the approved indications"
+    category: clinical
+  Titration:
+    meaning: "Gradual dose adjustment at the start of therapy"
+    category: clinical
+  Formulation:
+    meaning: "A product's form, such as IV, subcutaneous or prefilled syringe"
+    category: clinical
+  Serostatus:
+    meaning: "Whether a specific antibody test is positive; sometimes an eligibility criterion"
+    category: clinical
+  Genetic testing:
+    meaning: "A test used to confirm a diagnosis, sometimes offered free by the program"
+    category: clinical
+
+  # ── Consent ─────────────────────────────────────────────
+  HIPAA authorization:
+    meaning: "Patient permission to share health information with the program"
+    category: consent
+    aliases: ["patient authorization", "patient consent"]
+  Program consent:
+    meaning: "Patient agreement to take part in the program"
+    category: consent
+  Marketing consent:
+    meaning: "Permission to receive promotional communications"
+    category: consent
+  SMS consent:
+    meaning: "Permission to receive text messages"
+    category: consent
+    aliases: ["text consent"]
+  Verbal consent:
+    meaning: "Consent given by phone and documented by staff"
+    category: consent
+  POA:
+    meaning: "Power of attorney: authority for someone to act for the patient"
+    category: consent
+
+  # ── Records ─────────────────────────────────────────────
+  Lead:
+    meaning: "Preliminary record for a person not yet enrolled"
+    category: record
+  Person Account:
+    meaning: "CRM record representing an individual patient"
+    category: record
+  Care Plan:
+    meaning: "CRM record holding a patient's program activities, milestones and goals"
+    category: record
+  Care Program:
+    meaning: "CRM record representing a program the patient can enroll in"
+    category: record
+  CPE:
+    meaning: "Care Program Enrollee: the patient's enrollment in a program"
+    category: record
+  CPEP:
+    meaning: "Care Program Enrollee Product: enrollment in a specific product"
+    category: record
+  HCO:
+    meaning: "Healthcare organisation: the practice, clinic or hospital"
+    category: record
+  NPI:
+    meaning: "National Provider Identifier: the prescriber's unique ID"
+    category: record
+  Tax ID:
+    meaning: "Practice tax identifier, used to verify the prescriber's organisation"
+    category: record
+  Case:
+    meaning: "A CRM record tracking a piece of work, such as an onboarding or benefits investigation case"
+    category: record
+  Sub-status:
+    meaning: "A finer-grained status on a record, set alongside its main status"
+    category: record
+
+  # ── Platforms ───────────────────────────────────────────
+  CRM:
+    meaning: "Customer relationship management system where records and tasks live"
+    category: platform
+  Health Cloud:
+    meaning: "Salesforce's healthcare CRM product"
+    category: platform
+  Life Sciences Cloud:
+    meaning: "Salesforce's life sciences CRM product, including patient services objects"
+    category: platform
+  Experience Cloud:
+    meaning: "Salesforce product used for patient and HCP web forms and portals"
+    category: platform
+  Veeva Network:
+    meaning: "HCP and HCO master data service"
+    category: platform
+  DocuSign:
+    meaning: "Electronic signature platform"
+    category: platform
+  Adobe Sign:
+    meaning: "Electronic signature platform"
+    category: platform
+  OCR:
+    meaning: "Optical character recognition: reading text from scanned documents"
+    category: platform
+  IDP:
+    meaning: "Intelligent document processing: classifying documents and extracting fields"
+    category: platform
+  sFTP:
+    meaning: "Secure file transfer, often used for vendor data feeds"
+    category: platform
+  Teams:
+    meaning: "Microsoft Teams, used for internal messaging between roles"
+    category: platform
+
+  # ── Documents ───────────────────────────────────────────
+  PEF:
+    meaning: "Patient enrollment form: the core submission, often with numbered HCP and patient sections"
+    category: document
+    aliases: ["enrollment form", "patient enrollment form", "start form", "referral form"]
+  Prescription:
+    meaning: "The prescription itself; required before enrollment by some programs, only later by others"
+    category: document
+  Insurance card:
+    meaning: "Copy of the front and back of the patient's insurance card"
+    category: document
+  Clinical documentation:
+    meaning: "Chart notes, lab or test results supporting the diagnosis"
+    category: document
+    aliases: ["chart notes", "clinicals", "lab results"]
+  SMN:
+    meaning: "Statement of medical necessity: the prescriber's clinical justification, sometimes a section of the enrollment form"
+    category: document
+    aliases: ["LMN", "letter of medical necessity"]
+  Authority documents:
+    meaning: "Power of attorney or guardianship papers establishing who may sign for the patient"
+    category: document
+  Nurse referral:
+    meaning: "An HCP order or referral required before nurse or educator support starts"
+    category: document
+  Safety card:
+    meaning: "Card given to patients for safety reasons, sometimes REMS-required"
+    category: document
+
+  # ── Regulatory ──────────────────────────────────────────
+  REMS:
+    meaning: "Risk Evaluation and Mitigation Strategy: an FDA-required drug safety program"
+    category: regulatory
+  ETASU:
+    meaning: "Elements to Assure Safe Use: REMS requirements that gate prescribing or dispensing"
+    category: regulatory
+  TCPA:
+    meaning: "US law governing consent for texts and automated calls"
+    category: regulatory
+  PHI:
+    meaning: "Protected health information"
+    category: regulatory

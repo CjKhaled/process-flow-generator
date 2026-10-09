@@ -1,0 +1,988 @@
+# Coverage topics for Intake & Enrollment.
+#
+# Read by code. Each topic becomes one entry in a session's coverage ledger. The navigator
+# reads all of them; the interpreter sees ids, titles and cues; the extractor never sees this file.
+#
+# Fields
+#   id            stable id: <area>.<topic> on the main flow, <subprocess>.<topic> inside one
+#   scope         main, or a subprocess id from process.yaml
+#   area          groups topics in the coverage panel; on the main flow, matches a topic file
+#   title         short label for the coverage panel
+#   priority      high | normal | low (see README)
+#   applies_when  always, or program facts (see README)
+#   screening     true: a program-fact question, asked early while the fact is unknown
+#   sets_fact     the program fact a screening topic's answer settles
+#   cues          words suggesting the topic is being described. Hints for a model, never keyword rules
+#   ask           the opening question. Open, not leading. The navigator rephrases it
+#   follow_ups    asked when the topic is mentioned but underspecified
+#   leads_to      subprocess this topic's decision hands off to, if any
+
+schema_version: 2
+process: enrollment_and_intake
+
+topics:
+
+  # ══ Program screening ══════════════════════════════════════════════════════
+  - id: program.rems
+    scope: main
+    area: program
+    title: "REMS"
+    priority: high
+    applies_when: always
+    screening: true
+    sets_fact: product.has_rems
+    cues: ["REMS", "ETASU", "certified pharmacy", "vaccination before", "safety card"]
+    ask: "Do any of the products in this program have a REMS?"
+
+  - id: program.nurse
+    scope: main
+    area: program
+    title: "Nurse or educator program"
+    priority: high
+    applies_when: always
+    screening: true
+    sets_fact: program.has_nurse_program
+    cues: ["nurse", "educator", "injection training", "clinical educator"]
+    ask: "Does the program offer nurse or clinical educator support?"
+
+  - id: program.self_enrollment
+    scope: main
+    area: program
+    title: "Patient-started enrollment"
+    priority: high
+    applies_when: always
+    screening: true
+    sets_fact: program.patient_self_enrollment
+    cues: ["patient enrolls", "self-enroll", "patient website", "patient portal"]
+    ask: "Can a patient start an enrollment themselves, without the HCP?"
+
+  - id: program.pediatric
+    scope: main
+    area: program
+    title: "Patients under 18"
+    priority: high
+    applies_when: always
+    screening: true
+    sets_fact: product.pediatric_population
+    cues: ["minor", "under 18", "pediatric", "parent", "guardian"]
+    ask: "Does the program enroll any patients under 18?"
+
+  # ══ Channels ════════════════════════════════════════════════════════════════
+  - id: intake.channels
+    scope: main
+    area: channels
+    title: "Intake channels"
+    priority: high
+    applies_when: always
+    cues: ["fax", "efax", "email", "mail", "portal", "web form", "DocuSign", "online", "referral", "self-enroll"]
+    ask: "How do enrollment submissions arrive today? Please list every channel, even rarely used ones."
+    follow_ups:
+      - "Which channel brings in the most submissions?"
+
+  - id: intake.channel_paths
+    scope: main
+    area: channels
+    title: "Channel-specific paths"
+    priority: normal
+    applies_when: always
+    cues: ["web path", "fax path", "different process", "depending on how it comes in"]
+    ask: "Once a submission arrives, does what happens next depend on the channel it came through, or do all channels end up in the same place?"
+    follow_ups:
+      - "At what point do the channel paths come together?"
+
+  - id: intake.self_enrollment
+    scope: main
+    area: channels
+    title: "Patient self-enrollment"
+    priority: high
+    applies_when: {program.patient_self_enrollment: true}
+    cues: ["patient enrolls", "self-enroll", "patient website", "patient-only"]
+    ask: "When a patient starts enrollment on their own, without the HCP, what happens to that submission?"
+    follow_ups:
+      - "What can the patient receive before the HCP side arrives?"
+      - "What has to arrive from the HCP before the patient is fully enrolled?"
+
+  - id: sp.enrollment_role
+    scope: main
+    area: channels
+    title: "Specialty pharmacy role"
+    priority: normal
+    applies_when: always
+    cues: ["specialty pharmacy", "SP", "pharmacy referral", "pharmacy sends"]
+    ask: "Does a specialty pharmacy play any part in starting, completing or receiving an enrollment?"
+    follow_ups:
+      - "What does the pharmacy send, and what does it trigger?"
+
+  - id: intake.acknowledgement
+    scope: main
+    area: channels
+    title: "Receipt acknowledged"
+    priority: normal
+    applies_when: always
+    cues: ["confirmation", "acknowledge", "received fax", "confirm receipt"]
+    ask: "Does the HCP office, or the patient, hear back that a submission was received?"
+
+  - id: intake.work_pool
+    scope: main
+    area: channels
+    title: "Where new work lands"
+    priority: high
+    applies_when: always
+    cues: ["queue", "inbox", "unassigned", "pool", "shared mailbox"]
+    ask: "Where does a new submission sit before anyone starts working on it?"
+    follow_ups:
+      - "Is it one pool for all channels, or several?"
+
+  - id: intake.claim
+    scope: main
+    area: channels
+    title: "How work is claimed"
+    priority: normal
+    applies_when: always
+    cues: ["accept", "pick up", "claim", "auto-assign"]
+    ask: "How does someone take ownership of a submission from that pool?"
+    follow_ups:
+      - "Can others see who has picked up what?"
+
+  - id: intake.keying
+    scope: main
+    area: channels
+    title: "Who keys the form"
+    priority: high
+    applies_when: always
+    cues: ["key", "data entry", "enter the form", "transcribe", "vendor", "intake coordinator"]
+    ask: "Who enters the information from the submission into the system?"
+    follow_ups:
+      - "Is that team in-house or a vendor?"
+      - "Does that team ever contact the patient or the HCP office?"
+
+  - id: intake.keying_automation
+    scope: main
+    area: channels
+    title: "Keying automation"
+    priority: normal
+    applies_when: always
+    cues: ["OCR", "IDP", "document AI", "extraction", "classify", "confidence", "auto-populate"]
+    ask: "Is any part of reading or entering the form automated?"
+    follow_ups:
+      - "What happens when the automation isn't confident about a field?"
+
+  # ══ Leads and records ═══════════════════════════════════════════════════════
+  - id: record.model
+    scope: main
+    area: leads
+    title: "First record created"
+    priority: high
+    applies_when: always
+    cues: ["lead", "patient account", "person account", "create the patient", "enrollment record"]
+    ask: "When a submission is first entered, what kind of record is created for the person, and in which system?"
+    follow_ups:
+      - "Does that record change type or status later, and when?"
+
+  - id: record.lead_like_state
+    scope: main
+    area: leads
+    title: "Pending or lead-like state"
+    priority: low
+    applies_when: always
+    cues: ["marketing only", "pending account", "prospect"]
+    ask: "Is there a record type or status used for people who aren't fully enrolled yet?"
+    follow_ups:
+      - "What moves someone out of that state?"
+
+  - id: record.product_enrollment
+    scope: main
+    area: leads
+    title: "Product-level enrollment records"
+    priority: normal
+    applies_when: always
+    cues: ["care plan", "enrollment record", "program enrollee", "per product"]
+    ask: "Apart from the patient record, is there a separate record for the patient's enrollment in each product?"
+    follow_ups:
+      - "What does that record track? For example status, sub-status or milestones."
+
+  - id: record.system_handoffs
+    scope: main
+    area: leads
+    title: "Data moving between systems"
+    priority: normal
+    applies_when: always
+    cues: ["sends it to", "integration", "feed", "status is sent", "on their end", "comes through"]
+    ask: "Does enrollment data move between different systems along the way? If so, what moves, and what does its arrival trigger?"
+
+  - id: prescriber.lookup
+    scope: main
+    area: leads
+    title: "Prescriber lookup"
+    priority: high
+    applies_when: always
+    cues: ["NPI", "prescriber", "HCP record", "master data", "HCO", "practice"]
+    ask: "How is the prescriber found and linked to the patient?"
+    follow_ups:
+      - "Which identifiers are checked?"
+
+  - id: prescriber.not_found
+    scope: main
+    area: leads
+    title: "Prescriber not found"
+    priority: normal
+    applies_when: always
+    cues: ["create HCP", "new prescriber", "not found", "local record"]
+    ask: "What happens when the prescriber can't be found?"
+
+  # ══ Diagnosis ═══════════════════════════════════════════════════════════════
+  - id: eligibility.criteria
+    scope: main
+    area: diagnosis
+    title: "Eligibility criteria"
+    priority: high
+    applies_when: always
+    cues: ["eligible", "ICD-10", "diagnosis code", "age", "on-label", "criteria", "qualify"]
+    ask: "Is the submission checked against eligibility criteria during intake? If so, what's checked?"
+    follow_ups:
+      - "Do the criteria differ by product or indication?"
+
+  - id: eligibility.source_of_truth
+    scope: main
+    area: diagnosis
+    title: "What eligibility is judged from"
+    priority: high
+    applies_when: always
+    cues: ["as written", "on the form", "attachments", "chart notes", "infer"]
+    ask: "When checking eligibility, what can staff rely on? Only what's written on the form, or other documents too?"
+
+  - id: eligibility.judgement_owner
+    scope: main
+    area: diagnosis
+    title: "Who decides eligibility"
+    priority: normal
+    applies_when: always
+    cues: ["decides", "determines", "reviews eligibility", "clinical review"]
+    ask: "Who makes the eligibility decision, and is anyone allowed to make a judgement call?"
+
+  - id: eligibility.off_label_detection
+    scope: main
+    area: diagnosis
+    title: "Ineligible or off-label submissions"
+    priority: high
+    applies_when: always
+    cues: ["off-label", "ineligible", "wrong code", "doesn't qualify", "outside indication"]
+    ask: "What happens when a submission doesn't meet the eligibility criteria?"
+    leads_to: off_label_review
+
+  - id: rx.requirement
+    scope: main
+    area: diagnosis
+    title: "Prescription requirement"
+    priority: high
+    applies_when: always
+    cues: ["Rx", "prescription", "order", "script"]
+    ask: "Does a prescription need to be part of the submission? What happens if it isn't?"
+    follow_ups:
+      - "Does the prescription arriving later change the patient's enrollment in any way?"
+
+  - id: rx.entry_rule
+    scope: main
+    area: diagnosis
+    title: "Prescription entry"
+    priority: low
+    applies_when: always
+    cues: ["as written", "enter the Rx", "prescription record"]
+    ask: "How is the prescription recorded in the system?"
+
+  - id: hcp_signature.requirement
+    scope: main
+    area: diagnosis
+    title: "HCP signature"
+    priority: normal
+    applies_when: always
+    cues: ["HCP signature", "prescriber signature", "attestation", "section signed"]
+    ask: "What happens when the prescriber's signature or attestation is missing?"
+    follow_ups:
+      - "Does the rule differ by product or therapeutic area?"
+
+  # ══ Duplicates (main-flow check point) ══════════════════════════════════════
+  - id: duplicate.check_point
+    scope: main
+    area: duplicate_handling
+    title: "When duplicates are checked"
+    priority: high
+    applies_when: always
+    cues: ["duplicate", "existing patient", "search first", "match", "merge", "already enrolled", "already exists"]
+    ask: "At what point is the submission checked against existing patients, and who or what does it?"
+    leads_to: duplicate_handling
+
+  # ══ Missing information (main-flow detection) ═══════════════════════════════
+  - id: missing_info.detection
+    scope: main
+    area: missing_information_outreach
+    title: "How missing information is noticed"
+    priority: high
+    applies_when: always
+    cues: ["missing", "incomplete", "NIGO", "MI", "flag", "sections"]
+    ask: "How does the team find out that something is missing from a submission?"
+    follow_ups:
+      - "Is a task or alert created automatically?"
+
+  - id: missing_info.party_routing
+    scope: main
+    area: missing_information_outreach
+    title: "Who is asked for what"
+    priority: high
+    applies_when: always
+    cues: ["contact the office", "call the patient", "fax the HCP"]
+    ask: "How is it decided whether to go to the HCP office, the patient, or both for missing items?"
+    leads_to: [missing_info_hcp, missing_info_patient]
+
+  # ══ Consent ═════════════════════════════════════════════════════════════════
+  - id: consent.types
+    scope: main
+    area: consent
+    title: "Consent types"
+    priority: high
+    applies_when: always
+    cues: ["HIPAA", "program consent", "marketing", "SMS", "text", "email consent", "authorization"]
+    ask: "Which consents are collected from the patient?"
+    follow_ups:
+      - "Are they captured separately or together?"
+
+  - id: consent.methods
+    scope: main
+    area: consent
+    title: "How consent is captured"
+    priority: high
+    applies_when: always
+    cues: ["DocuSign", "Adobe Sign", "e-sign", "paper", "wet signature", "verbal", "link"]
+    ask: "How is consent captured, and through which methods?"
+    follow_ups:
+      - "Is there a fallback when the electronic method doesn't work for a patient?"
+
+  - id: consent.gate
+    scope: main
+    area: consent
+    title: "What consent blocks"
+    priority: high
+    applies_when: always
+    cues: ["can't proceed", "blocks", "until consent", "required for"]
+    ask: "What can and can't happen while patient consent is still outstanding?"
+    follow_ups:
+      - "What happens if consent never arrives?"
+
+  - id: consent.verbal
+    scope: main
+    area: consent
+    title: "Verbal consent"
+    priority: normal
+    applies_when: always
+    cues: ["verbal", "over the phone", "recorded consent"]
+    ask: "Is verbal consent accepted? If so, under what conditions?"
+    follow_ups:
+      - "Does verbal consent expire, or need to be followed by a written one?"
+      - "Are there states or regions where it isn't allowed?"
+
+  - id: consent.representative
+    scope: main
+    area: consent
+    title: "Legal representatives"
+    priority: normal
+    applies_when: always
+    cues: ["POA", "power of attorney", "guardian", "caregiver", "legal representative"]
+    ask: "How is consent handled when someone other than the patient signs?"
+    follow_ups:
+      - "How is the representative's authority checked, if at all?"
+
+  - id: consent.minors
+    scope: main
+    area: consent
+    title: "Minors"
+    priority: normal
+    applies_when: {product.pediatric_population: true}
+    cues: ["minor", "under 18", "parent", "pediatric", "turns 18"]
+    ask: "How is consent handled for patients under 18?"
+    follow_ups:
+      - "What happens when a patient turns 18?"
+
+  - id: consent.validity
+    scope: main
+    area: consent
+    title: "Consent validity period"
+    priority: normal
+    applies_when: always
+    cues: ["expires", "valid for", "years", "within 30 days"]
+    ask: "How long does consent remain valid?"
+
+  - id: consent.expiry_enforcement
+    scope: main
+    area: consent
+    title: "What happens at expiry"
+    priority: low
+    applies_when: always
+    cues: ["expired", "mask", "hide data", "unenroll", "warning"]
+    ask: "What happens to the patient and their data when consent expires?"
+
+  - id: consent.renewal
+    scope: main
+    area: consent
+    title: "Consent renewal"
+    priority: low
+    applies_when: always
+    cues: ["renew", "re-consent", "renewal task", "new form"]
+    ask: "How is consent renewed, and does a renewal come back through intake?"
+
+  # ══ Lead conversion ═════════════════════════════════════════════════════════
+  - id: routing.zip_basis
+    scope: main
+    area: lead_conversion
+    title: "How ownership is assigned"
+    priority: high
+    applies_when: always
+    cues: ["ZIP", "territory", "region", "alignment", "assigned by", "assigned via"]
+    ask: "How is it decided who owns a new patient?"
+    follow_ups:
+      - "If it's by location, whose address drives it?"
+
+  - id: routing.roles
+    scope: main
+    area: lead_conversion
+    title: "Roles assigned by routing"
+    priority: normal
+    applies_when: always
+    cues: ["care team", "assigned to", "nurse", "field", "PAM", "PSM"]
+    ask: "Which roles are assigned to a patient when ownership is routed?"
+
+  - id: routing.unmatched
+    scope: main
+    area: lead_conversion
+    title: "Unmatched territory"
+    priority: normal
+    applies_when: always
+    cues: ["ZIP not found", "no territory", "default owner"]
+    ask: "What happens when the routing can't find a match?"
+
+  - id: routing.realignment
+    scope: main
+    area: lead_conversion
+    title: "Territory realignment"
+    priority: low
+    applies_when: always
+    cues: ["realignment", "territory change", "quarterly", "reassign"]
+    ask: "When territories change, what happens to patients who are already enrolled?"
+
+  - id: conversion.criteria
+    scope: main
+    area: lead_conversion
+    title: "Enrollment criteria"
+    priority: high
+    applies_when: always
+    cues: ["convert", "checklist", "complete", "ready to enroll", "everything is obtained", "mandatory fields"]
+    ask: "What has to be in place before someone is considered enrolled?"
+
+  - id: conversion.trigger
+    scope: main
+    area: lead_conversion
+    title: "Conversion trigger"
+    priority: normal
+    applies_when: always
+    cues: ["convert button", "automatically", "conversion", "manually closed"]
+    ask: "How does the move to enrolled actually happen, and who or what does it?"
+
+  - id: conversion.records_created
+    scope: main
+    area: lead_conversion
+    title: "What enrollment creates"
+    priority: normal
+    applies_when: always
+    cues: ["creates", "care plan", "goals", "milestones", "records", "case"]
+    ask: "When someone becomes enrolled, what gets created in the system?"
+
+  - id: conversion.partial_tier
+    scope: main
+    area: lead_conversion
+    title: "Partial enrollment"
+    priority: high
+    applies_when: always
+    cues: ["support only", "partial", "reduced", "pending", "held", "limited services"]
+    ask: "Can a patient be partly enrolled, receiving some support before everything is in place?"
+    follow_ups:
+      - "What does a partly enrolled patient receive?"
+
+  - id: conversion.tier_upgrade
+    scope: main
+    area: lead_conversion
+    title: "Upgrade to full enrollment"
+    priority: normal
+    applies_when: always
+    cues: ["upgrade", "becomes full", "once the Rx arrives", "once the HCP form arrives"]
+    ask: "What moves a partly enrolled patient to full enrollment?"
+
+  - id: conversion.lead_after
+    scope: main
+    area: lead_conversion
+    title: "Original record after enrollment"
+    priority: low
+    applies_when: always
+    cues: ["lead locked", "lead tasks", "closed lead"]
+    ask: "What happens to the original record and its open tasks once the patient is enrolled?"
+
+  - id: nurse.offer
+    scope: main
+    area: lead_conversion
+    title: "Nurse program enrollment"
+    priority: high
+    applies_when: {program.has_nurse_program: true}
+    cues: ["nurse", "educator", "clinical educator", "injection training", "NCM"]
+    ask: "How does a patient become enrolled in nurse or clinical educator support?"
+
+  - id: nurse.order
+    scope: main
+    area: lead_conversion
+    title: "Nurse program prerequisites"
+    priority: normal
+    applies_when: {program.has_nurse_program: true}
+    cues: ["order", "referral", "HCP request", "opt in"]
+    ask: "Does anything need to be in place before nurse support can start?"
+
+  - id: nurse.timing
+    scope: main
+    area: lead_conversion
+    title: "Nurse program timing"
+    priority: normal
+    applies_when: {program.has_nurse_program: true}
+    cues: ["first shipment", "training date", "schedule"]
+    ask: "When does nurse support begin, relative to enrollment and the first shipment?"
+
+  - id: rems.requirements
+    scope: main
+    area: lead_conversion
+    title: "REMS requirements at intake"
+    priority: high
+    applies_when: {product.has_rems: true}
+    cues: ["REMS", "vaccination", "certification", "safety card", "lab", "pregnancy test"]
+    ask: "Which REMS requirements come up during intake and enrollment?"
+
+  - id: rems.who_tracks
+    scope: main
+    area: lead_conversion
+    title: "Who tracks REMS"
+    priority: normal
+    applies_when: {product.has_rems: true}
+    cues: ["REMS administrator", "track", "verify", "certified"]
+    ask: "Who checks or tracks those REMS requirements?"
+
+  - id: rems.intake_gate
+    scope: main
+    area: lead_conversion
+    title: "REMS effect on enrollment"
+    priority: normal
+    applies_when: {product.has_rems: true}
+    cues: ["before dispense", "can't ship until"]
+    ask: "Does an incomplete REMS requirement change anything about enrollment, or only dispensing?"
+
+  - id: welcome.call
+    scope: main
+    area: lead_conversion
+    title: "Welcome call"
+    priority: high
+    applies_when: always
+    cues: ["welcome call", "onboarding call", "first call"]
+    ask: "Is there a welcome contact with the patient once they're enrolled? If so, who makes it and when?"
+    follow_ups:
+      - "What happens if the patient can't be reached?"
+
+  - id: welcome.materials
+    scope: main
+    area: lead_conversion
+    title: "Welcome materials"
+    priority: normal
+    applies_when: always
+    cues: ["welcome pack", "welcome kit", "materials", "mailing"]
+    ask: "Does the patient receive any welcome materials? What triggers them?"
+
+  - id: welcome.parallel_clinical
+    scope: main
+    area: lead_conversion
+    title: "Clinical welcome contact"
+    priority: low
+    applies_when: {program.has_nurse_program: true}
+    cues: ["educator call", "nurse welcome", "parallel call"]
+    ask: "Does anyone from the clinical side contact the patient separately at the start?"
+
+  - id: welcome.gate
+    scope: main
+    area: lead_conversion
+    title: "What gates welcome outreach"
+    priority: normal
+    applies_when: always
+    cues: ["before welcome", "blocks welcome"]
+    ask: "Does anything need to be in place before welcome outreach can happen?"
+
+  - id: exit.bi_trigger
+    scope: main
+    area: lead_conversion
+    title: "Hand-off to benefits investigation"
+    priority: high
+    applies_when: always
+    cues: ["BI", "benefits investigation", "benefits verification", "verify coverage", "BV", "coverage determination"]
+    ask: "How does a case move into benefits investigation?"
+
+  - id: exit.bi_overlap
+    scope: main
+    area: lead_conversion
+    title: "Benefits investigation before enrollment completes"
+    priority: high
+    applies_when: always
+    cues: ["in parallel", "before enrollment complete", "at the same time"]
+    ask: "Can benefits investigation start while parts of enrollment are still outstanding?"
+
+  - id: exit.hcp_notified_enrolled
+    scope: main
+    area: lead_conversion
+    title: "HCP told of enrollment"
+    priority: normal
+    applies_when: always
+    cues: ["notify the office", "let the HCP know", "enrollment confirmation"]
+    ask: "Is the HCP office told when a patient is enrolled?"
+
+  - id: exit.not_enrolled_outcomes
+    scope: main
+    area: lead_conversion
+    title: "Not-enrolled outcomes"
+    priority: high
+    applies_when: always
+    cues: ["never start", "cancel", "close", "unable to reach", "declined", "archived"]
+    ask: "In what ways can a submission end without the patient being enrolled?"
+    follow_ups:
+      - "Is anyone notified when that happens?"
+
+  # ══ Cross-cutting ═══════════════════════════════════════════════════════════
+  - id: tasks.creation_and_closure
+    scope: main
+    area: cross_cutting
+    title: "Tasks and how they close"
+    priority: normal
+    applies_when: always
+    cues: ["task", "auto-created", "open task", "close the task", "due date", "manually closed"]
+    ask: "Which steps create tasks for the team, and how do those tasks get closed?"
+
+  - id: roles.keying_vs_relationship
+    scope: main
+    area: cross_cutting
+    title: "Data entry vs relationship owner"
+    priority: normal
+    applies_when: always
+    cues: ["owner", "relationship", "case manager", "point of contact"]
+    ask: "Is the person who enters the form the same person who owns the patient relationship afterwards?"
+
+  # ══ Subprocess: duplicate_handling ══════════════════════════════════════════
+  - id: duplicate_handling.match_keys
+    scope: duplicate_handling
+    area: duplicate_handling
+    title: "What counts as a match"
+    priority: normal
+    applies_when: always
+    cues: ["date of birth", "DOB", "name", "ZIP", "match on", "search by"]
+    ask: "What information is used to decide whether a submission matches an existing patient?"
+
+  - id: duplicate_handling.confirmer
+    scope: duplicate_handling
+    area: duplicate_handling
+    title: "Who confirms a match"
+    priority: normal
+    applies_when: always
+    cues: ["confirm", "reviews the match", "decides it's the same"]
+    ask: "When a possible match comes up, who or what confirms it's really the same patient?"
+
+  - id: duplicate_handling.outcomes
+    scope: duplicate_handling
+    area: duplicate_handling
+    title: "Kinds of match"
+    priority: high
+    applies_when: always
+    cues: ["re-enrollment", "restart", "update", "returning", "switch", "new product", "same submission"]
+    ask: "Once a match is confirmed, which situations does the team tell apart, and does each one follow a different path?"
+
+  - id: duplicate_handling.restart_switch
+    scope: duplicate_handling
+    area: duplicate_handling
+    title: "Restarting and switching patients"
+    priority: normal
+    applies_when: always
+    cues: ["restart", "switch", "formulation", "resume therapy"]
+    ask: "What happens differently for a patient restarting therapy, or switching product or formulation?"
+
+  - id: duplicate_handling.merge
+    scope: duplicate_handling
+    area: duplicate_handling
+    title: "Merging records"
+    priority: normal
+    applies_when: always
+    cues: ["merge", "IT ticket", "survivorship", "master record"]
+    ask: "When two records turn out to be the same patient, how are they combined?"
+
+  - id: duplicate_handling.later_found
+    scope: duplicate_handling
+    area: duplicate_handling
+    title: "Duplicates found later"
+    priority: low
+    applies_when: always
+    cues: ["found later", "cleanup", "data quality"]
+    ask: "What happens when a duplicate is only discovered after both records are in use?"
+
+  - id: duplicate_handling.exit
+    scope: duplicate_handling
+    area: duplicate_handling
+    title: "Where a matched case goes next"
+    priority: high
+    applies_when: always
+    cues: ["continues", "goes back", "attached to"]
+    ask: "Once a duplicate situation is handled, where does the case go next?"
+
+  # ══ Subprocess: off_label_review ════════════════════════════════════════════
+  - id: off_label_review.ambiguous
+    scope: off_label_review
+    area: diagnosis
+    title: "Ambiguous codes"
+    priority: normal
+    applies_when: always
+    cues: ["ambiguous", "unclear code", "not clearly", "confirm the diagnosis"]
+    ask: "Are there diagnosis codes treated as unclear rather than clearly on- or off-label? If so, what happens with them?"
+
+  - id: off_label_review.clarification
+    scope: off_label_review
+    area: diagnosis
+    title: "Clarifying with the prescriber"
+    priority: high
+    applies_when: always
+    cues: ["contact the prescriber", "confirm the code", "call the office", "clarify"]
+    ask: "Is the prescriber ever contacted about the diagnosis? If so, who contacts them, what is asked, and how does the answer come back?"
+
+  - id: off_label_review.diagnostic_support
+    scope: off_label_review
+    area: diagnosis
+    title: "Diagnostic testing"
+    priority: low
+    applies_when: always
+    cues: ["genetic test", "testing", "biomarker", "free test", "confirm through testing"]
+    ask: "Does diagnostic testing play any part in deciding eligibility?"
+
+  - id: off_label_review.override
+    scope: off_label_review
+    area: diagnosis
+    title: "Prescriber judgement"
+    priority: normal
+    applies_when: always
+    cues: ["clinical judgement", "insists", "attests", "override"]
+    ask: "Can the prescriber's documented clinical judgement change the outcome? If so, how is it recorded?"
+
+  - id: off_label_review.outcome
+    scope: off_label_review
+    area: diagnosis
+    title: "Off-label outcome"
+    priority: high
+    applies_when: always
+    cues: ["archived", "not entered", "closed", "routed", "work directly with the pharmacy", "separate account"]
+    ask: "What happens to a patient who is found to be off-label?"
+
+  - id: off_label_review.notification
+    scope: off_label_review
+    area: diagnosis
+    title: "Who is told"
+    priority: normal
+    applies_when: always
+    cues: ["notification", "notify", "letter", "fax the office"]
+    ask: "Who is told about an off-label outcome, and how?"
+
+  - id: off_label_review.corrected_return
+    scope: off_label_review
+    area: diagnosis
+    title: "How a corrected diagnosis comes back"
+    priority: normal
+    applies_when: always
+    cues: ["new form", "amended form", "resubmit", "phone note"]
+    ask: "If the diagnosis is corrected, how does the correction come back, and where does the patient pick up again?"
+
+  # ══ Subprocess: missing_info_hcp ════════════════════════════════════════════
+  - id: missing_info_hcp.detection_alert
+    scope: missing_info_hcp
+    area: missing_information_outreach
+    title: "How outreach starts"
+    priority: normal
+    applies_when: always
+    cues: ["task", "alert", "notified", "flag"]
+    ask: "How does the person who contacts the HCP office find out it's needed?"
+
+  - id: missing_info_hcp.who_reaches_out
+    scope: missing_info_hcp
+    area: missing_information_outreach
+    title: "Who contacts the office"
+    priority: high
+    applies_when: always
+    cues: ["sends the fax", "calls the office", "vendor", "PSM", "case manager"]
+    ask: "Who contacts the HCP office about missing items? Is it ever more than one team?"
+
+  - id: missing_info_hcp.channels
+    scope: missing_info_hcp
+    area: missing_information_outreach
+    title: "How the office is contacted"
+    priority: normal
+    applies_when: always
+    cues: ["fax", "call", "email", "portal"]
+    ask: "How is the office contacted?"
+
+  - id: missing_info_hcp.attempts
+    scope: missing_info_hcp
+    area: missing_information_outreach
+    title: "Attempts and timing"
+    priority: normal
+    applies_when: always
+    cues: ["attempts", "as many times", "every", "business days", "follow up"]
+    ask: "How many times is the office contacted, and how far apart?"
+
+  - id: missing_info_hcp.escalation
+    scope: missing_info_hcp
+    area: missing_information_outreach
+    title: "Escalation"
+    priority: high
+    applies_when: always
+    cues: ["escalate", "field", "specialist", "manager", "reach out to"]
+    ask: "What happens when the office doesn't respond? Is it escalated to anyone?"
+    follow_ups:
+      - "How does the outcome of that escalation come back to the case?"
+
+  - id: missing_info_hcp.escalation_trigger
+    scope: missing_info_hcp
+    area: missing_information_outreach
+    title: "When escalation happens"
+    priority: normal
+    applies_when: always
+    cues: ["after", "at their discretion", "weeks", "attempts"]
+    ask: "What decides when to escalate: a number of attempts, a time limit, or judgement?"
+
+  - id: missing_info_hcp.phi_limits
+    scope: missing_info_hcp
+    area: missing_information_outreach
+    title: "What the escalation contact can see"
+    priority: normal
+    applies_when: always
+    cues: ["PHI", "can't access", "won't share", "no patient details"]
+    ask: "Is there anything the person handling the escalation isn't allowed to see or be told?"
+
+  - id: missing_info_hcp.ending
+    scope: missing_info_hcp
+    area: missing_information_outreach
+    title: "When outreach stops"
+    priority: high
+    applies_when: always
+    cues: ["cancelled", "close", "weeks", "deadline", "give up"]
+    ask: "When does outreach to the office stop, and what happens then?"
+
+  - id: missing_info_hcp.closure_approval
+    scope: missing_info_hcp
+    area: missing_information_outreach
+    title: "Who approves closure"
+    priority: normal
+    applies_when: always
+    cues: ["approve", "manager", "sign off"]
+    ask: "Does anyone have to approve before an enrollment is cancelled, and who is told?"
+
+  - id: missing_info_hcp.automation_role
+    scope: missing_info_hcp
+    area: missing_information_outreach
+    title: "Automation in HCP outreach"
+    priority: low
+    applies_when: always
+    cues: ["automatic", "auto-fax", "due date", "scheduled"]
+    ask: "Does any automation take part in HCP outreach?"
+
+  # ══ Subprocess: missing_info_patient ════════════════════════════════════════
+  - id: missing_info_patient.detection_alert
+    scope: missing_info_patient
+    area: missing_information_outreach
+    title: "How outreach starts"
+    priority: normal
+    applies_when: always
+    cues: ["task", "alert", "notified", "flag"]
+    ask: "How does the person who contacts the patient find out it's needed?"
+
+  - id: missing_info_patient.who_reaches_out
+    scope: missing_info_patient
+    area: missing_information_outreach
+    title: "Who contacts the patient"
+    priority: high
+    applies_when: always
+    cues: ["calls the patient", "PSM", "case manager", "nurse"]
+    ask: "Who contacts the patient about missing items?"
+
+  - id: missing_info_patient.channels
+    scope: missing_info_patient
+    area: missing_information_outreach
+    title: "How the patient is contacted"
+    priority: normal
+    applies_when: always
+    cues: ["call", "text", "email", "letter", "alternate channels"]
+    ask: "How is the patient contacted?"
+    follow_ups:
+      - "Is anything checked before texting or emailing a patient?"
+
+  - id: missing_info_patient.attempts
+    scope: missing_info_patient
+    area: missing_information_outreach
+    title: "Attempts and timing"
+    priority: normal
+    applies_when: always
+    cues: ["attempts", "every other", "business day", "times"]
+    ask: "How many times is the patient contacted, and how far apart?"
+
+  - id: missing_info_patient.consent_specific
+    scope: missing_info_patient
+    area: missing_information_outreach
+    title: "Chasing consent"
+    priority: high
+    applies_when: always
+    cues: ["consent is missing", "consent link", "consent form", "verbal consent"]
+    ask: "When consent is what's missing, does anything happen differently?"
+
+  - id: missing_info_patient.escalation
+    scope: missing_info_patient
+    area: missing_information_outreach
+    title: "When the patient doesn't respond"
+    priority: high
+    applies_when: always
+    cues: ["contact the HCP", "help reach", "escalate", "alternate contacts"]
+    ask: "What happens when the patient doesn't respond? Does anyone else get involved?"
+
+  - id: missing_info_patient.letters
+    scope: missing_info_patient
+    area: missing_information_outreach
+    title: "Letters to unreachable patients"
+    priority: low
+    applies_when: always
+    cues: ["letter", "TTRY", "non-responsive letter", "mail"]
+    ask: "Is anything sent to a patient who can't be reached by phone?"
+
+  - id: missing_info_patient.ending
+    scope: missing_info_patient
+    area: missing_information_outreach
+    title: "When outreach stops"
+    priority: high
+    applies_when: always
+    cues: ["cancelled", "close", "weeks", "deadline", "unresponsive"]
+    ask: "When does outreach to the patient stop, and what happens then?"
+
+  - id: missing_info_patient.closure_approval
+    scope: missing_info_patient
+    area: missing_information_outreach
+    title: "Who approves closure"
+    priority: normal
+    applies_when: always
+    cues: ["approve", "manager", "sign off"]
+    ask: "Does anyone have to approve before an enrollment is cancelled, and who is told?"
+
+  - id: missing_info_patient.automation_role
+    scope: missing_info_patient
+    area: missing_information_outreach
+    title: "Automation in patient outreach"
+    priority: low
+    applies_when: always
+    cues: ["automatic", "auto-text", "call time", "scheduled"]
+    ask: "Does any automation take part in patient outreach?"
