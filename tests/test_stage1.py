@@ -15,16 +15,25 @@ from extractors.process import ModelCall
 from ir.models import NodeType, ProcessGraph
 from pipelines.stage1 import GRAPH_FILENAME, REPORT_FILENAME, main, run
 from tests.builders import branch, codes, edge, graph, node
-from tests.conftest import ENROLLMENT_DIR
+from tests.conftest import ENROLLMENT_DESCRIPTION, ENROLLMENT_DIR
 from validators.report import FindingCode, ValidationReport
 
 
 @pytest.fixture
 def processes_root(tmp_path: Path) -> Path:
-    """A throwaway copy of the real enrollment process folder."""
+    """A throwaway copy of the real enrollment process folder.
+
+    The description is supplied from the suite's own fixture when the folder
+    carries none. ``inputs/`` is the CLI's way in and nothing else reads it, so
+    whether one is checked in is not something these tests should depend on.
+    """
     root = tmp_path / "processes"
     shutil.copytree(ENROLLMENT_DIR, root / "enrollment")
     shutil.rmtree(root / "enrollment" / "outputs", ignore_errors=True)
+    inputs = root / "enrollment" / "inputs"
+    if not inputs.is_dir() or not any(inputs.iterdir()):
+        inputs.mkdir(exist_ok=True)
+        shutil.copy(ENROLLMENT_DESCRIPTION, inputs / "enrollment.md")
     return root
 
 

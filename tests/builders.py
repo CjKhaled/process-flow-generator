@@ -4,7 +4,17 @@ Tests need to build deliberately broken graphs, so these wrap the IR models with
 defaults rather than adding any validation of their own.
 """
 
-from ir.models import BranchAnswer, Edge, EdgeType, Node, NodeStatus, NodeType, ProcessGraph
+from ir.models import (
+    BranchAnswer,
+    Edge,
+    EdgeType,
+    EvidenceRef,
+    Node,
+    NodeOrigin,
+    NodeStatus,
+    NodeType,
+    ProcessGraph,
+)
 from ir.process_config import ProcessConfig
 from ir.skeleton import Skeleton, SubprocessSpec
 from validators.report import FindingCode, ValidationReport
@@ -22,6 +32,8 @@ def node(
     subprocess: str | None = None,
     detail: str | None = None,
     alternatives: tuple[str, ...] = (),
+    evidence: tuple[EvidenceRef, ...] = (),
+    origin: NodeOrigin = NodeOrigin.SOURCE,
 ) -> Node:
     """Build a node, defaulting to a plain stated task in the CM360 lane."""
     return Node(
@@ -33,7 +45,14 @@ def node(
         subprocess=subprocess,
         detail=detail,
         alternatives=alternatives,
+        evidence=evidence,
+        origin=origin,
     )
+
+
+def ref(statement_id: str, quote: str) -> EvidenceRef:
+    """Build one evidence reference."""
+    return EvidenceRef(statement_id=statement_id, quote=quote)
 
 
 def edge(
@@ -44,14 +63,30 @@ def edge(
     condition: str | None = None,
     order: int = 0,
     answer: BranchAnswer | None = None,
+    evidence: tuple[EvidenceRef, ...] = (),
 ) -> Edge:
     """Build an edge, defaulting to plain sequence flow."""
-    return Edge(from_id=from_id, to_id=to_id, type=edge_type, condition=condition, order=order, answer=answer)
+    return Edge(
+        from_id=from_id,
+        to_id=to_id,
+        type=edge_type,
+        condition=condition,
+        order=order,
+        answer=answer,
+        evidence=evidence,
+    )
 
 
-def branch(from_id: str, to_id: str, condition: str | None, order: int = 0, answer: BranchAnswer | None = None) -> Edge:
+def branch(
+    from_id: str,
+    to_id: str,
+    condition: str | None,
+    order: int = 0,
+    answer: BranchAnswer | None = None,
+    evidence: tuple[EvidenceRef, ...] = (),
+) -> Edge:
     """Build a gateway branch edge."""
-    return edge(from_id, to_id, EdgeType.BRANCH, condition=condition, order=order, answer=answer)
+    return edge(from_id, to_id, EdgeType.BRANCH, condition=condition, order=order, answer=answer, evidence=evidence)
 
 
 def graph(nodes: tuple[Node, ...], edges: tuple[Edge, ...], name: str = "enrollment") -> ProcessGraph:

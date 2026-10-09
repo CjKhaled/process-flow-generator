@@ -9,6 +9,7 @@ from bpmn.autolayout import Layouter
 from ir.models import EdgeType, NodeType, ProcessGraph
 from ir.process_config import ProcessConfig, load_process_config
 from ir.skeleton import Skeleton, load_skeleton
+from knowledge.loader import DomainKnowledge, load_domain
 from render.assets import BUNDLE, ViewerAssets
 from tests.builders import branch, edge, graph, node
 
@@ -16,6 +17,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PROCESSES_ROOT = REPO_ROOT / "processes"
 ENROLLMENT_DIR = PROCESSES_ROOT / "enrollment"
 COVERAGE_DETERMINATION_DIR = PROCESSES_ROOT / "coverage_determination"
+DOMAIN_DIR = REPO_ROOT / "domain_knowledge"
+DOMAIN_PROCESS = "enrollment_and_intake"
+ENROLLMENT_DESCRIPTION = REPO_ROOT / "tests" / "fixtures" / "enrollment_description.md"
+"""A real written description of enrollment, kept with the suite so no test depends on ``inputs/``."""
 
 
 def has_node() -> bool:
@@ -86,6 +91,17 @@ the stages that run :mod:`bpmn.decisions` over whatever the layouter returned.
 def decision_layouter(xml: str) -> str:  # noqa: ARG001  # the Layouter protocol names the parameter
     """A stand-in that hands back a document with one gateway already placed."""
     return LAID_OUT_WITH_A_DECISION
+
+
+@pytest.fixture(scope="session")
+def domain() -> DomainKnowledge:
+    """The real Intake & Enrollment knowledge base, loaded from disk.
+
+    The real one, because the ledger, the candidates and the slicer are all
+    driven by its contents: a hand-written stand-in would be testing the
+    stand-in.
+    """
+    return load_domain(DOMAIN_PROCESS, DOMAIN_DIR)
 
 
 @pytest.fixture

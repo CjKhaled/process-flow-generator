@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from ir.models import BranchAnswer, Edge, EdgeType, Node, NodeStatus, NodeType, ProcessGraph
+from ir.models import BranchAnswer, Edge, EdgeType, EvidenceRef, Node, NodeOrigin, NodeStatus, NodeType, ProcessGraph
 from ir.process_config import (
     SKELETON_FILENAME,
     Process,
@@ -11,7 +11,7 @@ from ir.process_config import (
     list_processes,
     load_process_config,
 )
-from ir.skeleton import load_skeleton
+from ir.skeleton import Skeleton, load_skeleton
 from tests.conftest import COVERAGE_DETERMINATION_DIR, ENROLLMENT_DIR, PROCESSES_ROOT
 
 
@@ -209,3 +209,53 @@ def test_a_default_actor_is_optional() -> None:
     config = ProcessConfig.model_validate({"process_name": "p", "display_name": "P"})
 
     assert config.default_actor is None
+
+
+def test_a_graph_written_before_evidence_existed_still_parses() -> None:
+    """Evidence and origin are optional with defaults, so every graph already on disk stays valid."""
+    legacy = {"id": "submit_pef", "type": "task", "label": "Submit PEF", "status": "stated", "actor": "HCP"}
+
+    parsed = Node.model_validate(legacy)
+
+    assert parsed.evidence == ()
+    assert parsed.origin is NodeOrigin.SOURCE
+    assert Edge.model_validate({"from_id": "a", "to_id": "b", "type": "precedes", "order": 0}).evidence == ()
+
+
+def test_evidence_and_origin_survive_the_round_trip() -> None:
+    cited = Node(
+        id="send_link",
+        type=NodeType.TASK,
+        label="Send consent link",
+        status=NodeStatus.STATED,
+        actor="PSM",
+        evidence=(EvidenceRef(statement_id="s_0004", quote="we send a link"),),
+    )
+    closing = Node(
+        id="end_open",
+        type=NodeType.TERMINAL,
+        label="Outcome not stated",
+        status=NodeStatus.NEEDS_CLARIFICATION,
+        actor="PSM",
+        detail="What happens if the patient declines is not stated.",
+        origin=NodeOrigin.RULE,
+    )
+    original = ProcessGraph(process_name="enrollment", nodes=(cited, closing), edges=())
+
+    restored = ProcessGraph.model_validate_json(original.model_dump_json())
+
+    assert restored == original
+    assert restored.nodes[0].evidence[0].quote == "we send a link"
+    assert restored.nodes[1].origin is NodeOrigin.RULE
+
+
+def test_an_evidence_reference_needs_both_a_statement_and_a_quote() -> None:
+    with pytest.raises(ValidationError):
+        EvidenceRef(statement_id="s_0001", quote="")
+    with pytest.raises(ValidationError):
+        EvidenceRef(statement_id="", quote="we send a link")
+
+
+def test_a_skeleton_may_declare_no_subprocesses() -> None:
+    """A subprocess drawn as a flow of its own hands nothing off, and that is not a defect."""
+    assert Skeleton.model_validate({"subprocesses": []}).required_names == frozenset()

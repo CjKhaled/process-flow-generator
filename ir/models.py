@@ -50,6 +50,25 @@ class NodeStatus(StrEnum):
     NEEDS_CLARIFICATION = "needs_clarification"
 
 
+class NodeOrigin(StrEnum):
+    """Where a node came from: the user's words, a convention, or the slicer.
+
+    Separate from :class:`NodeStatus`, which stays binary. Status says whether a
+    human still has to settle the node; origin says who put it there. Whether a
+    node rests on the first description or on a later answer is not recorded here
+    either -- it is read off the statements its evidence cites.
+    """
+
+    SOURCE = "source"
+    """Supported by statements the user made."""
+
+    RULE = "rule"
+    """Created by a convention: the terminal closing an outcome the user never stated."""
+
+    SLICE = "slice"
+    """Synthesised by code when a subprocess is cut out as a flow of its own."""
+
+
 class EdgeType(StrEnum):
     """What kind of connector an edge becomes when the graph is rendered."""
 
@@ -63,6 +82,30 @@ class BranchAnswer(StrEnum):
 
     YES = "yes"
     NO = "no"
+
+
+class EvidenceRef(BaseModel):
+    """One piece of support for a node or a branch: a statement, and the words in it."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    statement_id: str = Field(
+        min_length=1,
+        description=(
+            "The id of the numbered statement this rests on, exactly as the prompt lists it, "
+            "e.g. 's_0007'. Only ids the prompt supplies; never one you have made up."
+        ),
+    )
+    quote: str = Field(
+        min_length=1,
+        description=(
+            "The words in that statement which support this, copied exactly from the "
+            "statement's text or from its restatement -- character for character, with nothing "
+            "added, dropped, reordered or paraphrased. Keep it to the clause that carries the "
+            "support rather than the whole statement. A quote that cannot be found in the "
+            "statement it cites is rejected."
+        ),
+    )
 
 
 class Node(BaseModel):
@@ -136,6 +179,26 @@ class Node(BaseModel):
             "ambiguity."
         ),
     )
+    evidence: tuple[EvidenceRef, ...] = Field(
+        default=(),
+        description=(
+            "The statements this node comes from. Used only when the prompt supplies numbered "
+            "statements; leave it empty when it supplies plain source text. Cite every statement "
+            "that supports the node, not just the first, each with its own exact quote. Required "
+            "on every node whose origin is 'source'. Empty on a node whose origin is 'rule', "
+            "since by definition nothing the user said supports it."
+        ),
+    )
+    origin: NodeOrigin = Field(
+        default=NodeOrigin.SOURCE,
+        description=(
+            "source: the user's statements support this node -- the ordinary case, and the "
+            "default. rule: this node exists only because a convention requires it, and that is "
+            "only ever the needs_clarification terminal closing an outcome the user did not "
+            "state; never use it for a task, a gateway, or a terminal the user described. "
+            "slice: reserved for code; never emit it."
+        ),
+    )
 
 
 class Edge(BaseModel):
@@ -177,6 +240,17 @@ class Edge(BaseModel):
         description=(
             "Deliberate emission order among the edges leaving the same node, starting at 0. "
             "Used later to lay the diagram out predictably."
+        ),
+    )
+    evidence: tuple[EvidenceRef, ...] = Field(
+        default=(),
+        description=(
+            "The statements this branch comes from, each with an exact quote. Used only when "
+            "the prompt supplies numbered statements. Required on every branch edge, because a "
+            "branch is a claim about what the process does under a condition -- with one "
+            "exception: a branch leading to a terminal whose origin is 'rule' carries none, "
+            "since the user never stated that outcome. Leave empty on precedes and annotates "
+            "edges."
         ),
     )
 

@@ -8,7 +8,12 @@ runs in, since no test touches the network.
 Stage 2 has its own settings class rather than sharing :class:`Settings`. It
 calls no model and needs no credentials, so requiring an API key to draw a
 diagram from a graph already on disk would be a startup failure for no reason.
+:class:`SessionSettings` is separate for the same reason: where the knowledge base
+and the session files live is needed to load a session, list one or serve one,
+none of which calls a model.
 """
+
+from pathlib import Path
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -45,6 +50,65 @@ class Settings(BaseSettings):
         description=(
             "How many times to ask the model, including the first attempt. The single source "
             "of truth for the budget: a pipeline run never falls back to another default."
+        ),
+    )
+
+
+    interpreter_model_id: str | None = Field(
+        default=None,
+        alias="PFG_INTERPRETER_MODEL_ID",
+        description=(
+            "Model the conversation's interpreter runs on. None uses PFG_MODEL_ID. The "
+            "interpreter only reads one message against what was asked, so it is the role "
+            "that can run on a faster, cheaper model."
+        ),
+    )
+    extractor_model_id: str | None = Field(
+        default=None,
+        alias="PFG_EXTRACTOR_MODEL_ID",
+        description="Model the conversation's patch extractor runs on. None uses PFG_MODEL_ID.",
+    )
+    navigator_model_id: str | None = Field(
+        default=None,
+        alias="PFG_NAVIGATOR_MODEL_ID",
+        description="Model the conversation's navigator runs on. None uses PFG_MODEL_ID.",
+    )
+
+    def model_for(self, role: str) -> str:
+        """The model id one conversational role runs on.
+
+        Args:
+            role: ``interpreter``, ``extractor`` or ``navigator``.
+
+        Returns:
+            That role's override, or the global model id where it has none --
+            including for a role this class has never heard of, so a new agent
+            works before anyone has thought to give it a setting.
+        """
+        override: str | None = getattr(self, f"{role}_model_id", None)
+        return override or self.model_id
+
+
+class SessionSettings(BaseSettings):
+    """Where a conversation's knowledge is read from and its state is kept.
+
+    Every field has a default, and no credential is among them: a session is
+    loaded, listed and served far more often than it calls a model.
+    """
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    domain_dir: Path = Field(
+        default=Path("domain_knowledge"),
+        alias="PFG_DOMAIN_DIR",
+        description="The knowledge base. A relative path is taken from the repository root.",
+    )
+    sessions_dir: Path = Field(
+        default=Path("sessions"),
+        alias="PFG_SESSIONS_DIR",
+        description=(
+            "Where sessions are written, one folder each. A relative path is taken from "
+            "the repository root. Gitignored: a session holds what somebody typed."
         ),
     )
 
@@ -109,6 +173,30 @@ def load_api_settings() -> ApiSettings:
         The validated settings. Never raises for a missing value.
     """
     return ApiSettings()
+
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def load_session_settings() -> SessionSettings:
+    """Read the conversation's directories from the environment.
+
+    Returns:
+        The settings, with both directories made absolute. Never raises for a
+        missing value.
+    """
+    settings = SessionSettings()
+    return settings.model_copy(
+        update={
+            "domain_dir": _from_root(settings.domain_dir),
+            "sessions_dir": _from_root(settings.sessions_dir),
+        }
+    )
+
+
+def _from_root(path: Path) -> Path:
+    """A relative path, read from the repository root rather than from wherever the process started."""
+    return path if path.is_absolute() else REPO_ROOT / path
 
 
 def load_stage2_settings() -> Stage2Settings:

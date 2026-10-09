@@ -48,7 +48,13 @@ class Skeleton(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    subprocesses: tuple[SubprocessSpec, ...] = Field(min_length=1)
+    subprocesses: tuple[SubprocessSpec, ...] = Field(
+        description=(
+            "May be empty. A flow that hands nothing off -- a subprocess drawn as a flow of "
+            "its own, say -- has no boxes to collapse, and that is a description of it rather "
+            "than a defect."
+        )
+    )
 
     @property
     def required_names(self) -> frozenset[str]:

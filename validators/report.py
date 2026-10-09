@@ -35,10 +35,28 @@ class FindingCode(StrEnum):
     MISSING_CLARIFICATION_DETAIL = "missing_clarification_detail"
     MISSING_SWIMLANE = "missing_swimlane"
 
+    # Structural tier, conversation only: raised by validators.session_checks, which
+    # can see the statements and lanes a one-shot extraction never has.
+    MISSING_EVIDENCE = "missing_evidence"
+    EVIDENCE_NOT_FOUND = "evidence_not_found"
+    UNKNOWN_LANE = "unknown_lane"
+    UNKNOWN_SCOPE = "unknown_scope"
+    RULE_ORIGIN_MISUSE = "rule_origin_misuse"
+
+    # Structural tier, conversation only: a patch that could not be applied as written.
+    PATCH_UNKNOWN_NODE = "patch_unknown_node"
+    PATCH_DUPLICATE_NODE = "patch_duplicate_node"
+    PATCH_UNKNOWN_EDGE = "patch_unknown_edge"
+
     # Resolution tier.
     MISSING_REQUIRED_SUBPROCESS = "missing_required_subprocess"
     UNKNOWN_SUBPROCESS = "unknown_subprocess"
     NEEDS_CLARIFICATION = "needs_clarification"
+
+    # Resolution tier, conversation only: what the coverage ledger still holds open.
+    TOPIC_WITHOUT_NODES = "topic_without_nodes"
+    OPEN_TOPIC = "open_topic"
+    DEFERRED_TOPIC = "deferred_topic"
 
 
 _SEVERITY_BY_CODE: dict[FindingCode, Severity] = {
@@ -52,9 +70,20 @@ _SEVERITY_BY_CODE: dict[FindingCode, Severity] = {
     FindingCode.MALFORMED_ANNOTATION: Severity.STRUCTURAL,
     FindingCode.MISSING_CLARIFICATION_DETAIL: Severity.STRUCTURAL,
     FindingCode.MISSING_SWIMLANE: Severity.STRUCTURAL,
+    FindingCode.MISSING_EVIDENCE: Severity.STRUCTURAL,
+    FindingCode.EVIDENCE_NOT_FOUND: Severity.STRUCTURAL,
+    FindingCode.UNKNOWN_LANE: Severity.STRUCTURAL,
+    FindingCode.UNKNOWN_SCOPE: Severity.STRUCTURAL,
+    FindingCode.RULE_ORIGIN_MISUSE: Severity.STRUCTURAL,
+    FindingCode.PATCH_UNKNOWN_NODE: Severity.STRUCTURAL,
+    FindingCode.PATCH_DUPLICATE_NODE: Severity.STRUCTURAL,
+    FindingCode.PATCH_UNKNOWN_EDGE: Severity.STRUCTURAL,
     FindingCode.MISSING_REQUIRED_SUBPROCESS: Severity.RESOLUTION,
     FindingCode.UNKNOWN_SUBPROCESS: Severity.RESOLUTION,
     FindingCode.NEEDS_CLARIFICATION: Severity.RESOLUTION,
+    FindingCode.TOPIC_WITHOUT_NODES: Severity.RESOLUTION,
+    FindingCode.OPEN_TOPIC: Severity.RESOLUTION,
+    FindingCode.DEFERRED_TOPIC: Severity.RESOLUTION,
 }
 
 

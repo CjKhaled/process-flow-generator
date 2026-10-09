@@ -13,3 +13,9 @@ processes/*/outputs/diagram.html
 
 # The hosted page, built by pipelines/site.py. Generated for the same reason.
 site/
+
+# Conversations. A session holds what somebody typed, which is theirs.
+sessions/
+
+# The conversation's page: a second Node project, built by Vite.
+frontend/dist/

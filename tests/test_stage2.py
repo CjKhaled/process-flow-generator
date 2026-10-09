@@ -17,10 +17,10 @@ import pytest
 from bpmn.autolayout import Layouter, LayoutError
 from bpmn.decisions import BPMNDI_NS, DC_NS, DIAMOND
 from bpmn.document import BPMN_NS
-from ir.models import NodeType, ProcessGraph
+from ir.models import NodeOrigin, NodeStatus, NodeType, ProcessGraph
 from pipelines.stage1 import GRAPH_FILENAME
 from pipelines.stage2 import DIAGRAM_FILENAME, main, run
-from tests.builders import edge, graph, node
+from tests.builders import branch, edge, graph, node, ref
 from tests.conftest import ENROLLMENT_DIR, decision_layouter, echo_layouter
 
 
@@ -174,3 +174,36 @@ def test_stage_two_never_loads_the_model_settings(processes_root: Path, monkeypa
     monkeypatch.setattr("utils.settings.load_settings", refuse)
 
     assert run("enrollment", processes_root, layout=echo_layouter).is_file()
+
+
+def test_a_graph_carrying_evidence_and_origin_is_drawn_like_any_other(processes_root: Path, layouter: Layouter) -> None:
+    """Stage 2 re-parses ``graph.json`` through the schema, so the conversation's fields must pass through it.
+
+    They change nothing about the drawing: provenance is the page's business,
+    and this stage neither reads it nor is disturbed by it.
+    """
+    cited = graph(
+        nodes=(
+            node("start", NodeType.START, actor="HCP", evidence=(ref("s_0001", "faxes a form"),)),
+            node("gw_complete", NodeType.GATEWAY, evidence=(ref("s_0002", "if it is complete"),)),
+            node("end_enrolled", NodeType.TERMINAL, evidence=(ref("s_0002", "the patient is enrolled"),)),
+            node(
+                "end_open",
+                NodeType.TERMINAL,
+                status=NodeStatus.NEEDS_CLARIFICATION,
+                detail="What happens to an incomplete form is not stated.",
+                origin=NodeOrigin.RULE,
+            ),
+        ),
+        edges=(
+            edge("start", "gw_complete"),
+            branch("gw_complete", "end_enrolled", "it is complete", 0, evidence=(ref("s_0002", "if it is complete"),)),
+            branch("gw_complete", "end_open", "it is not complete", 1),
+        ),
+    )
+    write_graph(processes_root, cited)
+
+    written = run("enrollment", processes_root, layout=layouter)
+
+    names = {element.get("name") for element in ET.fromstring(written.read_text(encoding="utf-8")).iter()}
+    assert {"Gw Complete", "End Enrolled", "End Open"} <= names
