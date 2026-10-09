@@ -92,6 +92,83 @@ which is why they have to live somewhere else.
 *In the code: `extractors/` builds the prompt and runs the retry loop, `validators/` holds
 the checks, `ir/models.py` is the form being filled in.*
 
+## Stage 1 as a conversation
+
+```
+you describe the process ─► a first draft of the flow appears
+                              │
+        ┌─────────────────────┘
+        ▼
+   up to three questions ─► you answer ─► the flow is updated ─┐
+        ▲                                                      │
+        └──────────────────────────────────────────────────────┘
+                              │ nothing important left, or you choose to finish
+                              ▼
+               the main flow and each subprocess ─► stages 2 and 3, unchanged
+```
+
+One pasted description is rarely the whole process. So stage 1 can also be run as a
+conversation: it drafts the flow from what you wrote, asks about what is missing a few
+questions at a time, redraws the flow after every answer, and at the end hands the finished
+flows to stages 2 and 3 exactly as the one-shot version does.
+
+The questions are informed by a knowledge base of how programs like this are usually
+organised. That is useful and it is dangerous, so the rule the whole design is built around
+is this: **what the tool knows about other programs decides what it asks, and never what it
+draws.**
+
+It holds because the work is split between three narrow AI steps, each seeing only what it
+needs:
+
+- **The interpreter** reads your message against what was asked. It reports which topics you
+  addressed, which roles and systems you named, and what you corrected. It never sees the
+  flow.
+- **The extractor** turns your new statements into changes to the flow, and nothing else. It
+  is never shown the knowledge base. It gets your words, the roles you have named, and a
+  glossary.
+- **The navigator** chooses the next questions and writes the reply. It is the only one that
+  reads the knowledge base, and it cannot change the flow.
+
+Around them is ordinary code, which owns everything that has to be the same on turn twenty
+as on turn two: what you said, which topics are covered, which roles exist, where the
+discussion is focused. No AI step is trusted to remember any of it.
+
+### Every step cites your words
+
+Each box and each branch records the statements it came from and the exact words in them, and
+code looks those words up. A box whose quote is not in the statement it names is rejected
+and the extractor is asked again. Click any step in the page and you see the sentence it
+rests on, and which turn you said it in.
+
+Where you described only one outcome of a decision — "if the prescriber agrees, the patient
+proceeds" — the other is closed with a marked placeholder rather than guessed. That is what
+keeps the flow drawable after every turn, and it is also what the next question is about.
+
+### Nobody picks a client
+
+You choose a process and nothing else. Role names, system names and facts about the program
+are learned from what you say. Until you name the system that does the automated work, steps
+nobody is named for sit in a lane called `System (unconfirmed)`, and the tool asks.
+
+### One flow, sliced
+
+A session holds one flow. A subprocess — off-label review, duplicate handling, the two
+missing-information outreach flows — is a tag on some of its steps, not a second copy. The
+main view shows each as one box; opening one shows its steps as a flow of their own, cut out
+by code. They cannot disagree, because there is only one of each step.
+
+### Finishing
+
+When nothing important is left, or when you choose to finish, the page lists what is still
+open in each flow. You answer more, or accept. On accepting, each flow is written out in the
+same layout a hand-made process folder has, and stages 2 and 3 run on it unchanged. You get
+a BPMN file and a page per flow.
+
+*In the code: `agents/` holds the three AI steps and their prompts, `session/` the
+conversation around them, `knowledge/` the loader for `domain_knowledge/`, and
+`validators/session_checks.py` the evidence check. [technical.md](technical.md) has the
+detail, and [docs/DECISIONS.md](docs/DECISIONS.md) the assumptions made building it.*
+
 ## Stage 2 — drawing it
 
 ```
@@ -319,6 +396,33 @@ Stage 3 then writes `processes/enrollment/outputs/diagram.html`. Exit codes: `0`
 diagram could not be read. The validation report is optional — a diagram renders whether or
 not the questions that came with it are still on disk.
 
+### The conversation
+
+```bash
+uv run python -m session.cli start --process enrollment_and_intake --input description.md
+```
+
+Runs the first turn and drops into a chat in the terminal: the reply and its questions, then
+your answer, then a line on the flow and one per flow on coverage. `/focus <flow>` moves the
+discussion, `/state` prints the flow, `/close` lists what is open, `/accept` writes the final
+diagrams, `/quit` leaves. Every turn is saved, so `resume --session <id>` picks one back up.
+This is the quickest way to try it with a real model.
+
+The page needs its own build, once:
+
+```bash
+npm ci --prefix frontend
+npm run build --prefix frontend
+uv run --group api uvicorn api.app:app
+```
+
+Then open `/app`. The existing page at `/` is untouched. Sessions are written under
+`sessions/`, one folder each, with the finished flows beside the session file in
+`sessions/<id>/flows/<flow>/`.
+
+There is no login on any of this. It is an internal tool: keep the service off the public
+internet.
+
 ```bash
 uv run pytest        # no test touches the network
 uv run ruff check .
@@ -336,6 +440,11 @@ Tests needing the real layouter are marked `requires_node` and skip when Node or
 | `PFG_MODEL_ID` | `claude-opus-4-8` | Model used unless a process overrides it. |
 | `PFG_MAX_TOKENS` | `32000` | Output cap per call. A cap, not a reservation. Too low truncates the graph mid-generation. |
 | `PFG_MAX_EXTRACTION_ATTEMPTS` | `3` | How many times to ask, including the first attempt. |
+| `PFG_INTERPRETER_MODEL_ID` | `PFG_MODEL_ID` | Conversation only: the interpreter's model. The role that can run on a faster, cheaper one. |
+| `PFG_EXTRACTOR_MODEL_ID` | `PFG_MODEL_ID` | Conversation only: the patch extractor's model. |
+| `PFG_NAVIGATOR_MODEL_ID` | `PFG_MODEL_ID` | Conversation only: the navigator's model. |
+| `PFG_DOMAIN_DIR` | `domain_knowledge` | Conversation only: the knowledge base. Read-only at run time. |
+| `PFG_SESSIONS_DIR` | `sessions` | Conversation only: where sessions are written. Gitignored. |
 | `PFG_LAYOUT_BIN` | pinned install | The `bpmn-auto-layout` executable. Empty uses the version pinned in `js/`. |
 | `PFG_ALLOWED_ORIGIN` | `*` | Hosted demo only: comma-separated origins the page may call from. |
 | `PFG_MAX_SOURCE_CHARS` | `20000` | Hosted demo only: longest description accepted. |
@@ -390,10 +499,27 @@ one box get a lane, so declaring one the source never uses costs nothing.
   the tool schema the model sees, so they are prompt text.
 - `extractors/` — the LLM step. `prompt.py` builds all prompt text; `model.py` is the sole
   Strands/Anthropic boundary; `process.py` runs the retry loop against a protocol rather
-  than the SDK; `errors.py` holds the retry taxonomy.
+  than the SDK; `conversation.py` is the same seam made general for the conversation's
+  agents; `errors.py` holds the retry taxonomy.
+- `domain_knowledge/` — the knowledge base the conversation runs on. Data only, read-only at
+  run time: personas, glossary, and per process a definition, a coverage checklist and
+  topic files.
+- `knowledge/` — reads it. `schemas.py` is the shape of every file; `loader.py` loads one
+  process's worth; `compose.py` decides what each agent is told, which is where "knowledge
+  drives questions, never content" is enforced.
+- `agents/` — the conversation's three AI steps: `interpreter.py`, `extractor.py`,
+  `navigator.py`, and their system prompts as markdown in `prompts/`.
+- `session/` — the conversation around them, all deterministic. `models.py` is the session
+  file; `orchestrator.py` the turn pipeline; `statements.py`, `patch.py`, `ledger.py`,
+  `candidates.py` and `focus.py` the steps between the agents; `slicing.py` and `views.py`
+  the subprocess flows and what the page draws; `closeout.py` the hand-off to stages 2 and
+  3; `store.py` where sessions are kept; `cli.py` the terminal chat.
+- `frontend/` — the conversation's page: Vite, React and TypeScript, built to
+  `frontend/dist/` and served at `/app`. A separate Node project from `js/`.
 - `validators/` — deterministic checks, no LLM. `predicates.py` holds each check as a pure
   generator of findings; `graph.py` composes them into the structural and resolution
-  tiers; `report.py` defines the codes and severities.
+  tiers; `report.py` defines the codes and severities; `session_checks.py` holds the checks
+  only a conversation can make — evidence, lanes, scopes.
 - `bpmn/` — stage 2. `semantics.py` decides what each element *is* and the order it is
   declared in; `document.py` writes the semantic XML and no diagram interchange;
   `autolayout.py` is the sole boundary to the layouter; `decisions.py` redraws each gateway
@@ -408,15 +534,17 @@ one box get a lane, so declaring one the source never uses costs nothing.
   `editGate.js` is the Edit switch, and `viewer.js` ties them together. Built output goes to
   `js/dist/` and is not committed.
 - `api/` — the hosted demo's service. `pipeline.py` composes stages 1–3 in memory from the
-  same functions the CLI calls; `runs.py` holds runs in flight; `app.py` is the HTTP
-  surface, with the model and the layouter as constructor arguments so it can be tested
-  without either.
+  same functions the CLI calls; `runs.py` holds runs in flight; `sessions.py` is the
+  conversation's endpoints; `app.py` is the HTTP surface, with the model and the layouter as
+  constructor arguments so it can be tested without either.
 - `pipelines/` — orchestrators. `stage1.py`, `stage2.py` and `stage3.py` each compose one
   run end to end; `site.py` builds the hosted page.
 - `utils/` — IO helpers and typed environment settings.
 - `processes/<name>/` — data only, no code. Two of them: `enrollment` and
   `coverage_determination`.
 - `tests/` — schema, validator, retry loop, IO, prompt, the BPMN mapping and document, the
-  page builder, the service, and every orchestrator. Geometry is asserted only in the
+  page builder, the service, and every orchestrator; and for the conversation, the knowledge
+  base's own consistency, each deterministic step, and whole sessions run turn by turn with
+  the three agents scripted. Geometry is asserted only in the
   integration suite, against the file the layouter produced. No test drives a browser: the
   page's tests prove what it *says*, and that it *draws* is checked by opening it.

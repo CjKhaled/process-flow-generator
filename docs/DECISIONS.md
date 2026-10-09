@@ -175,3 +175,40 @@ the conversation asking.
 **Subprocess flows declare the default lane even when nothing sits in it.** `ProcessConfig`
 requires `default_actor` to be a declared actor. Stage 2 draws no lane for an actor nothing is
 attributed to, so this costs a line of `metadata.yaml` and nothing in the diagram.
+
+## The service and the page
+
+**`frontend/` is a second Node project.** `CLAUDE.md` said nothing ran under Node but the
+layouter and the `js/` build, and that a build needing a config file meant something was in
+the wrong language. The brief asks for a Vite, React and TypeScript page, which has both. It
+was kept apart from `js/` rather than merged into it, so the existing build stays as trivial
+as it was, and `CLAUDE.md` now says so.
+
+**The hosted image does not build `/app`.** Deployment changes were out of scope, so the
+`Dockerfile` and the Pages workflow are untouched. `/app` is mounted only when
+`frontend/dist/` exists; without it the service runs exactly as before. *Revisit when the
+conversation is to be hosted: add the two `npm` lines to the `Dockerfile`, and decide where
+`sessions/` lives, since a container's disk is not durable.*
+
+**Turns run on a pool of four workers.** The brief asks for one background worker queue like
+`api/runs.py`, and also allows different sessions to run concurrently. A single worker would
+make every session wait for every other. Per-session serialisation is what matters and is
+enforced separately, by refusing a second turn while one is in flight.
+
+**A session left mid-turn by a restart is reported as failed.** The turn's work was on a copy
+and is gone, so the stored session is exactly as it was before the turn. `GET /sessions/{id}`
+says so, where otherwise the page would poll a turn nobody is running.
+
+**`item_key` on `POST /messages`.** The brief's close-out view has an "Answer" action that
+returns to the chat with that item as the pending question. The message endpoint takes the
+item's key, and the orchestrator makes it the pending question before the interpreter reads
+the answer.
+
+**The first view of a flow fits its opening steps, not the whole flow.** A process of a dozen
+steps fitted whole is too small to read. After that the viewport is left alone, so an answer
+that adds a step does not throw away where the reader had panned to.
+
+**The page was checked by driving it, not by a test.** No test in this project drives a
+browser, and that was kept. A full scripted session — start, live flow, rationale, a
+subprocess tab, an answer, close-out, downloads — was run through the built page in a
+headless browser against the real service with scripted agents, with no console errors.

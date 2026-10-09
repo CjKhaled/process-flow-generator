@@ -5,7 +5,8 @@ What actually happens, stage by stage, at the level of files and functions. Read
 want the detail.
 
 Three stages. Only the first one calls a model; stages 2 and 3 are deterministic, and the
-same input always produces byte-identical output.
+same input always produces byte-identical output. Stage 1 has two ways in: one shot from a
+pasted description, and a conversation. Both end in the same validated graph.
 
 ---
 
@@ -177,6 +178,9 @@ Three layers, each doing something the others cannot: the **schema** fixes shape
 
 ### The 10 structural codes — the graph is malformed and must not be emitted
 
+These are `validate`'s own. The conversation adds eight more, raised by a separate validator
+that can see the statements and the lanes; they are in section C6.
+
 | Code | Fires when | In a schema? |
 | --- | --- | --- |
 | `duplicate_node_id` | Two or more nodes share an id | No — cross-object |
@@ -243,6 +247,391 @@ and the last schema complaint.
 `needs_clarification`, all on terminals: the prescriber disagreeing, duplicate handling
 resolved, an HCP still unresponsive, a manager not approving. Every one is a point where the
 source stops before saying what happens next. That is the stage working as intended.
+
+---
+
+# Stage 1, as a conversation
+
+```
+description ─► split into statements                              session.json
+                    │                                             (rewritten after
+                    ▼                                              every turn)
+ ┌─► 1 interpreter ─► 2 apply ─► 3 extractor ─► 4 record ─► 5 rank ─► 6 navigator ─► 7 store
+ │      (agent)       (code)     patch+repair    (code)     (code)     (agent)       (code)
+ │                                  (agent)
+ └──────────────────────────── the user's answer ◄───────────────────────────────────┘
+
+ accept ─► freeze the graph ─► slice each subprocess ─► per-flow folder ─► stages 2 and 3
+```
+
+The same stage 1 output — a validated `ProcessGraph` — reached over many turns instead of
+one. Everything in sections 1A to 1F still exists and is still what `pipelines/stage1.py` and
+`/runs` do. This section is the second way in.
+
+| | |
+| --- | --- |
+| Entry points | `session/cli.py` · `POST /sessions` in `api/sessions.py` |
+| Pipeline | `session/orchestrator.py::run_turn` — both entry points call it |
+| LLM calls per turn | Up to three agents; the extractor may repeat |
+| State | One `Session`, in `sessions/<id>/session.json` |
+| Knowledge | `domain_knowledge/`, read-only, through `knowledge/` |
+
+**Why plain code and not an agent framework's control flow.** A session is a long loop that
+stops for a person between every turn, with state that has to be inspectable and replayable.
+Inside one turn the work is fixed and sequential. So there are three narrow Strands agents,
+each answering in a Pydantic schema, called in order by ordinary Python — no swarm, no graph,
+no agent-as-tool. Strands' human-in-the-loop interrupts pause an agent *inside* its own tool
+loop; here the pause is *between* turns, every agent call runs to completion, and nothing
+needs resuming. For the same reason no Strands session manager is attached: the agents are
+built fresh each turn and have no state of their own to persist.
+
+## C1. The knowledge base and who reads it
+
+`domain_knowledge/agnostic/` holds `personas.yaml`, `glossary.yaml` and markdown that applies
+to any process. `domain_knowledge/<process>/` holds `process.yaml`, `checklist.yaml` and that
+process's topic files. `knowledge/schemas.py` models each YAML file with `extra="forbid"`, so
+a misspelt key is a load failure. `load_domain(process_id)` returns the parsed files and
+every markdown body — agnostic first, then the process folder, sorted by path — cached per
+process.
+
+`knowledge/compose.py` is where access is decided:
+
+| Agent | Sees | Does not see |
+| --- | --- | --- |
+| Navigator | Every markdown file in full, the whole checklist, the process definition | — |
+| Interpreter | Open topics as id, title and cues; glossary; personas; subprocess ids; unknown facts | Topic questions, markdown |
+| Extractor | Session lanes with descriptions, the default lane, glossary, subprocess ids | The checklist, every markdown file, anything about other programs |
+
+The extractor's row is the rule the feature is built on. A step that came from the knowledge
+base would be indistinguishable from one the user stated, so the agent that writes the graph
+is given vocabulary and nothing else. `tests/test_knowledge_compose.py` asserts its view
+contains no checklist question and no markdown.
+
+`tests/test_domain_knowledge.py` checks what the files must agree on between themselves:
+unique topic ids, scopes that exist, `leads_to` targets that exist, every subprocess reached
+by some topic, exactly one screening topic per program fact, every persona referenced
+defined, every markdown path mentioned in a body resolving.
+
+**The four program facts** — `product.has_rems`, `program.has_nurse_program`,
+`program.patient_self_enrollment`, `product.pediatric_population` — switch topics off. A fact
+is unknown until the user states it, and an unknown fact never filters.
+
+## C2. What was added to the IR
+
+All optional with defaults, so every graph already on disk still parses and stage 2 is
+undisturbed:
+
+| Field | Meaning |
+| --- | --- |
+| `Node.evidence`, `Edge.evidence` | `EvidenceRef(statement_id, quote)` — the statements this came from and the exact words in them |
+| `Node.origin` | `source` (the user's statements support it) · `rule` (the terminal closing an outcome nobody stated) · `slice` (synthesised when a subprocess is cut out) |
+
+`NodeStatus` stays binary. Whether a node rests on the first description or on a later answer
+is read off the statements its evidence cites, not stored on the node.
+
+## C3. The session file
+
+`session/models.py::Session`, versioned by `schema_version`. The records inside are frozen;
+the session is not, and a turn works on a deep copy that replaces the original only if the
+turn succeeds.
+
+| Field | Holds |
+| --- | --- |
+| `phase` | `describing` · `probing` · `closing` · `complete` · `abandoned` |
+| `focus`, `requested_focus` | `main` or a subprocess id; and a scope the user opened in the page, honoured next turn |
+| `turn`, `turn_status`, `turn_error` | The turn counter, what the turn in flight is doing, and the sentence for a failed one |
+| `corpus` | Every `Statement`: id (`s_0001`…), origin, turn, raw text, optional restatement, the question it answered, topics, scope |
+| `transcript` | Each line said, with the questions shown under an assistant line |
+| `lanes`, `default_lane` | `SessionLane`: name, persona, description, evidence, `placeholder` · `proposed` · `confirmed` |
+| `glossary`, `unknown_terms` | Terms the user explained; terms they used without explaining |
+| `facts` | The four program facts, each `true`, `false` or unknown |
+| `graph` | The master graph. The only graph a session has |
+| `versions` | Per turn: the patch, whether it was applied, attempts, findings, and the duration of every step |
+| `ledger` | One `LedgerEntry` per checklist topic |
+| `pending` | The questions the user was last asked |
+| `retry_statement_ids` | Statements a failed extraction still owes |
+| `accepted_open_items` | What the user accepted as open at close-out |
+
+`FileSessionStore` writes to a temporary file in the same folder and renames it into place,
+so the page, which polls while a turn runs, never reads half a session. Session ids and flow
+names become folder names and arrive from URLs, so both are matched against
+`[A-Za-z0-9_-]{1,64}` before any path is built.
+
+**Lanes.** A session starts with one lane, `System (unconfirmed)`, in the process's default
+persona. It is where unattributed work goes until the user names the system that does it.
+When a lane in that persona is learned, or the user answers the default-lane question, every
+node in the placeholder moves to the named lane and the placeholder is dropped. A lane the
+interpreter proposes is usable at once — the extractor needs somewhere to put work the user
+has already attributed.
+
+## C4. The model seam
+
+`extractors/conversation.py` is the one-shot path's `ModelCall` made general, and like it
+imports no SDK:
+
+| Protocol | Method |
+| --- | --- |
+| `ConversationFactory` | `open(role, system_prompt, cached_context=None) -> StructuredConversation` |
+| `StructuredConversation` | `send(prompt, output: type[T]) -> T` |
+
+`extractors/model.py` implements both with Strands and is still the only file that imports
+it. The exception translation is shared with `StrandsModelCall` through one context manager,
+so the retry taxonomy cannot differ between the two paths: `SchemaCallError` is repairable,
+`ModelUnavailableError` is not. The model per role comes from `PFG_INTERPRETER_MODEL_ID`,
+`PFG_EXTRACTOR_MODEL_ID` and `PFG_NAVIGATOR_MODEL_ID`, each falling back to `PFG_MODEL_ID`.
+
+**Caching.** `cached_context` is sent as the opening exchange of the conversation, ending in a
+cache point, not as part of the system prompt. Strands' Anthropic provider sends the system
+prompt as a plain string, which drops a cache point placed there; one inside a message is
+honoured. The navigator's knowledge is the same text on every turn of every session about a
+process, so it is the block this exists for.
+
+## C5. The interpreter
+
+*What did the user just say, in relation to what was asked?* One fresh conversation per turn.
+It never sees the graph.
+
+| | |
+| --- | --- |
+| Reads | The message — or on turn 1 the description's statements — pending questions with their topics and steps, open topics, glossary, lanes, personas, subprocess ids, unknown facts, unknown terms, focus |
+| Returns | `InterpretResult`: statements, topic updates, corrections, new lanes, lane updates, the default lane, learned and unknown terms, facts, a focus request, `meta` |
+| Failure | One repair turn for a schema slip, then the turn is rejected with no state change |
+
+On turn 1 the description is split by `session/statements.py` — each non-empty line, then
+sentences within a line, deterministically — and the interpreter classifies those statements
+by number. Code does the splitting because statement text is what quotes are checked against,
+and a model asked to split is also free to tidy. On later turns the interpreter splits the
+message itself, and any statement whose text is not found in the message is replaced by the
+whole message.
+
+Its rules are in `agents/prompts/interpreter.md`. The ones that matter most: a restatement
+may contain only what the answer states or affirms; silence is not absence;
+`confirmed_absent` needs the user to say so; a form, a task or a status is never a lane; an
+unexplained term is reported, never guessed.
+
+Its output is a *reading*. Every change it implies is applied by code, which drops what does
+not hold up — a persona that does not exist, a topic not in the checklist.
+
+## C6. The extractor, and patches
+
+*Turn new statements into graph changes. Nothing else.*
+
+| | |
+| --- | --- |
+| Reads | The master graph as JSON, every statement with this turn's marked `NEW` and owed ones `RETRY`, this turn's corrections |
+| System prompt | `extractor_patch.md` + the conventions block from `extractors/prompt.py`, verbatim + `extractor_context` |
+| Returns | `GraphPatch`: a list of operations |
+| Conversation | Held across repair attempts within a turn, never across turns |
+
+It returns a patch, not a graph, for two reasons: node ids stay stable, which topics, pending
+questions and the page's open rationale are all keyed by; and an answer changes little, so
+asking for the whole graph again would invite revisions nobody asked for. Turn 1 is a patch
+against an empty graph, so there is one path.
+
+| Operation | Fields |
+| --- | --- |
+| `add_node` | `node` |
+| `update_node` | `id`, `fields` — a partial node |
+| `remove_node` | `id`, `reason_statement_ids`. Its edges go with it |
+| `add_edge` | `edge` |
+| `update_edge` | `from_id`, `to_id`, `order`, `fields` — a partial edge, which may re-point it |
+| `remove_edge` | `from_id`, `to_id`, `order`, `reason_statement_ids` |
+
+In a partial node or edge, null means *unchanged*, because a model writes explicit nulls for
+fields it has no view on; a `clear` list names the few fields that can be emptied.
+`apply_patch` is pure and never raises on a bad operation: it skips it and reports it, so the
+repair turn can name everything wrong with a patch at once. Nodes a patch adds are moved to
+just after the step that leads to them, because stage 2 lays out by node order and a patch
+can only append.
+
+### The checks, and the 8 codes the conversation adds
+
+After a patch is applied, `agents/extractor.py::check` runs `validate(graph, skeleton)`
+unchanged and then `validators/session_checks.py::validate_session(graph, corpus, lanes,
+process)`. The second exists because a session holds what the first never sees: the
+statements, the lanes, the process definition. All eight are structural.
+
+| Code | Fires when |
+| --- | --- |
+| `missing_evidence` | A `source` node, or a branch edge, cites nothing. Exempt: the branch leading to a `rule` terminal — nobody stated that outcome, so there is nothing to quote |
+| `evidence_not_found` | A reference names a statement that does not exist, or its quote is not in that statement's text or restatement. Compared with case, whitespace and typographic quotes normalised. Also raised for a removal citing an unknown statement |
+| `unknown_lane` | A node's `actor` is not one of the session's lanes. The check the one-shot path cannot make until stage 2 |
+| `unknown_scope` | A node's `subprocess` is not declared in `process.yaml` |
+| `rule_origin_misuse` | An `origin: rule` node that is not a `needs_clarification` terminal, or any node with `origin: slice` |
+| `patch_unknown_node` | `update_node` or `remove_node` names a node that is not there |
+| `patch_duplicate_node` | `add_node` uses an id already taken |
+| `patch_unknown_edge` | `update_edge` or `remove_edge` names an edge that is not there. An edge is found by its ends alone when exactly one joins them, since the order is what a model misremembers |
+
+`evidence_not_found` is what makes extraction literal. A paraphrase is not a quote, and a
+node that rests on a paraphrase is sent back.
+
+### The repair loop
+
+Section 1E's loop, unchanged in spirit: only structural findings are fed back, in the held
+conversation, with "fix only these defects; keep every other node and edge". Each repair is a
+whole corrected patch against the *original* graph — a rejected patch was never applied.
+Budget is `PFG_MAX_EXTRACTION_ATTEMPTS`, first attempt included.
+
+What differs is the ending. The one-shot loop raises when the budget runs out, having nothing
+to fall back on. A session always has last turn's graph, which is valid, so here it is an
+outcome: the graph is kept, the turn's statements go to `retry_statement_ids`, the next
+turn's prompt marks them `RETRY`, and the page says the flow was not updated.
+
+The extractor is not called at all when a turn described nothing — a quick reply, or a
+message about the session itself — unless statements are owed or something was corrected.
+
+## C7. The ledger, the candidates, and focus
+
+All three are code. What counts as covered, what matters most next and where the discussion
+is should not depend on a model's reading of a long conversation.
+
+**The ledger** (`session/ledger.py`) has one entry per checklist topic.
+
+| From | On | To |
+| --- | --- | --- |
+| `not_yet_covered` | asked | `asked`, `asked_count` + 1 |
+| `asked` | answered | `present` · `confirmed_absent` · `needs_clarification` · `deferred` |
+| `asked` | not answered | back to what it was, `asked_count` kept |
+| any open status | mentioned unprompted | `present` · `needs_clarification` |
+| `needs_clarification`, `deferred` | asked again | `asked` |
+| any | its program fact denied, or its subprocess said not to exist | `not_applicable` |
+
+A topic links to a node when they cite a common statement — set intersection, not judgement.
+A scope is complete, by `process.yaml`, when every applicable topic of a required priority
+has an accepted status and every `rule` terminal in it has been accepted at close-out.
+
+Three resolution codes come from the ledger: `topic_without_nodes` (covered, but no step rests
+on what was said), `open_topic` (a required-priority topic never settled, or any topic left
+needing clarification) and `deferred_topic`.
+
+**The candidates** (`session/candidates.py`), ranked:
+
+| Rank | What |
+| --- | --- |
+| 1 | Structural gaps in the focus: a step whose outcome nobody stated, or one listing alternatives with no rule |
+| 2 | The placeholder lane if any step sits in it; a lane whose role is unknown; an unexplained term |
+| 3 | Screening topics whose program fact is still unknown |
+| 4 | High-priority topics not yet covered, in the focus |
+| 5 | Topics needing clarification, in the focus |
+| 6 | Normal-priority gaps in the focus, then high-priority gaps in a subprocess the conversation has reached |
+| 7 | Everything else |
+
+Within a rank the order is the narrative's: checklist order for topics, graph order for
+steps. Anything asked twice without an answer is marked `skip_offer`, sinks below everything
+still askable, and is never asked a third time. The navigator is shown the top eight.
+
+**Focus** (`session/focus.py`) starts on `main`. It moves into a subprocess when the user
+asks, when an answer this turn was about it, or when the main flow has reached it and
+nothing more pressing is open on the main flow. It returns when the subprocess has no open
+high-priority topic and no open outcome. The navigator proposes; code accepts only what
+these rules allow.
+
+## C8. The navigator
+
+*What to ask next, where to focus, and what to say.* One conversation per turn. It cannot
+edit the graph.
+
+| | |
+| --- | --- |
+| Cached context | `navigator_knowledge(domain)`: every knowledge file and the whole checklist |
+| Reads each turn | Phase and focus; a summary of the flow per scope, not JSON; this turn's findings; coverage; the ranked candidates; program facts; lanes and unexplained terms; the last few lines of transcript |
+| Returns | `NavigatorResult`: `focus`, up to three `questions`, `reply`, `propose_close` |
+| Failure | The reply falls back to an acknowledgement and the top candidate's own checklist question |
+
+The navigator words a question; code decides what it is *about*. A question naming a
+candidate takes that candidate's kind, steps, scope and subject, so a mis-copied id cannot
+attach an answer to the wrong topic. A question of its own is kept as `suggested`, with only
+the topic and step ids that exist. `propose_close` is honoured only when nothing at rank 6 or
+above can still be asked.
+
+Its style rules are in `agents/prompts/navigator.md`: open questions, never leading; the
+user's own words; never another client's name or setup; never advice, never a comment on
+compliance.
+
+## C9. What each failure does
+
+| Failure | Behaviour |
+| --- | --- |
+| Interpreter cannot answer | Turn rejected, no state change, the user is asked to resend |
+| Extractor exhausts its budget | The previous graph is kept; the statements are owed to the next turn; the page says the flow was not updated |
+| Navigator cannot answer | The fallback reply, from the top candidate |
+| The API refuses a request | Turn rejected, no state change, the user can retry — whichever agent hit it |
+| The process restarts mid-turn | The turn's work was on a copy and is gone; `GET /sessions/{id}` reports it as failed so the page stops polling |
+
+The duration of every step — the interpreter, each extraction attempt, the navigator — is
+written to that turn's version record.
+
+## C10. Slicing and the live views
+
+`session/slicing.py::slice_subprocess` cuts a subprocess out of the master graph: the tagged
+nodes and the edges among them; one synthesised start labelled with `process.yaml`'s `entry`,
+wired to every node entered from outside; and for every edge leaving, a synthesised terminal
+— "Return to main flow: \<the step it returns to\>", or the outside terminal's own label
+where the path ends the process there. Synthesised nodes are `origin: slice`. Subprocess tags
+are cleared, and the result is checked with `validate`: a slice that fails is a defect in the
+slicer.
+
+`session/views.py` builds what the page draws, on every request, from the session alone:
+
+| View | Content |
+| --- | --- |
+| Main | The master graph, each subprocess with steps collapsed to `sub:<id>`. Edges *leaving* a box are kept, unlike stage 2's fold, so the summary reads as one line |
+| One per subprocess with steps | Its slice |
+
+Annotations are not drawn; each becomes a note on the step it describes. Every node has a
+`Rationale`: label, status, detail, the open question, the evidence as quote plus the
+statement it came from and its turn, alternatives, notes, and the titles of linked topics.
+
+## C11. Close-out
+
+`session/closeout.py`. On accept, for the main flow and each subprocess with steps:
+
+| File | Content |
+| --- | --- |
+| `metadata.yaml` | `process_name` (`<process>` or `<process>_<subprocess>`); `actors` = the lanes that flow uses, ordered by `process.yaml`'s `typical_personas` then first appearance, each described by its persona's `lane_description` plus what the user said; `default_actor`; `glossary` = the domain's plus learned terms |
+| `skeleton.json` | Main flow: the subprocesses that have steps, each in the lane of whoever hands off to it. Subprocess flows: `{"subprocesses": []}` |
+| `outputs/graph.json` | The master graph, or the slice |
+| `outputs/validation.json` | `validate`'s findings plus the ledger's for that scope |
+
+Then, per flow, the calls `pipelines/stage2.py` and `pipelines/stage3.py` make: `translate`,
+`render`, the layouter, `decisions.widen`, `colors.apply`, `page.build`. Everything is drawn
+before anything is written, so a flow that cannot be drawn leaves no half-finished set of
+folders. A folder close-out writes can be re-run with `pipelines.stage2 --processes-root`,
+which is the check that no second copy of a stage crept in.
+
+Stage 3 prints any finding code by its name and message, so the conversation's codes needed
+no mapping there.
+
+**One difference worth knowing.** Stage 2's fold ends each path at its subprocess box, so the
+final main diagram does not show a subprocess flowing on to the next step, where the live
+view does. Each subprocess's own diagram shows where it returns to.
+
+## C12. The HTTP surface and the page
+
+Start-and-poll, as `/runs` is. Every endpoint that starts work answers `202`.
+
+| Endpoint | Behaviour |
+| --- | --- |
+| `GET /session-processes` | The processes in `domain_knowledge/`. Separate from `/processes`, which lists `processes/` |
+| `POST /sessions` | `{process_id, description}` → `{session_id}`, and queues turn 1. `422` empty, `413` over `PFG_MAX_SOURCE_CHARS`, `404` unknown process |
+| `GET /sessions/{id}` | Phase, focus, turn, status and its sentence, transcript, pending questions, lanes, coverage, views with rationale, open items, outputs |
+| `POST /sessions/{id}/messages` | `{text, quick_reply, question_id, item_key}`. `409` if a turn is running or the session is complete |
+| `POST /sessions/{id}/focus` | `{focus}`: recorded, honoured on the next turn |
+| `POST /sessions/{id}/close` | Enter close-out |
+| `POST /sessions/{id}/accept` | Accept what is open and finalise |
+| `GET /sessions/{id}/outputs` | The finished flows and their files |
+| `GET /sessions/{id}/outputs/{flow}/{file}` | `diagram.bpmn`, `diagram.html` or `graph.json` |
+
+Turns run on a small worker pool and are serialised per session: a second message to a busy
+session is a `409`. A quick reply is sent as words as well as a flag, so the transcript reads
+naturally and the interpreter treats a pressed button and a typed "not sure" alike.
+
+The page is `frontend/`: Vite, React, TypeScript, `@xyflow/react` and `elkjs`, built to
+`frontend/dist/` and mounted at `/app` when present. Three regions — chat, flow, side panel.
+The flow is laid out by elk, layered, left to right, and re-laid out only when its shape
+changes. It polls every 1.5 seconds while a turn is running and not otherwise. The status
+line, the quick replies and every error sentence arrive from the service; the page prints
+them.
 
 ---
 
