@@ -24,6 +24,7 @@ from datetime import UTC, datetime
 
 from bpmn.autolayout import LayoutError
 from extractors.errors import ExtractionError, ModelUnavailableError
+from utils.logs import trace_context
 
 logger = logging.getLogger(__name__)
 
@@ -98,10 +99,14 @@ class RunStore:
 
     def _execute(self, run_id: str, work: Callable[[Callable[[str], None]], dict[str, object]]) -> None:
         def progress(stage: str) -> None:
+            logger.info("run %s: stage -> %s", run_id, stage)
             self._update(run_id, status=stage)
 
+        started = datetime.now(UTC)
+        logger.info("run %s: a worker picked it up", run_id)
         try:
-            result = work(progress)
+            with trace_context(run=run_id[:8]):
+                result = work(progress)
         except Exception as error:
             # Whatever went wrong, the browser is entitled to hear about it
             # rather than poll a run that never moves again. This is the worker
@@ -110,6 +115,7 @@ class RunStore:
             self._update(run_id, status=FAILED, detail=_explain(error))
             return
         self._update(run_id, status=DONE, result=result)
+        logger.info("run %s: done in %.1fs", run_id, (datetime.now(UTC) - started).total_seconds())
 
     def _update(
         self,

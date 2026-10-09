@@ -19,3 +19,6 @@ sessions/
 
 # The conversation's page: a second Node project, built by Vite.
 frontend/dist/
+
+# The application log and the model trace. Overwritten each start; they hold what users typed.
+logs/

@@ -22,7 +22,6 @@ This module prints and reads; it decides nothing. Every turn goes through
 """
 
 import argparse
-import logging
 import sys
 import uuid
 from collections.abc import Callable
@@ -39,6 +38,7 @@ from session.ledger import coverage
 from session.models import Phase, Role, Session
 from session.orchestrator import TurnInput, TurnRejected, new_session, run_close, run_turn
 from session.store import FileSessionStore, SessionNotFound, SessionStore
+from utils.logs import configure_logging
 from utils.settings import load_session_settings, load_settings
 
 Reader = Callable[[str], str]
@@ -65,8 +65,7 @@ def main(argv: list[str] | None = None, *, read: Reader = input) -> int:
     resume.add_argument("--session", required=True, help="The session id.")
     args = parser.parse_args(argv)
 
-    logging.basicConfig(level=logging.WARNING, format="%(message)s", stream=sys.stderr)
-    logging.getLogger("agents").setLevel(logging.INFO)
+    configure_logging()
 
     directories = load_session_settings()
     store = FileSessionStore(directories.sessions_dir)

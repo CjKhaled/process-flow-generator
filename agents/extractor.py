@@ -27,6 +27,7 @@ is nothing for a correction to build on.
 import json
 import logging
 import time
+from collections import Counter
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
@@ -40,6 +41,7 @@ from knowledge.compose import extractor_context
 from knowledge.loader import DomainKnowledge
 from session.models import Session, StatementOrigin, StepTiming
 from session.patch import GraphPatch, apply_patch
+from utils.logs import trace_context
 from validators.graph import validate
 from validators.report import Finding, FindingCode, ValidationReport
 from validators.session_checks import check_removal_reasons, validate_session
@@ -146,7 +148,8 @@ def extract_patch(
     for attempt in range(1, max_attempts + 1):
         started = clock()
         try:
-            patch = conversation.send(prompt, GraphPatch)
+            with trace_context(attempt=attempt):
+                patch = conversation.send(prompt, GraphPatch)
         except SchemaCallError as error:
             timings.append(StepTiming(step=STEP, attempt=attempt, seconds=clock() - started))
             logger.warning("attempt %d/%d: the patch did not fit the schema: %s", attempt, max_attempts, error)
@@ -155,6 +158,13 @@ def extract_patch(
             continue
         timings.append(StepTiming(step=STEP, attempt=attempt, seconds=clock() - started))
 
+        logger.info(
+            "attempt %d/%d: patch of %d operation(s): %s",
+            attempt,
+            max_attempts,
+            len(patch.operations),
+            ", ".join(f"{count} {name}" for name, count in Counter(op.op for op in patch.operations).items()) or "none",
+        )
         graph, patch_findings = apply_patch(session.graph, patch)
         report = check(graph, session, domain)
         structural = (*patch_findings, *check_removal_reasons(patch, session.corpus), *report.structural)

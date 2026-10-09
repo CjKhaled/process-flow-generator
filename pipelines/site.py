@@ -18,6 +18,7 @@ from pathlib import Path
 from ir.process_config import list_processes
 from render import page
 from render.assets import AssetError, ViewerAssets, load_assets, load_template
+from utils.logs import configure_logging
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Directory holding the process folders.",
     )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=logging.WARNING, format="%(message)s", stream=sys.stderr)
+    configure_logging()
 
     try:
         written = run(args.api_base, args.out, args.processes_root)

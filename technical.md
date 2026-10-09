@@ -178,7 +178,7 @@ Three layers, each doing something the others cannot: the **schema** fixes shape
 
 ### The 10 structural codes — the graph is malformed and must not be emitted
 
-These are `validate`'s own. The conversation adds eight more, raised by a separate validator
+These are `validate`'s own. The conversation adds seven more, raised by a separate validator
 that can see the statements and the lanes; they are in section C6.
 
 | Code | Fires when | In a schema? |
@@ -213,8 +213,8 @@ invented step is indistinguishable from a real one everywhere downstream.
 
 **One thing the validator cannot check.** It is never given `metadata.yaml` — the signature
 is `validate(graph, skeleton)`. So it can require that a node names *a* lane, but has no list
-to check the name against. An actor the model invented reaches disk looking perfectly valid,
-and is caught in stage 2.
+to check the name against. A lane the config never declared reaches disk looking like any
+other, and stage 2 draws it — after the declared lanes, with a warning in the log.
 
 ## 1E. The retry loop
 
@@ -444,23 +444,28 @@ repair turn can name everything wrong with a patch at once. Nodes a patch adds a
 just after the step that leads to them, because stage 2 lays out by node order and a patch
 can only append.
 
-### The checks, and the 8 codes the conversation adds
+### The checks, and the 7 codes the conversation adds
 
 After a patch is applied, `agents/extractor.py::check` runs `validate(graph, skeleton)`
 unchanged and then `validators/session_checks.py::validate_session(graph, corpus, lanes,
 process)`. The second exists because a session holds what the first never sees: the
-statements, the lanes, the process definition. All eight are structural.
+statements, the lanes, the process definition. All seven are structural.
 
 | Code | Fires when |
 | --- | --- |
 | `missing_evidence` | A `source` node, or a branch edge, cites nothing. Exempt: the branch leading to a `rule` terminal — nobody stated that outcome, so there is nothing to quote |
 | `evidence_not_found` | A reference names a statement that does not exist, or its quote is not in that statement's text or restatement. Compared with case, whitespace and typographic quotes normalised. Also raised for a removal citing an unknown statement |
-| `unknown_lane` | A node's `actor` is not one of the session's lanes. The check the one-shot path cannot make until stage 2 |
 | `unknown_scope` | A node's `subprocess` is not declared in `process.yaml` |
 | `rule_origin_misuse` | An `origin: rule` node that is not a `needs_clarification` terminal, or any node with `origin: slice` |
 | `patch_unknown_node` | `update_node` or `remove_node` names a node that is not there |
 | `patch_duplicate_node` | `add_node` uses an id already taken |
 | `patch_unknown_edge` | `update_edge` or `remove_edge` names an edge that is not there. An edge is found by its ends alone when exactly one joins them, since the order is what a model misremembers |
+
+**There is no lane check.** A lane the extractor uses that the session has not learned is
+accepted, and `session/orchestrator.py::learn_lanes` adds it as `proposed` with no persona —
+the state the candidates turn into a rank 2 question, "what is X, and what part does it
+play?". It is far more often a name the user said and the interpreter missed than an
+invention, and either way the right response is to ask, not to send the patch back.
 
 `evidence_not_found` is what makes extraction literal. A paraphrase is not a quote, and a
 node that rests on a paraphrase is sent back.
@@ -633,6 +638,33 @@ changes. It polls every 1.5 seconds while a turn is running and not otherwise. T
 line, the quick replies and every error sentence arrive from the service; the page prints
 them.
 
+## C13. What gets logged
+
+`utils/logs.py`. Configured by entry points only — `api/app.py` (the module uvicorn is
+pointed at), `session/cli.py`, and each `pipelines/*.py` `main` — never by importing a
+library module.
+
+| Output | Answers | Content |
+| --- | --- | --- |
+| Console and `logs/app.log` | What happened, when, why | One line per decision, prefixed `[session tN role#attempt]`. At `DEBUG`, every prompt and response in full |
+| `logs/trace.jsonl` | What exactly was sent and what came back | One object per model call: context, role, model, system prompt, prompt, response or error, seconds, token usage including cache read and write. The navigator's cached block is recorded by size, not copied |
+
+Both files are opened in write mode by `configure_logging`, so each start overwrites them.
+
+**Every model call is traced, by construction.** `extractors/model.py::_TracedAgent` wraps
+the one Strands agent each adapter holds, and both the one-shot `StrandsModelCall` and the
+conversation's `StrandsConversation` call a model only through it. It times the call,
+translates the SDK's exceptions, reads the token delta off the agent's running total, and
+calls `record_call` whether the call succeeded or not.
+
+**Context travels in a context variable.** `trace_context(session=, turn=, role=, attempt=)`
+is set by the turn runner, the orchestrator and the extractor's loop, so a line written deep
+in a validator says whose turn it belongs to without ids threaded through signatures. Turns
+run on worker threads, and a context variable set in a worker is that worker's alone.
+
+Our packages log at `PFG_LOG_LEVEL` (default `DEBUG`); everything else at `WARNING`.
+uvicorn's own access log is separate and untouched.
+
 ---
 
 # Stage 2 — graph to laid-out BPMN
@@ -720,10 +752,12 @@ Also here:
   punctuation beyond `_`, never a leading digit. "SP Biologics" fails all three. Prefixes are
   load-bearing, because stage 3's CSS has no other handle on element type: `Node_`, `Note_`,
   `Node_sub_`, `Lane_`, `Flow_`, `Association_`.
-- **The lane check stage 1 could not make.** `lane_order` raises if any node — or any
-  collapsed box actually drawn — names an actor `metadata.yaml` does not declare. This is the
-  first point the graph and the config are both in hand. A subprocess the skeleton declares
-  but this description never mentions produces no box, so it names no lane and is not checked.
+- **An undeclared lane is drawn, not refused.** `lane_order` returns the declared actors
+  that are used, in declaration order, then any lane a node — or a collapsed box — names
+  that `metadata.yaml` never declared, in order of first use, and logs a warning naming
+  them. It used to raise. The declared list is a vocabulary the extractor is offered, and the
+  extraction prompt itself says to "use the source's own wording" for someone outside it, so
+  raising cancelled a whole run over a name the pipeline had asked for.
 - Only lanes with something left in them get drawn, so declaring an actor the source never
   uses costs nothing but a line of config.
 
@@ -926,7 +960,7 @@ This is deliberately **not** part of `decisions.py`. That module earns its excep
 happens to be written to the same elements.
 
 **Exit codes:** `0` success · `1` layout failed, nothing written · `2` process unreadable,
-including a node attributed to an undeclared actor.
+not including a node in a lane the config never declared, which is drawn.
 
 ---
 

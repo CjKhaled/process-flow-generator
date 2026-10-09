@@ -72,6 +72,7 @@ from session.models import (
     GraphVersion,
     LaneStatus,
     LearnedTerm,
+    LedgerEntry,
     Message,
     Phase,
     QuestionKind,
@@ -86,6 +87,7 @@ from session.models import (
 )
 from session.patch import empty_graph
 from session.statements import split
+from utils.logs import trace_context
 from validators.report import Finding, FindingCode
 from validators.session_checks import normalise
 
@@ -172,22 +174,53 @@ def run_turn(
     Raises:
         TurnRejected: If the turn could not be carried out. Nothing changed.
     """
+    with trace_context(session=session.id, turn=session.turn + 1):
+        return _run_turn(session, domain, turn_input, conversations, max_attempts, progress, clock)
+
+
+def _run_turn(
+    session: Session,
+    domain: DomainKnowledge,
+    turn_input: TurnInput,
+    conversations: ConversationFactory,
+    max_attempts: int,
+    progress: Progress | None,
+    clock: Callable[[], float],
+) -> Session:
+    """The turn itself. Split from :func:`run_turn` only so the whole of it runs inside the trace context."""
+    turn_started = clock()
     working = session.model_copy(deep=True)
     working.turn += 1
     first = turn_input.description is not None
     text = (turn_input.description if first else turn_input.message) or ""
     timings: list[StepTiming] = []
+    logger.info(
+        "turn %d begins: %s, %d chars | phase %s, focus %s%s%s",
+        working.turn,
+        "first description" if first else "answer",
+        len(text),
+        working.phase,
+        working.focus,
+        f" | quick reply: {turn_input.hint}" if turn_input.hint else "",
+        f" | answering open item {turn_input.item_key}" if turn_input.item_key else "",
+    )
+    logger.debug("the user said:\n%s", text)
 
     if working.phase is Phase.CLOSING and not first:
         # Answering something at close-out reopens the conversation.
         working.phase = Phase.PROBING
+        logger.info("phase closing -> probing: the user answered instead of accepting")
     if turn_input.item_key:
         working.pending = _question_for_item(working, domain, turn_input.item_key)
 
     _say(progress, TurnStatus.INTERPRETING)
     statements = tuple(split(text)) if first else ()
     if not text.strip() or (first and not statements):
+        logger.warning("turn rejected before any model call: there is nothing to read")
         raise TurnRejected(NOTHING_TO_READ)
+    if first:
+        logger.info("step 0 split: the description is %d statements", len(statements))
+    logger.info("step 1 interpret: reading the %s", "description" if first else "answer against the pending questions")
     started = clock()
     try:
         reading = interpret(
@@ -202,14 +235,29 @@ def run_turn(
         logger.warning("turn %d: the interpreter could not answer: %s", working.turn, error)
         raise TurnRejected(RESEND) from error
     except ModelUnavailableError as error:
+        logger.error("turn %d rejected: the API refused the interpreter's request: %s", working.turn, error)
         raise TurnRejected(str(error)) from error
     timings.append(StepTiming(step="interpreter", seconds=clock() - started))
+    _log_reading(reading)
 
+    logger.info("step 2 apply: folding the reading into the session")
+    before_ledger, before_focus = list(working.ledger), working.focus
     applied = _apply(working, domain, reading, text, statements)
+    _log_ledger(before_ledger, working.ledger, "the user's message")
+    logger.info(
+        "statements %s added; corpus is now %d",
+        ", ".join(applied.statement_ids) or "none",
+        len(working.corpus),
+    )
+    if working.focus != before_focus:
+        why = "the user asked for it" if applied.requested_focus else "the subprocess it was on is settled"
+        logger.info("focus %s -> %s: %s", before_focus, working.focus, why)
 
     _say(progress, TurnStatus.EXTRACTING)
     outcome: ExtractionOutcome | None = None
-    if _worth_extracting(working, reading, applied, quick_reply=turn_input.hint is not None):
+    worth, why = _worth_extracting(working, reading, applied, quick_reply=turn_input.hint is not None)
+    logger.info("step 3 extract: %s -- %s", "calling the extractor" if worth else "skipped", why)
+    if worth:
         try:
             outcome = extract_patch(
                 working,
@@ -221,14 +269,37 @@ def run_turn(
                 clock=clock,
             )
         except ModelUnavailableError as error:
+            logger.error("turn %d rejected: the API refused the extractor's request: %s", working.turn, error)
             raise TurnRejected(str(error)) from error
         timings.extend(outcome.timings)
+        nodes_before, edges_before = len(working.graph.nodes), len(working.graph.edges)
         working.graph = outcome.graph
-        learn_lanes(working)
+        learned = learn_lanes(working)
+        if learned:
+            logger.info(
+                "lane(s) learned from the graph: %s -- the extractor used a name the session had not "
+                "learned, so it is added as proposed and will be asked about",
+                ", ".join(learned),
+            )
         if outcome.updated:
             working.retry_statement_ids = []
+            logger.info(
+                "flow updated in %d attempt(s): %d operation(s); nodes %d -> %d, edges %d -> %d",
+                outcome.attempts,
+                len(outcome.patch.operations) if outcome.patch else 0,
+                nodes_before,
+                len(working.graph.nodes),
+                edges_before,
+                len(working.graph.edges),
+            )
         else:
             working.retry_statement_ids = list(dict.fromkeys([*working.retry_statement_ids, *applied.statement_ids]))
+            logger.warning(
+                "flow NOT updated: %d attempt(s) all left structural defects, so the previous graph is kept "
+                "and %s will be retried next turn",
+                outcome.attempts,
+                ", ".join(working.retry_statement_ids),
+            )
 
     working.ledger = link_nodes(working.ledger, working.graph)
     resolution = _resolution(working, domain, outcome)
@@ -243,16 +314,48 @@ def run_turn(
         )
     )
 
-    ranked = rank_candidates(working, domain)
+    logger.info("step 4 record: %d open point(s) on the flow this turn", len(resolution))
+    for finding in resolution:
+        logger.info("  open point [%s] %s", finding.code, finding.message)
 
+    ranked = rank_candidates(working, domain)
+    logger.info(
+        "step 5 rank: %d candidate(s), %d of them skip offers; the navigator is shown the top %d",
+        len(ranked),
+        sum(candidate.skip_offer for candidate in ranked),
+        min(TOP, len(ranked)),
+    )
+    for candidate in ranked[:TOP]:
+        logger.info(
+            "  %s rank %d %s [%s]%s: %s -- %s",
+            candidate.id,
+            candidate.rank,
+            candidate.kind,
+            candidate.scope,
+            " SKIP-OFFER" if candidate.skip_offer else "",
+            candidate.ask,
+            candidate.reason,
+        )
+
+    logger.info("step 6 navigate: choosing questions and wording the reply")
     _say(progress, TurnStatus.NAVIGATING)
     closing_items = open_items(working, domain) if working.phase is Phase.CLOSING else ()
     started = clock()
     answer = _navigate(working, domain, ranked, resolution, closing_items, reading.meta, conversations)
     timings.append(StepTiming(step="navigator", seconds=clock() - started))
 
+    if answer is None:
+        logger.warning("the navigator could not answer; replying with the fallback and the top candidate's question")
+    else:
+        logger.info(
+            "the navigator proposed focus %s, %d question(s), close=%s",
+            answer.focus,
+            len(answer.questions),
+            answer.propose_close,
+        )
     questions = _questions(working, domain, answer, ranked)
     reply = _reply(working, answer, closing_items, domain)
+    focus_before = working.focus
     working.focus = accept_focus(
         answer.focus if answer else None,
         working,
@@ -261,8 +364,24 @@ def run_turn(
         requested=applied.requested_focus,
         scopes_raised_this_turn=applied.scopes,
     )
+    proposed = answer.focus if answer else None
+    if working.focus != focus_before:
+        logger.info("focus %s -> %s: the navigator's proposal was accepted", focus_before, working.focus)
+    elif proposed and proposed != focus_before:
+        logger.info(
+            "focus stays on %s: the navigator proposed %s, which the focus rules do not allow yet",
+            focus_before,
+            proposed,
+        )
     if working.phase is Phase.DESCRIBING:
         working.phase = Phase.PROBING
+        logger.info("phase describing -> probing: the first description has been read")
+    if answer is not None and answer.propose_close and working.phase is Phase.PROBING:
+        blocking = [candidate.id for candidate in ranked if candidate.rank <= 6 and not candidate.skip_offer]
+        logger.info(
+            "the navigator proposed closing: %s",
+            f"refused, {len(blocking)} candidate(s) at rank 6 or above can still be asked" if blocking else "accepted",
+        )
     if (
         working.phase is Phase.PROBING
         and answer is not None
@@ -272,7 +391,66 @@ def run_turn(
         working.phase = Phase.CLOSING
 
     _store(working, text, reply, questions, timings)
+    logger.info("step 7 store: %d question(s) pending", len(working.pending))
+    for question in working.pending:
+        logger.info(
+            "  %s [%s; %s] %s", question.id, question.kind, ", ".join(question.topic_ids) or "no topic", question.text
+        )
+    logger.debug("the reply:\n%s", reply)
+    logger.info(
+        "turn %d done in %.1fs (%s) | phase %s, focus %s, %d nodes, %d edges",
+        working.turn,
+        clock() - turn_started,
+        ", ".join(f"{t.step}{'#' + str(t.attempt) if t.step == 'extractor' else ''} {t.seconds:.1f}s" for t in timings),
+        working.phase,
+        working.focus,
+        len(working.graph.nodes),
+        len(working.graph.edges),
+    )
     return working
+
+
+def _log_reading(reading: InterpretResult) -> None:
+    """What the interpreter read, one line per kind of thing it found."""
+    logger.info(
+        "the interpreter read: %d statement(s), %d topic update(s), %d correction(s), %d new lane(s), "
+        "%d lane update(s), %d fact(s), %d learned term(s), %d unknown term(s), focus request %s, meta %s",
+        len(reading.statements),
+        len(reading.topic_updates),
+        len(reading.corrections),
+        len(reading.new_lanes),
+        len(reading.lane_updates),
+        len(reading.facts),
+        len(reading.learned_terms),
+        len(reading.unknown_terms),
+        reading.focus_request,
+        reading.meta,
+    )
+    for update in reading.topic_updates:
+        logger.info(
+            "  topic %s read as %s%s", update.topic_id, update.status, f" ({update.note})" if update.note else ""
+        )
+    for correction in reading.corrections:
+        logger.info("  correction: %s", correction.description)
+    for lane in reading.new_lanes:
+        logger.info("  new lane '%s' (persona %s): %s", lane.name, lane.persona or "not known", lane.description or "-")
+    if reading.default_lane:
+        logger.info("  the user named the automation system: '%s'", reading.default_lane.name)
+    for fact in reading.facts:
+        logger.info("  fact %s = %s", fact.fact.value, fact.value)
+    for term in reading.unknown_terms:
+        logger.info("  unexplained term '%s'", term.term)
+
+
+def _log_ledger(before: Sequence[LedgerEntry], after: Sequence[LedgerEntry], why: str) -> None:
+    """Every topic whose status changed, as ``topic: old -> new``. Found by comparing, so nothing is missed."""
+    was = {entry.topic_id: entry.status for entry in before}
+    for entry in after:
+        if was.get(entry.topic_id) is not entry.status:
+            reason = (
+                "its program fact or its subprocess ruled it out" if entry.status is TopicStatus.NOT_APPLICABLE else why
+            )
+            logger.info("  ledger %s: %s -> %s (%s)", entry.topic_id, was.get(entry.topic_id), entry.status, reason)
 
 
 def run_close(
@@ -304,6 +482,9 @@ def run_close(
     working.phase = Phase.CLOSING
     _say(progress, TurnStatus.NAVIGATING)
     items = open_items(working, domain)
+    logger.info("closing session %s: %d item(s) still open", working.id, len(items))
+    for item in items:
+        logger.info("  open [%s; %s] %s", item.scope, item.kind, item.text)
     resolution = working.versions[-1].resolution if working.versions else ()
     answer = _navigate(working, domain, [], resolution, items, None, conversations)
 
@@ -530,6 +711,8 @@ def resolve_default_lane(session: Session, name: str) -> None:
     if old == name or session.lane(name) is None:
         return
     session.default_lane = name
+    moved = sum(node.actor == old for node in session.graph.nodes)
+    logger.info("default lane '%s' -> '%s': %d step(s) move with it", old, name, moved)
     old_lane = session.lane(old)
     if old_lane is None or old_lane.status is not LaneStatus.PLACEHOLDER:
         return
@@ -624,18 +807,26 @@ def _apply_terms(working: Session, domain: DomainKnowledge, reading: InterpretRe
 # ── steps 3 to 7 ─────────────────────────────────────────────────────────────
 
 
-def _worth_extracting(working: Session, reading: InterpretResult, applied: _Applied, *, quick_reply: bool) -> bool:
-    """Whether this turn said anything that could change the flow.
+def _worth_extracting(
+    working: Session, reading: InterpretResult, applied: _Applied, *, quick_reply: bool
+) -> tuple[bool, str]:
+    """Whether this turn said anything that could change the flow, and the reason either way.
 
     "Not sure yet" and a question about the session describe no process, so
     calling the extractor on them would spend a model call to be told nothing
     changed. Statements still waiting from a failed turn always earn a call.
     """
-    if working.retry_statement_ids or applied.corrections:
-        return True
-    if quick_reply or not applied.statement_ids:
-        return False
-    return not (reading.meta is not None and not reading.topic_updates)
+    if working.retry_statement_ids:
+        return True, f"statements from a failed turn are still owed: {', '.join(working.retry_statement_ids)}"
+    if applied.corrections:
+        return True, "the user corrected something"
+    if quick_reply:
+        return False, "a quick reply describes no process"
+    if not applied.statement_ids:
+        return False, "the turn produced no statements"
+    if reading.meta is not None and not reading.topic_updates:
+        return False, f"the message was about the session itself (meta: {reading.meta})"
+    return True, f"{len(applied.statement_ids)} new statement(s) to apply"
 
 
 def _resolution(working: Session, domain: DomainKnowledge, outcome: ExtractionOutcome | None) -> tuple[Finding, ...]:
@@ -697,19 +888,31 @@ def _questions(
     nodes = {node.id for node in working.graph.nodes}
     drafts: list[tuple[Candidate | None, str, tuple[str, ...], tuple[str, ...], str]] = []
 
-    for question in (answer.questions if answer else ())[:MAX_QUESTIONS]:
+    offered = answer.questions if answer else ()
+    if len(offered) > MAX_QUESTIONS:
+        logger.info("the navigator offered %d questions; only the first %d are kept", len(offered), MAX_QUESTIONS)
+    for question in offered[:MAX_QUESTIONS]:
         candidate = by_id.get(question.candidate_id or "")
         topics = tuple(topic for topic in question.topic_ids if domain.topic(topic) is not None)
         if candidate is None:
             scope = question.scope if valid_scope(domain, question.scope) else working.focus
             drafts.append((None, question.text, topics, tuple(n for n in question.node_ids if n in nodes), scope))
+            logger.info(
+                "  question kept as the navigator's own (no candidate '%s'): %s", question.candidate_id, question.text
+            )
         elif not candidate.skip_offer:
             merged = tuple(dict.fromkeys((*candidate.topic_ids, *topics)))
             drafts.append((candidate, question.text, merged, candidate.node_ids, candidate.scope))
+            logger.info("  question kept from %s (%s): %s", candidate.id, candidate.kind, question.text)
+        else:
+            logger.info(
+                "  question dropped: %s has been asked twice without an answer: %s", candidate.id, question.text
+            )
 
     if not drafts and askable:
         top = askable[0]
         drafts.append((top, top.ask, top.topic_ids, top.node_ids, top.scope))
+        logger.info("  no usable question came back, so the top candidate's own is asked: %s", top.ask)
 
     return [
         AskedQuestion(

@@ -121,6 +121,31 @@ class SessionSettings(BaseSettings):
     )
 
 
+class LogSettings(BaseSettings):
+    """How much the application says, and where it writes it. Every field has a default."""
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    log_level: str = Field(
+        default="DEBUG",
+        alias="PFG_LOG_LEVEL",
+        description=(
+            "Level for this project's own loggers: DEBUG, INFO, WARNING or ERROR. INFO says what "
+            "happened and why; DEBUG adds every prompt and response in full. The default is "
+            "DEBUG because this is still being debugged far more often than it is being run."
+        ),
+    )
+    log_dir: Path = Field(
+        default=Path("logs"),
+        alias="PFG_LOG_DIR",
+        description=(
+            "Where app.log and trace.jsonl are written, both overwritten each time the process "
+            "starts. A relative path is taken from the repository root. Gitignored: the trace "
+            "holds what users typed."
+        ),
+    )
+
+
 class Stage2Settings(BaseSettings):
     """Settings for the layout stage. Every field has a default, deliberately."""
 
@@ -205,6 +230,17 @@ def load_session_settings() -> SessionSettings:
 def _from_root(path: Path) -> Path:
     """A relative path, read from the repository root rather than from wherever the process started."""
     return path if path.is_absolute() else REPO_ROOT / path
+
+
+def load_log_settings() -> LogSettings:
+    """Read the logging settings from the environment.
+
+    Returns:
+        The settings, with the directory made absolute. Never raises for a
+        missing value.
+    """
+    settings = LogSettings()
+    return settings.model_copy(update={"log_dir": _from_root(settings.log_dir)})
 
 
 def load_stage2_settings() -> Stage2Settings:

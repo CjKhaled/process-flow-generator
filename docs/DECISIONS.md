@@ -220,3 +220,39 @@ to a workspace is refused with a `400` unless each request carries `anthropic-wo
 The setting is named without the `PFG_` prefix because, like the key beside it, it is the
 provider's own variable and not this project's. Both the one-shot path and the conversation
 build their client through one function, so they cannot come to authenticate differently.
+
+## Reversed after the first real runs
+
+**A lane nobody declared is no longer an error, anywhere.** The first real one-shot run was
+cancelled because the model put a step in a lane `metadata.yaml` did not list. Two things
+changed.
+
+*Stage 2.* `bpmn/semantics.py::lane_order` draws such a lane after the declared ones and logs
+it, where it used to raise. This is the one edit made under `bpmn/`, which the original brief
+put off-limits; it was asked for directly. The check contradicted the extraction prompt, which
+tells the model to use the source's own wording for someone outside the list.
+
+*The conversation.* The brief's `unknown_lane` structural code is removed. A lane the
+extractor uses that the session has not learned is added as `proposed` with no persona, and
+the existing rank 2 lane question asks the user what it is. The extractor's prompt now says
+to use the statement's own name for someone not listed, where it said never to.
+
+What is lost: a lane the model genuinely invented is now drawn, and in the one-shot path
+nothing asks about it — it is only logged. In the conversation the user is asked.
+
+**Logging is verbose by default and overwrites itself.** `PFG_LOG_LEVEL` defaults to `DEBUG`
+and `logs/app.log` and `logs/trace.jsonl` are truncated on every start, by request: the
+project is being debugged far more than it is being run. *Revisit before this is hosted:* the
+trace holds everything users type and every prompt in full, the default level is too loud
+for a shared service, and a file that is overwritten on restart is no record of anything.
+
+**Strands' console printing is off on both paths.** The one-shot agent used the default
+callback handler, which is where `Tool #1: ProcessGraph` came from. Both agents are now built
+with none, and the application's own lines say what was called, how long it took and what it
+cost.
+
+**Polling stays.** A webhook was raised as more scalable. It does not apply here: a webhook
+is the server calling a URL the client hosts, and the client is a browser tab. The push
+alternatives for a browser are server-sent events or a WebSocket, both of which need a
+heartbeat to survive a host that drops quiet connections, and a polling fallback when the
+stream drops. Not changed.

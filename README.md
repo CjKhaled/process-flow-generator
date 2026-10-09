@@ -388,8 +388,8 @@ written), `2` the process or configuration could not be read.
 
 Stage 2 then writes `processes/enrollment/outputs/diagram.bpmn`, which opens in bpmn.io or
 Camunda Modeler. Exit codes: `0` success, `1` the layout failed (nothing written), `2` the
-process could not be read — including a node attributed to an actor `metadata.yaml` does
-not declare, which stage 1 cannot catch because the validator never sees the process config.
+process could not be read. A step attributed to someone `metadata.yaml` never listed is not
+an error: it gets a lane of its own, drawn after the listed ones.
 
 Stage 3 then writes `processes/enrollment/outputs/diagram.html`. Exit codes: `0` success,
 `1` the page could not be built (bpmn-js is not installed), `2` the process or stage 2's
@@ -423,6 +423,19 @@ Then open `/app`. The existing page at `/` is untouched. Sessions are written un
 There is no login on any of this. It is an internal tool: keep the service off the public
 internet.
 
+### What it tells you
+
+Every entry point — the service, the session CLI, the three stages — logs to the console and
+to `logs/app.log`: each step of a turn, what the interpreter read, which coverage topics
+moved and what moved them, why the extractor was or was not called, which questions were
+kept or dropped and why. Beside it, `logs/trace.jsonl` has one line per model call with
+everything: the system prompt, the prompt, the response or the error, the model, the
+duration and the token counts.
+
+Both files are **overwritten every time the process starts**. They are for debugging the
+run in front of you, not a history. And both contain whatever was typed in, which is why
+`logs/` is not committed.
+
 ```bash
 uv run pytest        # no test touches the network
 uv run ruff check .
@@ -446,6 +459,8 @@ Tests needing the real layouter are marked `requires_node` and skip when Node or
 | `PFG_NAVIGATOR_MODEL_ID` | `PFG_MODEL_ID` | Conversation only: the navigator's model. |
 | `PFG_DOMAIN_DIR` | `domain_knowledge` | Conversation only: the knowledge base. Read-only at run time. |
 | `PFG_SESSIONS_DIR` | `sessions` | Conversation only: where sessions are written. Gitignored. |
+| `PFG_LOG_LEVEL` | `DEBUG` | How much the application says. `INFO` is what happened and why; `DEBUG` adds every prompt and response in full. |
+| `PFG_LOG_DIR` | `logs` | Where `app.log` and `trace.jsonl` are written. Gitignored. |
 | `PFG_LAYOUT_BIN` | pinned install | The `bpmn-auto-layout` executable. Empty uses the version pinned in `js/`. |
 | `PFG_ALLOWED_ORIGIN` | `*` | Hosted demo only: comma-separated origins the page may call from. |
 | `PFG_MAX_SOURCE_CHARS` | `20000` | Hosted demo only: longest description accepted. |
@@ -469,7 +484,9 @@ named anywhere in the code.
   Nothing enforces that the machine name matches the folder, but every id in the generated
   BPMN file is built from it, so a copied folder with an unedited name produces a diagram
   whose internals name the process it was copied from.
-  `actors` is the complete set of lanes the diagram may use. Descriptions are not
+  `actors` is the set of lanes the extractor is offered, and the order they are drawn in.
+  It is not a fence: a step the source attributes to someone not listed gets a lane of its
+  own, after these. Descriptions are not
   decoration: a model told only "JCRM" cannot know it is the platform that runs the
   automations, so it cannot place an automated step in that lane. `default_actor` is where
   a box falls when the source never says who — source text routinely describes automation

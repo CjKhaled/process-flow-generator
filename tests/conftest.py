@@ -1,6 +1,15 @@
 """Shared fixtures."""
 
+import os
 import shutil
+import tempfile
+
+# Before anything of the project's is imported. Importing ``api.app`` starts the service's
+# logging, and a suite that wrote a log into the repository, or filled the terminal with
+# every prompt, would be doing so on every run.
+os.environ["PFG_LOG_DIR"] = tempfile.mkdtemp(prefix="pfg-test-logs-")
+os.environ["PFG_LOG_LEVEL"] = "WARNING"
+
 from pathlib import Path
 
 import pytest

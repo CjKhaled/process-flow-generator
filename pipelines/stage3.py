@@ -35,6 +35,7 @@ from pipelines.stage1 import GRAPH_FILENAME, REPORT_FILENAME
 from pipelines.stage2 import DIAGRAM_FILENAME
 from render import page
 from render.assets import AssetError, ViewerAssets, load_assets, load_template
+from utils.logs import configure_logging
 from validators.report import Finding, ValidationReport
 
 logger = logging.getLogger(__name__)
@@ -135,7 +136,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Directory holding the process folders.",
     )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=logging.WARNING, format="%(message)s", stream=sys.stderr)
+    configure_logging()
 
     try:
         written = run(args.process, args.processes_root)

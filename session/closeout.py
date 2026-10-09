@@ -24,6 +24,7 @@ actually have steps, each in the lane of whoever hands off to it.
 it. :func:`finalise` is the only function that touches the disk or the layouter.
 """
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -47,6 +48,8 @@ from utils.io import write_json
 from utils.settings import load_stage2_settings
 from validators.graph import validate
 from validators.report import ValidationReport
+
+logger = logging.getLogger(__name__)
 
 GRAPH_FILENAME = "graph.json"
 REPORT_FILENAME = "validation.json"
@@ -241,8 +244,25 @@ def finalise(
     # Everything is composed and drawn before anything is written, so a flow that
     # cannot be drawn leaves no half-finished set of folders behind.
     drawn = []
-    for scope in flow_scopes(working, domain):
+    scopes = flow_scopes(working, domain)
+    logger.info(
+        "finalising session %s: %d flow(s) (%s); %d open item(s) accepted as open",
+        working.id,
+        len(scopes),
+        ", ".join(scopes),
+        len(working.accepted_open_items),
+    )
+    for scope in scopes:
         bundle = compose_flow(working, domain, scope)
+        logger.info(
+            "flow '%s': %d nodes, %d edges, lanes %s, %d box(es), %d finding(s)",
+            scope,
+            len(bundle.graph.nodes),
+            len(bundle.graph.edges),
+            ", ".join(bundle.config.actors),
+            len(bundle.skeleton.subprocesses),
+            len(bundle.report.findings),
+        )
         diagram = draw(bundle, layout)
         html = page.build(
             diagram,
@@ -259,6 +279,7 @@ def finalise(
         write_flow(folder, bundle)
         (folder / OUTPUTS_DIRNAME / DIAGRAM_FILENAME).write_text(diagram, encoding="utf-8")
         (folder / OUTPUTS_DIRNAME / PAGE_FILENAME).write_text(html, encoding="utf-8")
+        logger.info("flow '%s' written to %s", bundle.scope, folder)
 
     working.phase = Phase.COMPLETE
     working.pending = []

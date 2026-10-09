@@ -95,11 +95,35 @@ def run(
         layout_bin = load_stage2_settings().layout_bin
         layout = subprocess_layouter([layout_bin] if layout_bin else None)
 
+    logger.info(
+        "extracting '%s' from %d chars; up to %d attempt(s); %d declared actor(s), %d subprocess(es)",
+        process_name,
+        len(source_text),
+        max_attempts,
+        len(config.actors),
+        len(skeleton.subprocesses),
+    )
     result = extract(source_text, skeleton, call=call, max_attempts=max_attempts)
+    logger.info(
+        "extracted %d nodes and %d edges in %d attempt(s); %d open question(s)",
+        len(result.graph.nodes),
+        len(result.graph.edges),
+        result.attempts,
+        len(result.report.resolution),
+    )
+    for finding in result.report.resolution:
+        logger.info("  open question [%s] %s", finding.code, finding.message)
 
     _say(progress, LAYING_OUT)
     definitions = semantics.translate(result.graph, config, skeleton)
+    logger.info(
+        "drawing %d element(s) in %d lane(s): %s",
+        len(definitions.flow_nodes),
+        len(definitions.lanes),
+        ", ".join(lane.actor for lane in definitions.lanes),
+    )
     laid_out = colors.apply(decisions.widen(layout(document.render(definitions))))
+    logger.info("laid out: %d chars of BPMN", len(laid_out))
 
     _say(progress, RENDERING)
     return page.payload(

@@ -313,7 +313,7 @@ def test_when_the_flow_could_not_be_updated_the_page_is_told(client: TestClient,
 
 
 def test_a_session_left_mid_turn_by_a_restart_is_reported_as_interrupted(
-    client: TestClient, store: FileSessionStore
+    client: TestClient, store: FileSessionStore, fake: FakeConversations
 ) -> None:
     """No worker holds the turn, so nothing will ever finish it. The page must be told, not left polling."""
     session_id = started(client)["id"]
@@ -324,7 +324,10 @@ def test_a_session_left_mid_turn_by_a_restart_is_reported_as_interrupted(
     state = client.get(f"/sessions/{session_id}").json()
 
     assert (state["running"], state["turn_status"], state["status_label"]) == (False, "failed", INTERRUPTED)
-    assert client.post(f"/sessions/{session_id}/messages", json={"text": "again"}).status_code == 202
+
+    fake.interpreter(reads("again")).extractor(patch()).navigator(says("Carrying on."))
+
+    assert send(client, session_id, text="again")["transcript"][-1]["text"] == "Carrying on."
 
 
 def test_a_service_with_no_key_starts_and_explains_itself_on_the_first_turn(

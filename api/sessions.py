@@ -25,6 +25,7 @@ quick replies, the error sentence. The page prints what it is given.
 
 import logging
 import threading
+import time
 import uuid
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
@@ -49,6 +50,7 @@ from session.orchestrator import NOT_UPDATED, Progress, TurnInput, TurnRejected,
 from session.slicing import SliceError
 from session.store import SessionNotFound, SessionStore
 from session.views import session_views
+from utils.logs import trace_context
 from utils.settings import load_api_settings, load_settings
 
 logger = logging.getLogger(__name__)
@@ -158,13 +160,21 @@ class TurnRunner:
                 return False
             self._running.add(session.id)
         self._mark(session.id, status, error=None)
+        logger.info("session %s: work queued (%s)", session.id, status)
         self._pool.submit(self._execute, session.id, work)
         return True
 
     def _execute(self, session_id: str, work: Work) -> None:
+        with trace_context(session=session_id):
+            self._run(session_id, work)
+
+    def _run(self, session_id: str, work: Work) -> None:
+        started = time.perf_counter()
+        logger.info("session %s: a worker picked the work up", session_id)
         try:
             updated = work(self._store.load(session_id), lambda status: self._mark(session_id, status, error=None))
         except TurnRejected as error:
+            logger.warning("session %s: turn rejected, nothing changed: %s", session_id, error)
             self._mark(session_id, TurnStatus.FAILED, error=str(error))
         except ValidationError as error:  # Before ValueError, which it subclasses.
             missing = ", ".join(str(item["loc"][0]) for item in error.errors())
@@ -180,6 +190,13 @@ class TurnRunner:
             self._mark(session_id, TurnStatus.FAILED, error=BROKEN)
         else:
             self._store.save(updated)
+            logger.info(
+                "session %s: saved after %.1fs | turn %d, phase %s",
+                session_id,
+                time.perf_counter() - started,
+                updated.turn,
+                updated.phase,
+            )
         finally:
             with self._lock:
                 self._running.discard(session_id)
@@ -195,6 +212,7 @@ class TurnRunner:
         session.turn_status = status
         session.turn_error = error
         self._store.save(session)
+        logger.info("session %s: status -> %s%s", session_id, status, f" ({error})" if error else "")
 
 
 def create_session_router(
@@ -282,6 +300,9 @@ def create_session_router(
 
         session = new_session(uuid.uuid4().hex[:16], domain)
         store.create(session)
+        logger.info(
+            "session %s created for '%s' from a %d-char description", session.id, request.process_id, len(description)
+        )
         start_turn(session, TurnInput(description=description))
         return {"session_id": session.id}
 
@@ -326,6 +347,7 @@ def create_session_router(
             raise HTTPException(status_code=409, detail=BUSY)
         session.requested_focus = request.focus
         store.save(session)
+        logger.info("session %s: the user opened '%s'; honoured on the next turn", session_id, request.focus)
         return {"focus": request.focus}
 
     @router.post("/sessions/{session_id}/close", status_code=202)

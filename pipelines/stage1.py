@@ -26,6 +26,7 @@ from ir.process_config import (
 )
 from ir.skeleton import load_skeleton
 from utils.io import read_source, write_json
+from utils.logs import configure_logging
 from utils.settings import load_settings
 
 logger = logging.getLogger(__name__)
@@ -111,9 +112,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Directory holding the process folders.",
     )
     args = parser.parse_args(argv)
-    # Our own progress at INFO; the SDK and HTTP client stay quiet unless something breaks.
-    logging.basicConfig(level=logging.WARNING, format="%(message)s", stream=sys.stderr)
-    logging.getLogger("extractors").setLevel(logging.INFO)
+    configure_logging()
 
     try:
         result = run(args.process, args.processes_root)

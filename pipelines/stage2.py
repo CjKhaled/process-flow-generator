@@ -30,6 +30,7 @@ from ir.process_config import (
 )
 from ir.skeleton import load_skeleton
 from pipelines.stage1 import GRAPH_FILENAME
+from utils.logs import configure_logging
 from utils.settings import load_stage2_settings
 
 logger = logging.getLogger(__name__)
@@ -101,8 +102,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Directory holding the process folders.",
     )
     args = parser.parse_args(argv)
-    # The layouter's warnings are ours to surface; nothing else speaks at INFO.
-    logging.basicConfig(level=logging.WARNING, format="%(message)s", stream=sys.stderr)
+    configure_logging()
 
     try:
         written = run(args.process, args.processes_root)

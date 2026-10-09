@@ -33,6 +33,7 @@ from extractors.process import ModelCall
 from ir.process_config import list_processes
 from render.assets import ViewerAssets
 from session.store import FileSessionStore, SessionStore
+from utils.logs import configure_logging
 from utils.settings import load_api_settings, load_session_settings
 
 logger = logging.getLogger(__name__)
@@ -176,6 +177,10 @@ def _state(run: Run) -> dict[str, object]:
         "result": run.result,
     }
 
+
+# This module is what uvicorn is pointed at, so importing it *is* starting the service:
+# the one place logging is configured on import rather than from a ``main``.
+configure_logging()
 
 app = create_app()
 """The instance uvicorn serves."""
