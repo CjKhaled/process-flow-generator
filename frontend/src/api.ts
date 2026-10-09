@@ -52,4 +52,7 @@ export const closeSession = (id: string) => request<unknown>(`/sessions/${id}/cl
 
 export const acceptSession = (id: string) => request<unknown>(`/sessions/${id}/accept`, {});
 
+/** A finished flow's page, to be shown in a frame; the download URL serves the same file to be saved. */
+export const flowPageUrl = (id: string, flow: string) => `${BASE}/sessions/${id}/flows/${flow}/page`;
+
 export const downloadUrl = (id: string, flow: string, file: string) => `${BASE}/sessions/${id}/outputs/${flow}/${file}`;

@@ -19,7 +19,7 @@ from fastapi.testclient import TestClient
 from agents.interpreter import InterpretedStatement, InterpretResult, TopicReading
 from agents.navigator import NavigatorQuestion, NavigatorResult
 from api.app import create_app
-from api.sessions import BUSY, INTERRUPTED, QUICK_REPLIES, UNCONFIGURED
+from api.sessions import BUSY, INTERRUPTED, QUICK_REPLIES, REOPEN, STALE, UNCONFIGURED
 from bpmn.document import BPMN_NS
 from extractors.conversation import EXTRACTOR, INTERPRETER
 from extractors.errors import ModelUnavailableError, SchemaCallError
@@ -437,22 +437,77 @@ def test_only_the_offered_files_can_be_downloaded(client: TestClient) -> None:
 def test_nothing_is_offered_before_the_session_is_finished(client: TestClient) -> None:
     state = started(client)
 
-    assert state["outputs"] == []
+    assert (state["outputs"], state["outputs_stale"], state["reopen_notice"]) == ([], False, None)
     assert client.get(f"/sessions/{state['id']}/outputs/main/diagram.bpmn").status_code == 404
 
 
-def test_a_finished_session_takes_no_more_messages(client: TestClient) -> None:
+def test_a_finished_session_cannot_be_finished_again_until_something_is_said(client: TestClient) -> None:
+    """Closing or accepting twice with nothing said between would only redraw the same diagrams."""
+    session_id = started(client)["id"]
+    client.post(f"/sessions/{session_id}/accept")
+    state = settled(client, session_id)
+
+    assert state["reopen_notice"] == REOPEN
+    for path in ("close", "accept"):
+        assert client.post(f"/sessions/{session_id}/{path}").status_code == 409, path
+
+
+def test_a_finished_flows_page_is_served_to_be_shown_not_saved(client: TestClient) -> None:
+    """The same file as the download, without the header that makes a browser save it."""
+    session_id = started(client)["id"]
+    assert client.get(f"/sessions/{session_id}/flows/main/page").status_code == 404, "not drawn yet"
+    client.post(f"/sessions/{session_id}/accept")
+    settled(client, session_id)
+
+    shown = client.get(f"/sessions/{session_id}/flows/main/page")
+    saved = client.get(f"/sessions/{session_id}/outputs/main/diagram.html")
+
+    assert shown.status_code == 200
+    assert shown.headers["content-type"].startswith("text/html")
+    assert "content-disposition" not in shown.headers
+    assert shown.text == saved.text
+    assert "attachment" in saved.headers["content-disposition"]
+
+
+def test_a_flow_page_is_only_served_for_a_flow_that_exists(client: TestClient) -> None:
     session_id = started(client)["id"]
     client.post(f"/sessions/{session_id}/accept")
     settled(client, session_id)
 
-    for path, body in (
-        ("messages", {"text": "one more"}),
-        ("close", None),
-        ("accept", None),
-        ("focus", {"focus": "main"}),
-    ):
-        assert client.post(f"/sessions/{session_id}/{path}", json=body).status_code == 409, path
+    assert client.get(f"/sessions/{session_id}/flows/off_label_review/page").status_code == 404
+    assert client.get(f"/sessions/{session_id}/flows/..%2F..%2Fx/page").status_code == 404
+    assert client.get("/sessions/nosuchsession/flows/main/page").status_code == 404
+
+
+def test_answering_a_finished_session_reopens_it_and_marks_its_diagrams_out_of_date(
+    client: TestClient, fake: FakeConversations
+) -> None:
+    """A finished session is not sealed. Its diagrams stay on show, and say they are behind."""
+    session_id = started(client)["id"]
+    client.post(f"/sessions/{session_id}/accept")
+    finished = settled(client, session_id)
+    assert (finished["phase"], finished["outputs_stale"], finished["outputs_notice"]) == ("complete", False, None)
+
+    fake.interpreter(reads("One more thing: we log it.")).extractor(patch()).navigator(says("Noted."))
+    reopened = send(client, session_id, text="One more thing: we log it.")
+
+    assert (reopened["phase"], reopened["reopen_notice"]) == ("probing", None)
+    assert reopened["outputs"] == finished["outputs"], "still there to look at"
+    assert (reopened["outputs_stale"], reopened["outputs_notice"]) == (True, STALE)
+    assert client.get(f"/sessions/{session_id}/flows/main/page").status_code == 200
+
+    assert client.post(f"/sessions/{session_id}/accept").status_code == 202
+    again = settled(client, session_id)
+
+    assert (again["phase"], again["outputs_stale"]) == ("complete", False)
+
+
+def test_a_flow_can_be_opened_on_a_finished_session(client: TestClient) -> None:
+    session_id = started(client)["id"]
+    client.post(f"/sessions/{session_id}/accept")
+    settled(client, session_id)
+
+    assert client.post(f"/sessions/{session_id}/focus", json={"focus": "main"}).status_code == 200
 
 
 def test_a_session_with_no_flow_cannot_be_accepted(client: TestClient, fake: FakeConversations) -> None:

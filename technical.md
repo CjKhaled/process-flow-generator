@@ -541,16 +541,24 @@ starts work answers `202`.
 | `GET /processes` | The processes in `domain_knowledge/`, for the picker |
 | `POST /sessions` | `{process_id, description}` → `{session_id}`, and queues turn 1. `422` empty, `413` over `PFG_MAX_SOURCE_CHARS`, `404` unknown process |
 | `GET /sessions/{id}` | Phase, focus, turn, status and its sentence, transcript, pending questions, lanes, coverage, views with rationale, open items, outputs |
-| `POST /sessions/{id}/messages` | `{text, quick_reply, question_id, item_key}`. `409` if a turn is running or the session is complete |
+| `POST /sessions/{id}/messages` | `{text, quick_reply, question_id, item_key}`. `409` if a turn is running. On a finished session it reopens it |
 | `POST /sessions/{id}/focus` | `{focus}`: recorded, honoured on the next turn |
 | `POST /sessions/{id}/close` | Enter close-out |
 | `POST /sessions/{id}/accept` | Accept what is open and finalise |
 | `GET /sessions/{id}/outputs` | The finished flows and their files |
-| `GET /sessions/{id}/outputs/{flow}/{file}` | `diagram.bpmn`, `diagram.html` or `graph.json` |
+| `GET /sessions/{id}/outputs/{flow}/{file}` | `diagram.bpmn`, `diagram.html` or `graph.json`, as a download |
+| `GET /sessions/{id}/flows/{flow}/page` | The same `diagram.html`, served inline so the page can show it in a frame |
 
 Turns run on a small worker pool and are serialised per session: a second message to a busy
 session is a `409`. A quick reply is sent as words as well as a flag, so the transcript reads
 naturally and the interpreter treats a pressed button and a typed "not sure" alike.
+
+**Finishing is not a seal.** A message to a `complete` session moves it back to `probing`,
+as one to a `closing` session does, and the conversation goes on from where the flow stood.
+Its finished flows stay on disk and stay listed in `outputs`; `outputs_stale` and
+`outputs_notice` say they were drawn before the latest answers. Finishing again rewrites
+them. `/close` and `/accept` on a `complete` session are refused: with nothing said in
+between they would only redraw the same diagrams.
 
 The page is `frontend/`: Vite, React, TypeScript, `@xyflow/react` and `elkjs`, built to
 `frontend/dist/` with a relative base and mounted at `/` when present, last, so the API keeps
@@ -559,6 +567,15 @@ The flow is laid out by elk, layered, left to right, and re-laid out only when i
 changes. It polls every 1.5 seconds while a turn is running and not otherwise. The status
 line, the quick replies and every error sentence arrive from the service; the page prints
 them.
+
+It has two views. **Requirements** is the three regions above. **Diagrams**
+(`DiagramsView.tsx`) replaces them once flows have been finished: a top bar with a tab per
+flow, that flow's downloads and **Back to requirements**, over one `<iframe>` on the flow's
+`/page` URL. The frame holds stage 3's page whole, which is the point: Edit mode, Reset, the
+open-questions panel and zoom all live inside that page, so they work as they do in the
+downloaded file and nothing about them is reimplemented. A session that is finished when
+opened, or has just become finished, lands on Diagrams; after that the view only changes
+when the reader changes it.
 
 ## 1N. What gets logged
 

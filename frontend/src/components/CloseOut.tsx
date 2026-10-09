@@ -6,14 +6,18 @@ interface Props {
   busy: boolean;
   onAnswer: (item: OpenItem) => void;
   onAccept: () => void;
+  onViewDiagrams: () => void;
 }
 
 /** What is still open, grouped by flow; and once the session is finished, the files to download. */
-export function CloseOut({ state, busy, onAnswer, onAccept }: Props) {
+export function CloseOut({ state, busy, onAnswer, onAccept, onViewDiagrams }: Props) {
   if (state.phase === "complete") {
     return (
       <div className="closeout">
         <h3>Finished</h3>
+        <button className="primary" onClick={onViewDiagrams}>
+          View diagrams
+        </button>
         {state.outputs.map((output) => (
           <div key={output.flow} className="download-row">
             <span>{output.label}</span>

@@ -288,3 +288,24 @@ and for their tests. Nothing lists or serves them.
 and the image builds it, but a session is a file on the instance's disk, a free instance
 loses its disk on restart, there is no login, and the log level defaults to `DEBUG`. *Decide
 where sessions live before pointing anyone at a hosted copy.*
+
+## The diagrams view
+
+**The finished diagrams are shown in a frame, not redrawn.** After a session is finished the
+page shows each flow's `diagram.html` in an `<iframe>`. Rebuilding the BPMN viewer inside the
+React page would have meant a second copy of Edit mode, the questions panel and the custom
+shapes to keep in step with stage 3. The frame costs one endpoint that serves the file
+without a download header.
+
+**A finished session can be reopened.** The brief ended a session at `complete`. Going "back
+to requirements" would be little use if nothing could be said there, so a message to a
+finished session returns it to `probing`. What was accepted as open stays accepted. The
+diagrams from the last finish stay on show and are marked out of date until it is finished
+again; they are not deleted, because a reader comparing before and after wants the before.
+
+**Finishing twice in a row is refused.** `/close` and `/accept` on a session that is already
+complete answer `409`: nothing has been said, so the result would be the same files.
+
+**A flow that no longer has steps keeps its old folder on disk.** If a reopened session
+removes a subprocess's only steps and is finished again, that subprocess is no longer listed
+or shown, but its folder from the earlier finish is not deleted.

@@ -126,6 +126,12 @@ open in each flow. You answer more, or accept. On accepting, each flow is writte
 same layout a hand-made process folder has, and stages 2 and 3 run on it unchanged. You get
 a BPMN file and a page per flow.
 
+The chat then steps aside and the finished diagrams take its place: one tab per flow, each
+showing stage 3's own page, so rearranging it in Edit mode and the open-questions panel work
+exactly as they do in the downloaded file. **Back to requirements** returns to the chat.
+Finishing is not a seal — answer something there and the session reopens; the diagrams stay
+on show, marked as out of date, until you finish again and they are redrawn.
+
 *In the code: `agents/` holds the three AI steps and their prompts, `session/` the
 conversation around them, `knowledge/` the loader for `domain_knowledge/`, `validators/` the
 checks, and `ir/models.py` the form being filled in. [technical.md](technical.md) has the
@@ -312,9 +318,10 @@ page doesn't wait for an answer: it sends yours, gets an acknowledgement back, a
 every second or so. That's also what lets it tell you *which* step is running rather than
 just spinning.
 
-The page has three parts: the chat on the left, the flow in the middle with a tab for each
-subprocess, and on the right either where the selected step came from or how much of the
-process is covered.
+The page has two views. **Requirements** is where the conversation happens, in three parts:
+the chat on the left, the flow in the middle with a tab for each subprocess, and on the right
+either where the selected step came from or how much of the process is covered.
+**Diagrams** appears once a session has been finished, and shows the finished BPMN pages.
 
 **What you type is saved**, in a session file on the server, after every turn. That is what
 lets a conversation be picked up again, and it is also a reason to keep the service

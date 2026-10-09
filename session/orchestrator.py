@@ -206,10 +206,19 @@ def _run_turn(
     )
     logger.debug("the user said:\n%s", text)
 
-    if working.phase is Phase.CLOSING and not first:
-        # Answering something at close-out reopens the conversation.
+    if working.phase in (Phase.CLOSING, Phase.COMPLETE) and not first:
+        # Answering reopens the conversation, at close-out or after it. A finished
+        # session is not sealed: its diagrams stay as they were drawn until it is
+        # finished again, and the flow goes on from where it stood.
+        was = working.phase
         working.phase = Phase.PROBING
-        logger.info("phase closing -> probing: the user answered instead of accepting")
+        logger.info(
+            "phase %s -> probing: the user %s",
+            was,
+            "answered instead of accepting"
+            if was is Phase.CLOSING
+            else "answered after finishing, which reopens the session",
+        )
     if turn_input.item_key:
         working.pending = _question_for_item(working, domain, turn_input.item_key)
 

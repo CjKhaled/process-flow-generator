@@ -752,3 +752,18 @@ def test_a_patch_type_is_not_needed_to_read_a_version(domain: DomainKnowledge) -
     assert isinstance(restored.versions[0].patch, GraphPatch)
     assert isinstance(restored.versions[0].patch.operations[0], AddNode)
     assert isinstance(restored.versions[0].patch.operations[-1], AddEdge)
+
+
+def test_answering_a_finished_session_reopens_it(domain: DomainKnowledge) -> None:
+    """Finishing is not a seal: the conversation goes on from where the flow stood."""
+    fake = FakeConversations()
+    session = started(domain, fake)
+    session.phase = Phase.COMPLETE
+    session.accepted_open_items.append("node:end_incomplete")
+    fake.interpreter(answer("We also log it.")).extractor(patch()).navigator(says())
+
+    reopened = turn(session, domain, fake, "We also log it.")
+
+    assert reopened.phase is Phase.PROBING
+    assert reopened.accepted_open_items == ["node:end_incomplete"], "what was accepted stays accepted"
+    assert session.phase is Phase.COMPLETE, "the session given is never modified"

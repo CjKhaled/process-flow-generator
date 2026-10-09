@@ -91,6 +91,12 @@ npm ci --prefix frontend
 npm run build --prefix frontend
 ```
 
+It has two views: **requirements** (chat, live flow, side panel) and **diagrams**, which
+shows each finished flow's `diagram.html` in an `<iframe>` served from
+`/sessions/{id}/flows/{flow}/page`. The frame is stage 3's page whole and unmodified --
+**do not rebuild the BPMN viewer in React**; Edit mode, the questions panel and zoom live in
+that page and arrive with it.
+
 The rule below still holds for it: **the page never decides what it says.** The transcript,
 the questions, the status sentence and the quick replies arrive from `api/sessions.py`.
 

@@ -133,6 +133,9 @@ export interface SessionState {
   views: FlowView[];
   open_items: OpenItem[];
   outputs: FlowOutput[];
+  outputs_stale: boolean;
+  outputs_notice: string | null;
+  reopen_notice: string | null;
 }
 
 export interface ProcessOption {

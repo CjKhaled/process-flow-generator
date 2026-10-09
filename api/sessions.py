@@ -32,7 +32,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, Field, ValidationError
 
 from agents.extractor import DEFAULT_MAX_ATTEMPTS
@@ -42,7 +42,7 @@ from extractors.model import StrandsConversationFactory
 from ir.process_config import OUTPUTS_DIRNAME
 from knowledge.loader import DomainKnowledge, list_domain_processes, load_domain
 from render.assets import AssetError, ViewerAssets
-from session.closeout import DOWNLOADS, NothingToDraw, finalise, list_outputs
+from session.closeout import DOWNLOADS, PAGE_FILENAME, NothingToDraw, finalise, list_outputs
 from session.focus import valid_scope
 from session.ledger import coverage, open_items
 from session.models import Phase, Session, TurnStatus
@@ -96,7 +96,9 @@ INTERRUPTED = "The service restarted while that turn was running. Nothing was ch
 BROKEN = "Something went wrong inside the pipeline. Nothing was changed; the service log has the details."
 UNCONFIGURED = "The service is not configured to reach a model. Nothing was changed."
 BUSY = "A turn is already running for this session. Wait for it to finish."
-FINISHED = "This session is finished."
+FINISHED = "This session is finished. Answer something to reopen it first."
+REOPEN = "This session is finished. Sending an answer reopens it; finish again to redraw the diagrams."
+STALE = "These diagrams were drawn before your latest answers. Finish again to redraw them."
 
 
 class StartRequest(BaseModel):
@@ -318,9 +320,8 @@ def create_session_router(
 
     @router.post("/sessions/{session_id}/messages", status_code=202)
     def message(session_id: str, request: MessageRequest) -> dict[str, str]:
-        """Queue a turn for one answer."""
+        """Queue a turn for one answer. On a finished session, that reopens it."""
         session = load(session_id)
-        _require_open(session)
         quick = QUICK_REPLIES.get(request.quick_reply or "")
         if request.quick_reply and quick is None:
             raise HTTPException(status_code=422, detail=f"There is no '{request.quick_reply}' quick reply.")
@@ -340,7 +341,6 @@ def create_session_router(
     def focus(session_id: str, request: FocusRequest) -> dict[str, str]:
         """Record a flow the user opened. Honoured on the next turn."""
         session = load(session_id)
-        _require_open(session)
         if not valid_scope(domain_for(session.process_id), request.focus):
             raise HTTPException(status_code=422, detail=f"There is no '{request.focus}' flow.")
         if runner.is_running(session_id):
@@ -354,7 +354,7 @@ def create_session_router(
     def close(session_id: str) -> dict[str, str]:
         """Enter close-out: stop asking, and list what is still open."""
         session = load(session_id)
-        _require_open(session)
+        _require_unfinished(session)
 
         def work(current: Session, progress: Progress) -> Session:
             factory, _ = seam()
@@ -368,7 +368,7 @@ def create_session_router(
     def accept(session_id: str) -> dict[str, str]:
         """Accept what is still open and produce the final diagrams."""
         session = load(session_id)
-        _require_open(session)
+        _require_unfinished(session)
         if not session.graph.nodes:
             raise HTTPException(status_code=409, detail="There is no flow to finish yet.")
 
@@ -399,10 +399,34 @@ def create_session_router(
             raise HTTPException(status_code=404, detail="That file has not been produced yet.")
         return FileResponse(path, filename=f"{flow}-{filename}")
 
+    @router.get("/sessions/{session_id}/flows/{flow}/page", response_class=HTMLResponse)
+    def flow_page(session_id: str, flow: str) -> HTMLResponse:
+        """One finished flow's page, served to be looked at, not saved.
+
+        The same ``diagram.html`` the download endpoint serves, without the
+        header that makes a browser save it -- which is what lets the page show
+        it in a frame. It is stage 3's own page, whole: its Edit mode, its
+        questions panel and its zoom arrive with it and need nothing from here.
+        """
+        session = load(session_id)
+        try:
+            path = store.path_for_outputs(session.id, flow) / OUTPUTS_DIRNAME / PAGE_FILENAME
+        except ValueError:
+            raise HTTPException(status_code=404, detail="There is no such flow.") from None
+        if not path.is_file():
+            raise HTTPException(status_code=404, detail="That flow has not been drawn yet.")
+        return HTMLResponse(path.read_text(encoding="utf-8"))
+
     return router
 
 
-def _require_open(session: Session) -> None:
+def _require_unfinished(session: Session) -> None:
+    """Refuse to close or accept a session that is already finished.
+
+    Only those two. A finished session still takes an answer, which reopens it;
+    what it cannot do is be finished twice with nothing said in between, since
+    that would redraw the same diagrams.
+    """
     if session.phase is Phase.COMPLETE:
         raise HTTPException(status_code=409, detail=FINISHED)
 
@@ -421,6 +445,8 @@ def _state(session: Session, domain: DomainKnowledge, store: SessionStore, *, ru
         status, error = TurnStatus.FAILED, INTERRUPTED
 
     personas = {persona_id: persona.name for persona_id, persona in domain.personas.items()}
+    finished = list_outputs(session, domain, store)
+    stale = bool(finished) and session.phase is not Phase.COMPLETE
     return {
         "id": session.id,
         "process_id": session.process_id,
@@ -460,5 +486,11 @@ def _state(session: Session, domain: DomainKnowledge, store: SessionStore, *, ru
             }
             for item in open_items(session, domain)
         ],
-        "outputs": list_outputs(session, domain, store) if session.phase is Phase.COMPLETE else [],
+        # Listed whenever they exist, not only while the session is finished: a
+        # reopened session still has the diagrams it was last finished with, and
+        # the page says they are out of date rather than hiding them.
+        "outputs": finished,
+        "outputs_stale": stale,
+        "outputs_notice": STALE if stale else None,
+        "reopen_notice": REOPEN if session.phase is Phase.COMPLETE else None,
     }

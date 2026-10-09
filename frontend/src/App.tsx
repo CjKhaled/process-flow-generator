@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ApiError, getSession, setFocus } from "./api";
 import { Chat } from "./components/Chat";
+import { DiagramsView } from "./components/DiagramsView";
 import { FlowCanvas } from "./components/FlowCanvas";
 import { SidePanel } from "./components/SidePanel";
 import { StartScreen } from "./components/StartScreen";
@@ -20,6 +21,8 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState("main");
   const [selected, setSelected] = useState<string | null>(null);
+  const [screen, setScreen] = useState<"requirements" | "diagrams">("requirements");
+  const lastPhase = useRef<string | null>(null);
   const timer = useRef<number | undefined>(undefined);
 
   const refresh = useCallback(async (id: string) => {
@@ -64,6 +67,17 @@ export function App() {
     return () => window.clearTimeout(timer.current);
   }, [sessionId, watch]);
 
+  // Finishing is what the diagrams are for, so a session that is finished when it is
+  // opened, or that has just become finished, lands on them. Only on that change: someone
+  // who has gone back to the requirements is not dragged away again by the next poll.
+  useEffect(() => {
+    const phase = state?.phase ?? null;
+    if (phase === "complete" && lastPhase.current !== "complete" && (state?.outputs.length ?? 0) > 0) {
+      setScreen("diagrams");
+    }
+    lastPhase.current = phase;
+  }, [state]);
+
   // A tab can disappear between payloads (a correction removed a subprocess's only steps).
   useEffect(() => {
     if (state && !state.views.some((view) => view.id === tab)) {
@@ -88,11 +102,23 @@ export function App() {
 
   const view = state.views.find((candidate) => candidate.id === tab) ?? state.views[0] ?? null;
 
+  const newSession = () => {
+    window.location.hash = "";
+    lastPhase.current = null;
+    setScreen("requirements");
+    setSessionId(null);
+    setState(null);
+  };
+
+  if (screen === "diagrams" && state.outputs.length > 0) {
+    return <DiagramsView state={state} onBack={() => setScreen("requirements")} onNewSession={newSession} />;
+  }
+
   const openFlow = (flowId: string) => {
     setTab(flowId);
     setSelected(null);
     // Tell the conversation where the user went, so the next questions follow them.
-    if (state.phase !== "complete" && !state.running) {
+    if (!state.running) {
       void setFocus(state.id, flowId)
         .then(() => refresh(state.id))
         .catch(() => undefined);
@@ -105,18 +131,13 @@ export function App() {
         <strong>{state.process_name}</strong>
         <span className="muted">Turn {state.turn}</span>
         {error && <span className="error-inline">{error}</span>}
-        <button
-          className="link"
-          onClick={() => {
-            window.location.hash = "";
-            setSessionId(null);
-            setState(null);
-          }}
-        >
+        <span className="spacer" />
+        {state.outputs.length > 0 && <button onClick={() => setScreen("diagrams")}>View diagrams</button>}
+        <button className="link" onClick={newSession}>
           New session
         </button>
       </header>
-      <Chat state={state} onChanged={() => watch(state.id)} />
+      <Chat state={state} onChanged={() => watch(state.id)} onViewDiagrams={() => setScreen("diagrams")} />
       <FlowCanvas
         views={state.views}
         view={view}
