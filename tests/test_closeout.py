@@ -142,7 +142,7 @@ def test_a_subprocess_flow_is_its_slice_with_an_empty_skeleton(
     assert bundle.skeleton.subprocesses == ()
     assert bundle.config.process_name == f"enrollment_and_intake_{scope}"
     assert bundle.config.display_name == f"Intake & Enrollment: {domain.process.scope_label(scope)}"
-    assert set(n.actor for n in bundle.graph.nodes) <= set(bundle.config.actors)
+    assert {n.actor for n in bundle.graph.nodes} <= set(bundle.config.actors)
     assert bundle.report.is_structurally_valid
 
 

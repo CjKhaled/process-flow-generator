@@ -36,8 +36,8 @@ def test_every_flow_is_laid_out_with_a_shape_for_each_element(flows: dict[str, P
     assert len(flows) == 5
     for scope, outputs in flows.items():
         diagram = ET.fromstring((outputs / "diagram.bpmn").read_text(encoding="utf-8"))
-        elements = {e.get("id") for kind in FLOW_ELEMENTS for e in diagram.iter(f"{{{BPMN_NS}}}{kind}")}
-        shaped = {shape.get("bpmnElement") for shape in diagram.iter(f"{{{BPMNDI_NS}}}BPMNShape")}
+        elements = {e.get("id", "") for kind in FLOW_ELEMENTS for e in diagram.iter(f"{{{BPMN_NS}}}{kind}")}
+        shaped = {shape.get("bpmnElement", "") for shape in diagram.iter(f"{{{BPMNDI_NS}}}BPMNShape")}
 
         assert elements, scope
         assert elements <= shaped, f"{scope}: {sorted(elements - shaped)} were not drawn"
