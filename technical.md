@@ -549,6 +549,15 @@ starts work answers `202`.
 | `GET /sessions/{id}/outputs/{flow}/{file}` | `diagram.bpmn`, `diagram.html` or `graph.json`, as a download |
 | `GET /sessions/{id}/flows/{flow}/page` | The same `diagram.html`, served inline so the page can show it in a frame |
 
+**Access.** With `PFG_ACCESS_PASSWORD` set, a middleware in `api/app.py` refuses every
+request that does not carry HTTP Basic credentials with that password — any username,
+compared with `secrets.compare_digest` — and answers `401` with a `WWW-Authenticate` header
+so the browser asks. Two exceptions: `GET /health`, which the host's health check calls
+without credentials, and CORS preflights. The page, its API calls, the diagram frames and
+the downloads are one origin, so one prompt covers all of them. Unset, the service is open
+and logs a warning at startup. CORS allows no other origin unless `PFG_ALLOWED_ORIGIN` names
+one.
+
 Turns run on a small worker pool and are serialised per session: a second message to a busy
 session is a `409`. A quick reply is sent as words as well as a flag, so the transcript reads
 naturally and the interpreter treats a pressed button and a typed "not sure" alike.

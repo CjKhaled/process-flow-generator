@@ -542,3 +542,107 @@ def test_the_service_runs_without_a_built_page(client: TestClient) -> None:
     """How the tests and a ``vite dev`` session both use it: the API alone."""
     assert client.get("/").status_code == 404
     assert client.get("/health").status_code == 200
+
+
+# ── the shared password ──────────────────────────────────────────────────────
+
+
+@pytest.fixture
+def locked(
+    fake: FakeConversations,
+    store: FileSessionStore,
+    tmp_path: Path,
+    viewer_assets: ViewerAssets,
+    monkeypatch: pytest.MonkeyPatch,
+) -> Iterator[TestClient]:
+    """The service with a password set and a page built, as it is deployed."""
+    monkeypatch.setenv("PFG_ACCESS_PASSWORD", "open sesame")
+    frontend = tmp_path / "frontend"
+    frontend.mkdir()
+    (frontend / "index.html").write_text("<h1>the conversation</h1>", encoding="utf-8")
+    app = create_app(
+        conversations=fake,
+        session_store=store,
+        layout=echo_layouter,
+        assets=viewer_assets,
+        domain_dir=DOMAIN_DIR,
+        frontend_dir=frontend,
+    )
+    with TestClient(app) as running:
+        yield running
+
+
+KEY = ("anyone", "open sesame")
+
+
+def test_without_the_password_nothing_but_the_health_check_answers(locked: TestClient) -> None:
+    """The host's health check cannot authenticate; everything else is behind the door."""
+    assert locked.get("/health").json() == {"status": "ok"}
+    for path in ("/", "/processes", "/sessions/anything", "/sessions/anything/flows/main/page"):
+        refused = locked.get(path)
+        assert refused.status_code == 401, path
+        assert refused.headers["www-authenticate"].startswith("Basic"), "so the browser asks instead of erroring"
+    assert locked.post("/sessions", json={"process_id": DOMAIN_PROCESS, "description": DESCRIPTION}).status_code == 401
+
+
+@pytest.mark.parametrize(
+    "authorization",
+    ["Basic bm9wZTpub3Bl", "Bearer open sesame", "Basic not-base64!", "Basic", ""],
+    ids=["wrong password", "wrong scheme", "malformed", "no credentials", "empty"],
+)
+def test_a_wrong_or_malformed_credential_is_refused(locked: TestClient, authorization: str) -> None:
+    assert locked.get("/processes", headers={"Authorization": authorization}).status_code == 401
+
+
+def test_the_password_opens_the_page_the_api_and_the_finished_flows(locked: TestClient) -> None:
+    """One prompt covers everything, because it is all one origin."""
+    assert locked.get("/", auth=KEY).text == "<h1>the conversation</h1>"
+    assert locked.get("/processes", auth=KEY).json()[0]["id"] == DOMAIN_PROCESS
+
+    session_id = locked.post(
+        "/sessions", json={"process_id": DOMAIN_PROCESS, "description": DESCRIPTION}, auth=KEY
+    ).json()["session_id"]
+    deadline = time.monotonic() + TIMEOUT_S
+    while locked.get(f"/sessions/{session_id}", auth=KEY).json()["running"]:
+        assert time.monotonic() < deadline
+        time.sleep(0.02)
+    locked.post(f"/sessions/{session_id}/accept", auth=KEY)
+    while locked.get(f"/sessions/{session_id}", auth=KEY).json()["running"]:
+        assert time.monotonic() < deadline
+        time.sleep(0.02)
+
+    assert locked.get(f"/sessions/{session_id}/flows/main/page", auth=KEY).status_code == 200
+    assert locked.get(f"/sessions/{session_id}/outputs/main/diagram.bpmn", auth=KEY).status_code == 200
+    assert locked.get(f"/sessions/{session_id}/flows/main/page").status_code == 401
+
+
+def test_the_username_does_not_matter(locked: TestClient) -> None:
+    """There are no accounts, only a door."""
+    assert locked.get("/processes", auth=("", "open sesame")).status_code == 200
+    assert locked.get("/processes", auth=("someone else", "open sesame")).status_code == 200
+
+
+def test_with_no_password_set_the_service_is_open_and_says_so(
+    client: TestClient, caplog: pytest.LogCaptureFixture, store: FileSessionStore, tmp_path: Path
+) -> None:
+    assert client.get("/processes").status_code == 200
+
+    with caplog.at_level("WARNING", logger="api.app"):
+        create_app(conversations=FakeConversations(), session_store=store, frontend_dir=tmp_path / "none")
+
+    assert "PFG_ACCESS_PASSWORD is not set" in caplog.text
+
+
+def test_no_other_origin_may_call_the_service_unless_one_is_named(
+    client: TestClient, store: FileSessionStore, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The page is served by the service, so nothing cross-origin has a reason to call it."""
+    elsewhere = {"Origin": "https://elsewhere.example"}
+    assert "access-control-allow-origin" not in client.get("/health", headers=elsewhere).headers
+
+    monkeypatch.setenv("PFG_ALLOWED_ORIGIN", "http://localhost:5173")
+    app = create_app(conversations=FakeConversations(), session_store=store, frontend_dir=tmp_path / "none")
+    with TestClient(app) as dev:
+        allowed = dev.get("/health", headers={"Origin": "http://localhost:5173"})
+
+    assert allowed.headers["access-control-allow-origin"] == "http://localhost:5173"

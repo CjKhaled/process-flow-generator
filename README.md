@@ -324,8 +324,10 @@ either where the selected step came from or how much of the process is covered.
 **Diagrams** appears once a session has been finished, and shows the finished BPMN pages.
 
 **What you type is saved**, in a session file on the server, after every turn. That is what
-lets a conversation be picked up again, and it is also a reason to keep the service
-somewhere private: there is no login, no rate limit, and every turn costs real AI calls.
+lets a conversation be picked up again.
+
+**There are no accounts.** The service can be put behind one shared password, which the
+browser asks for once; see *Deploying* below. On a laptop it runs open.
 
 *In the code: `api/sessions.py` is the endpoints, `api/app.py` the application around them,
 `frontend/` the page.*
@@ -394,6 +396,45 @@ uv run mypy .        # strict
 Tests needing the real layouter are marked `requires_node` and skip when Node or
 `js/node_modules` is absent; the rest of the suite still runs.
 
+## Deploying
+
+The repository deploys to [Render](https://render.com) as one Docker service that serves the
+API and the page from a single URL. `render.yaml` is the blueprint and `Dockerfile` the
+image: Python and Node together, because finishing a session needs the layouter.
+
+1. Push to `main`. Render builds the image from the repository.
+2. In the Render dashboard, set the service's environment:
+   - `ANTHROPIC_API_KEY` — required.
+   - `PFG_ACCESS_PASSWORD` — the shared password. **Set this.** Without it anyone with the URL
+     can hold sessions on your key.
+   - `ANTHROPIC_WORKSPACE_ID` — only if your key is not scoped to a workspace.
+3. Open the service's URL. The browser asks for a username and password: the username can be
+   anything, the password is the one you set.
+
+What to know before sharing the link:
+
+- **The password is a door, not accounts.** Everyone who has it sees every session whose
+  link they are given, and nothing records who did what. It is sent with each request, so it
+  is only as private as the connection — Render serves HTTPS, which is what makes it
+  acceptable.
+- **Sessions do not survive a restart.** They are files on the instance's disk, and Render's
+  free plan does not keep that disk across a redeploy or a restart. A conversation in
+  progress is lost. Finish and download before redeploying.
+- **The free plan sleeps** after fifteen idle minutes and takes about a minute to wake.
+- **One instance only.** Which sessions have a turn running is held in memory.
+- The image logs at `INFO`. Set `PFG_LOG_LEVEL=DEBUG` on the service to see every prompt and
+  answer while chasing a problem, and remember the host keeps that log.
+
+To try the image locally first:
+
+```bash
+docker build -t pfg .
+docker run --rm -p 10000:10000 --env-file .env -e PFG_ACCESS_PASSWORD=choose-one pfg
+```
+
+`.dockerignore` keeps `.env`, `sessions/` and `logs/` out of the image, so building it
+locally does not bake your key or anyone's conversations into it.
+
 ## Configuration
 
 | Variable | Default | Purpose |
@@ -411,7 +452,8 @@ Tests needing the real layouter are marked `requires_node` and skip when Node or
 | `PFG_LOG_LEVEL` | `DEBUG` | How much the application says. `INFO` is what happened and why; `DEBUG` adds every prompt and response in full. |
 | `PFG_LOG_DIR` | `logs` | Where `app.log` and `trace.jsonl` are written. Gitignored. |
 | `PFG_LAYOUT_BIN` | pinned install | The `bpmn-auto-layout` executable. Empty uses the version pinned in `js/`. |
-| `PFG_ALLOWED_ORIGIN` | `*` | Comma-separated origins the page may call from, when it is served from somewhere other than the service. |
+| `PFG_ACCESS_PASSWORD` | — | A shared password for the whole service. Unset leaves it open: fine on a laptop, nowhere else. |
+| `PFG_ALLOWED_ORIGIN` | none | Comma-separated origins, other than the service's own, that a page may call from. Only needed when running the page with `vite dev`. |
 | `PFG_MAX_SOURCE_CHARS` | `20000` | Longest description, or answer, accepted. |
 
 Read from the environment or a `.env` file. Stages 2 and 3 need none of them — they call no

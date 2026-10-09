@@ -333,3 +333,40 @@ file: events are now the Moss tint with a Mirage outline, collapsed subprocesses
 tint with an Ink 2 outline, where they were red and purple. Flagged elements are outlined in
 Mango, solid, where they were dashed amber, to match "needs your input". A diagram finished
 before this change keeps its old colours until it is finished again.
+
+## Deployment
+
+**Render, one service, one URL.** The existing blueprint is kept: a Docker web service that
+serves the API and the page together. The GitHub Pages workflow is deleted, because a second
+copy of the page on `github.io` would be public whatever the service required, and would
+need cross-origin calls the single-URL setup avoids. The copy already published stays up
+until Pages is switched off in the repository settings.
+
+**A shared password, by HTTP Basic.** The brief put authentication out of scope and said to
+keep the service off the public internet; a hosted copy cannot do the second without some of
+the first. One password from `PFG_ACCESS_PASSWORD`, asked for by the browser, with no
+username and no accounts. It stops a stranger spending the API key. It does not separate
+users from each other: anyone with the password can open any session whose id they have.
+
+**`/health` is outside the password.** Render's health check cannot authenticate, and a
+service it cannot reach is one it restarts. The endpoint says only that the process is up.
+
+**Sessions are not durable when hosted.** They stay as files on the instance's disk, by
+decision: losing them on a restart or redeploy was accepted over paying for a persistent
+disk or building the object-store implementation the brief deferred. `SessionStore` is
+still a protocol, so that implementation has somewhere to go.
+
+**CORS now allows no other origin by default.** It was `*`, for the days when the page lived
+on Pages and the service on Render. The page is always same-origin now.
+
+**`.dockerignore` exists because a local build is otherwise unsafe.** Without it
+`COPY . .` put `.env`, `sessions/` and `logs/` into the image, and the host's
+`node_modules` and `dist` over the ones the image had just built. Render builds from the git
+checkout, where none of those exist, so the hosted image was never at risk; the local one
+was.
+
+**Verified in the image, without a model:** it builds; it holds no `.env`, sessions, logs or
+tests; stages 2 and 3 run inside it, which is the Node layouter and the viewer bundle
+working there; and the running container answers `/health` openly and everything else only
+with the password. **Not verified:** a real turn inside the container, and the deploy on
+Render itself.

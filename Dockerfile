@@ -10,7 +10,8 @@ COPY --from=node:22-slim /usr/local/bin/node /usr/local/bin/node
 COPY --from=node:22-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
 RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+# Pinned, like everything else here: `latest` would let a build change under an unchanged repo.
+COPY --from=ghcr.io/astral-sh/uv:0.12.24 /uv /usr/local/bin/uv
 
 WORKDIR /app
 
@@ -36,6 +37,10 @@ RUN npm run build --prefix frontend
 COPY . .
 
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1
+
+# What happened and why, without every prompt and answer in full: on a host the
+# log is kept by someone else. Override it to DEBUG while chasing something.
+ENV PFG_LOG_LEVEL=INFO
 
 # Render supplies the port. The default matches its own so `docker run` locally
 # behaves the same way.

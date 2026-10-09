@@ -5,18 +5,25 @@
 # which starts that early; if a demo cannot afford even that, this is the line
 # to change. Sessions are written to the instance's disk, which a free instance
 # does not keep across a restart: a redeploy loses conversations in progress.
+#
+# One instance only. Which sessions have a turn running is held in memory, so a
+# second instance would let two turns run on one session.
 services:
   - type: web
     name: pfg-api
     runtime: docker
     plan: free
+    numInstances: 1
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     envVars:
-      # Set in the Render dashboard, never here.
+      # All three are set in the Render dashboard, never here.
       - key: ANTHROPIC_API_KEY
         sync: false
-      # The origin the page is served from, e.g. https://cjkhaled.github.io.
-      # Left unset, any origin may call the service.
-      - key: PFG_ALLOWED_ORIGIN
+      # The shared password the browser asks for. Without it the service is open
+      # to anyone with the URL, and every turn spends the key above.
+      - key: PFG_ACCESS_PASSWORD
+        sync: false
+      # Only for an API key that is not scoped to a workspace.
+      - key: ANTHROPIC_WORKSPACE_ID
         sync: false

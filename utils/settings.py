@@ -173,13 +173,22 @@ class ApiSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
+    access_password: SecretStr | None = Field(
+        default=None,
+        alias="PFG_ACCESS_PASSWORD",
+        description=(
+            "A shared password for the whole service, asked for by the browser. Unset leaves "
+            "the service open, which is right on a laptop and nowhere else: there are no "
+            "accounts, and every turn spends the API key."
+        ),
+    )
     allowed_origins: str = Field(
-        default="*",
+        default="",
         alias="PFG_ALLOWED_ORIGIN",
         description=(
-            "Comma-separated origins the browser page may call from, e.g. "
-            "'https://user.github.io'. The default allows any, which is right only "
-            "while the URL is unpublished."
+            "Comma-separated origins, other than the service's own, that a page may call "
+            "from. Empty allows none, which is right whenever the service serves its own "
+            "page. Set it to the dev server's origin when running the page with `vite dev`."
         ),
     )
     max_source_chars: int = Field(

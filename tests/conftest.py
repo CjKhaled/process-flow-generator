@@ -10,6 +10,12 @@ import tempfile
 os.environ["PFG_LOG_DIR"] = tempfile.mkdtemp(prefix="pfg-test-logs-")
 os.environ["PFG_LOG_LEVEL"] = "WARNING"
 
+# And nothing from a developer's own `.env` deciding how the service under test behaves: a
+# password or an allowed origin set there for local use would otherwise fail tests that
+# have nothing to do with either. The tests that want one set it themselves.
+os.environ["PFG_ACCESS_PASSWORD"] = ""
+os.environ["PFG_ALLOWED_ORIGIN"] = ""
+
 from pathlib import Path
 
 import pytest

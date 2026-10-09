@@ -1,0 +1,27 @@
+# What the image must not contain, and what it builds for itself.
+
+# Secrets and what users typed. Never in an image.
+.env
+.env.*
+sessions/
+logs/
+
+# Built inside the image, from the lockfiles. The host's copies would overwrite them.
+**/node_modules/
+**/dist/
+.venv/
+
+# Not needed to run the service.
+.git/
+.github/
+.claude/
+tests/
+docs/
+site/
+**/__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.md
+!agents/prompts/*.md
+!domain_knowledge/**/*.md
