@@ -1,0 +1,101 @@
+process_name: enrollment_and_intake_duplicate_handling
+display_name: 'Intake & Enrollment: Duplicate handling'
+actors:
+  Meridian: A vendor that does intake or hub work in its own systems and feeds results
+    into the CRM. Its internal steps are often only partly visible to the person describing
+    the process. Hub vendor that picks up enrollment forms, keys the PEF into Atlas,
+    checks for existing patients, and checks the diagnosis code against approved codes.
+  Atlas: 'The system of record and its automations: creates records and tasks, routes
+    ownership by ZIP code, sets statuses, and sends automated faxes, emails and e-sign
+    requests. The default lane for steps described in the passive voice with no person
+    named. System the PEF is keyed into.'
+default_actor: Atlas
+glossary:
+  BI: 'Benefits investigation: checking the patient''s insurance coverage for the
+    drug'
+  BV: Benefits verification, used interchangeably with BI
+  MI: Missing information
+  NIGO: 'Not in good order: a submission missing required items'
+  IGO: 'In good order: a complete submission'
+  Hub: The patient support operation that runs intake and case management, in-house
+    or outsourced
+  Welcome Call: First outreach to a newly enrolled patient
+  Welcome Pack: Welcome materials sent to a newly enrolled patient
+  Never Start: Status for a patient who was referred but never began therapy or enrollment
+  Restart: A patient resuming therapy after stopping
+  Switch: A patient changing product or formulation
+  Re-enrollment: A previously enrolled patient enrolling again
+  Lead conversion: Turning a lead into an enrolled patient record
+  Unassigned queue: Shared pool where new work waits until someone claims it
+  Territory alignment: The mapping of ZIP codes to territories and their staff
+  TTRY letter: Tried-to-reach-you letter sent to an unreachable patient
+  Milestone: A tracked stage on an enrollment or care plan record, such as onboarding
+    or coverage determination
+  Quick Start: Free supply shipped while coverage is being determined
+  Bridge: Free supply while a coverage delay or gap is resolved
+  PA: Prior authorization
+  ePA: Electronic prior authorization
+  EOB: Explanation of benefits from the insurer
+  PAP: 'Patient assistance program: free drug for eligible uninsured or underinsured
+    patients'
+  BIN/PCN: Pharmacy benefit identifiers on an insurance card
+  ICD-10: Diagnosis code system used to judge eligibility
+  Rx: Prescription
+  On-label: Use within the product's approved indications
+  Off-label: Use outside the approved indications
+  Titration: Gradual dose adjustment at the start of therapy
+  Formulation: A product's form, such as IV, subcutaneous or prefilled syringe
+  Serostatus: Whether a specific antibody test is positive; sometimes an eligibility
+    criterion
+  Genetic testing: A test used to confirm a diagnosis, sometimes offered free by the
+    program
+  HIPAA authorization: Patient permission to share health information with the program
+  Program consent: Patient agreement to take part in the program
+  Marketing consent: Permission to receive promotional communications
+  SMS consent: Permission to receive text messages
+  Verbal consent: Consent given by phone and documented by staff
+  POA: 'Power of attorney: authority for someone to act for the patient'
+  Lead: Preliminary record for a person not yet enrolled
+  Person Account: CRM record representing an individual patient
+  Care Plan: CRM record holding a patient's program activities, milestones and goals
+  Care Program: CRM record representing a program the patient can enroll in
+  CPE: 'Care Program Enrollee: the patient''s enrollment in a program'
+  CPEP: 'Care Program Enrollee Product: enrollment in a specific product'
+  HCO: 'Healthcare organisation: the practice, clinic or hospital'
+  NPI: 'National Provider Identifier: the prescriber''s unique ID'
+  Tax ID: Practice tax identifier, used to verify the prescriber's organisation
+  Case: A CRM record tracking a piece of work, such as an onboarding or benefits investigation
+    case
+  Sub-status: A finer-grained status on a record, set alongside its main status
+  CRM: Customer relationship management system where records and tasks live
+  Health Cloud: Salesforce's healthcare CRM product
+  Life Sciences Cloud: Salesforce's life sciences CRM product, including patient services
+    objects
+  Experience Cloud: Salesforce product used for patient and HCP web forms and portals
+  Veeva Network: HCP and HCO master data service
+  DocuSign: Electronic signature platform
+  Adobe Sign: Electronic signature platform
+  OCR: 'Optical character recognition: reading text from scanned documents'
+  IDP: 'Intelligent document processing: classifying documents and extracting fields'
+  sFTP: Secure file transfer, often used for vendor data feeds
+  Teams: Microsoft Teams, used for internal messaging between roles
+  PEF: 'Patient enrollment form: the core submission, often with numbered HCP and
+    patient sections'
+  Prescription: The prescription itself; required before enrollment by some programs,
+    only later by others
+  Insurance card: Copy of the front and back of the patient's insurance card
+  Clinical documentation: Chart notes, lab or test results supporting the diagnosis
+  SMN: 'Statement of medical necessity: the prescriber''s clinical justification,
+    sometimes a section of the enrollment form'
+  Authority documents: Power of attorney or guardianship papers establishing who may
+    sign for the patient
+  Nurse referral: An HCP order or referral required before nurse or educator support
+    starts
+  Safety card: Card given to patients for safety reasons, sometimes REMS-required
+  REMS: 'Risk Evaluation and Mitigation Strategy: an FDA-required drug safety program'
+  ETASU: 'Elements to Assure Safe Use: REMS requirements that gate prescribing or
+    dispensing'
+  TCPA: US law governing consent for texts and automated calls
+  PHI: Protected health information
+  Meridian: The hub vendor
+  Atlas: The system the PEF is keyed into

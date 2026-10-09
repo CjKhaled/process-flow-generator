@@ -138,6 +138,18 @@ export interface SessionState {
   reopen_notice: string | null;
 }
 
+/** One row of GET /sessions: enough to recognise a session without opening it. */
+export interface SessionSummary {
+  id: string;
+  process_name: string;
+  title: string;
+  turn: number;
+  phase: string;
+  phase_label: string;
+  updated_at: string;
+  flows: number;
+}
+
 export interface ProcessOption {
   id: string;
   display_name: string;

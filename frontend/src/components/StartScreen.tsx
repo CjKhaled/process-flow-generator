@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { listProcesses, startSession } from "../api";
-import type { ProcessOption } from "../types";
+import { listProcesses, listSessions, startSession } from "../api";
+import type { ProcessOption, SessionSummary } from "../types";
 
 interface Props {
   onStarted: (sessionId: string) => void;
@@ -9,6 +9,7 @@ interface Props {
 
 export function StartScreen({ onStarted }: Props) {
   const [processes, setProcesses] = useState<ProcessOption[]>([]);
+  const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [processId, setProcessId] = useState("");
   const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
@@ -23,6 +24,14 @@ export function StartScreen({ onStarted }: Props) {
       .catch((caught: unknown) =>
         setError(caught instanceof Error ? caught.message : "The service could not be reached."),
       );
+  }, []);
+
+  // Separate from the process list on purpose: with no earlier sessions, or none readable,
+  // the form above is still everything a first visit needs.
+  useEffect(() => {
+    listSessions()
+      .then(setSessions)
+      .catch(() => setSessions([]));
   }, []);
 
   const start = async () => {
@@ -68,6 +77,27 @@ export function StartScreen({ onStarted }: Props) {
       <button className="accent" disabled={busy || !processId || !description.trim()} onClick={() => void start()}>
         {busy ? "Starting…" : "Start"}
       </button>
+
+      {sessions.length > 0 && (
+        <section className="previous">
+          <h2>Previous sessions</h2>
+          <ul>
+            {sessions.map((session) => (
+              <li key={session.id}>
+                <button onClick={() => onStarted(session.id)}>
+                  <span className="title">{session.title}</span>
+                  <span className="meta">
+                    <span className={`pill ${session.phase}`}>{session.phase_label}</span>
+                    {session.process_name} · turn {session.turn}
+                    {session.flows > 0 ? ` · ${session.flows} diagram${session.flows === 1 ? "" : "s"}` : ""} ·{" "}
+                    {new Date(session.updated_at).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
   );
 }

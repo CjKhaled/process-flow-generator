@@ -1,0 +1,49 @@
+{
+  "process_name": "enrollment_and_intake_off_label_review",
+  "nodes": [
+    {
+      "id": "slice_start",
+      "type": "start",
+      "label": "The submission doesn't clearly meet the eligibility criteria",
+      "actor": "Meridian",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": [],
+      "evidence": [],
+      "origin": "slice"
+    },
+    {
+      "id": "send_back_to_office",
+      "type": "terminal",
+      "label": "Send form back to office",
+      "actor": "Meridian",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If it's off-label they send it back to the office.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0007",
+          "quote": "If it's off-label they"
+        },
+        {
+          "statement_id": "s_0008",
+          "quote": "send it back to the office."
+        }
+      ],
+      "origin": "source"
+    }
+  ],
+  "edges": [
+    {
+      "from_id": "slice_start",
+      "to_id": "send_back_to_office",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0,
+      "evidence": []
+    }
+  ]
+}

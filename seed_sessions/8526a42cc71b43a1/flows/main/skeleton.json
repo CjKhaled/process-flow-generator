@@ -1,0 +1,19 @@
+{
+  "subprocesses": [
+    {
+      "name": "duplicate_handling",
+      "label": "Duplicate handling",
+      "actor": "Meridian"
+    },
+    {
+      "name": "off_label_review",
+      "label": "Off-label review",
+      "actor": "Meridian"
+    },
+    {
+      "name": "missing_info_hcp",
+      "label": "Missing information outreach (HCP)",
+      "actor": "PAM"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "findings": [
+    {
+      "code": "open_topic",
+      "severity": "resolution",
+      "message": "'Attempts and timing' still needs clarifying: User says a maximum of three times, but it isn't clear whether three attempts applies separately to the HCP office or is shared across both parties.",
+      "node_ids": [
+        "pam_follow_up_office"
+      ]
+    },
+    {
+      "code": "open_topic",
+      "severity": "resolution",
+      "message": "'Escalation' was not covered",
+      "node_ids": []
+    }
+  ]
+}

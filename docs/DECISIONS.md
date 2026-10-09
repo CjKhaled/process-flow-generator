@@ -370,3 +370,27 @@ tests; stages 2 and 3 run inside it, which is the Node layouter and the viewer b
 working there; and the running container answers `/health` openly and everything else only
 with the password. **Not verified:** a real turn inside the container, and the deploy on
 Render itself.
+
+## Seed sessions and the session list
+
+**Saved sessions ship in the repository.** Sessions on the hosted copy were accepted as
+lost on restart, and then two existing ones were wanted there permanently. With no durable
+disk the only place they can live is the repository, so `seed_sessions/` is committed and
+restored into the store at startup wherever a session is missing. The repository is public,
+so **those two sessions are publicly readable, outside the password**; that was a stated
+choice. A seeded session changed on the server reverts at the next restart.
+
+**Restored only where missing.** A seed never overwrites a session already in the store, so
+on a laptop the working copy wins. On Render the store is empty at boot, so the seed always
+wins. One rule, and which copy survives follows from whether the disk does.
+
+**The start screen lists sessions.** Until now a session could only be reached by its link.
+The list shows every session that completed a first turn; one whose first turn failed is
+left out, since there is nothing in it to return to. Anyone with the password sees every
+session in the list — consistent with the password being a door and not accounts, and worth
+knowing before sharing it.
+
+**Seeds are tested against the current schema.** `extra="forbid"` means a session file from
+an older version stops loading the moment a field is renamed. Every committed seed is loaded
+and served in the suite so that shows up as a failing test and not as a session missing from
+the deployed list.

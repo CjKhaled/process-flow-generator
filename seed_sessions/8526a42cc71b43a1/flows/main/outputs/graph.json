@@ -1,0 +1,587 @@
+{
+  "process_name": "enrollment_and_intake",
+  "nodes": [
+    {
+      "id": "receive_enrollment_form",
+      "type": "start",
+      "label": "Receive enrollment form",
+      "actor": "Meridian",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "Enrollment forms come in from the HCP office by fax or through the provider portal.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0001",
+          "quote": "Enrollment forms come in from the HCP office by fax or through the provider portal."
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "key_pef_into_atlas",
+      "type": "task",
+      "label": "Key PEF into Atlas",
+      "actor": "Meridian",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "Our hub vendor, Meridian, picks them up and keys the PEF into Atlas.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0002",
+          "quote": "Our hub"
+        },
+        {
+          "statement_id": "s_0003",
+          "quote": "vendor, Meridian, picks them up and keys the PEF into Atlas."
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "prescription_required_rule",
+      "type": "annotation",
+      "label": "Prescription must be part of submission",
+      "actor": "Meridian",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "A prescription needs to be part of the submission; it never isn't -- no cases exist where the prescription isn't part of the submission.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0021",
+          "quote": "yes it needs to be part of submission."
+        },
+        {
+          "statement_id": "s_0022",
+          "quote": "IT never isn't. No cases like this exist."
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "gw_patient_exists",
+      "type": "gateway",
+      "label": "Patient already in system?",
+      "actor": "Meridian",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "Meridian also checks whether the patient is already in the system",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0004",
+          "quote": "Meridian also checks whether the"
+        },
+        {
+          "statement_id": "s_0005",
+          "quote": "patient is already in the system"
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "handle_duplicate",
+      "type": "task",
+      "label": "Attach to existing patient",
+      "actor": "Meridian",
+      "subprocess": "duplicate_handling",
+      "status": "stated",
+      "detail": "When Meridian finds the patient is already in the system, they attach it to the existing patient.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0005",
+          "quote": "if they are, they figure out what to do with it"
+        },
+        {
+          "statement_id": "s_0017",
+          "quote": "They attach it to the existing patient."
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "check_diagnosis_code",
+      "type": "task",
+      "label": "Check diagnosis code against approved codes",
+      "actor": "Meridian",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "They check the diagnosis code on the form against the approved codes.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0006",
+          "quote": "They check the diagnosis code on the form against the approved codes."
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "age_eligibility_rule",
+      "type": "annotation",
+      "label": "Program does not enroll any patients under 18",
+      "actor": "Meridian",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "The program does not enroll any patients under 18.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0016",
+          "quote": "No it does not."
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "gw_off_label",
+      "type": "gateway",
+      "label": "Is it off-label?",
+      "actor": "Meridian",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0006",
+          "quote": "They check the diagnosis code on the form against the approved codes."
+        },
+        {
+          "statement_id": "s_0007",
+          "quote": "If it's off-label they"
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "send_back_to_office",
+      "type": "terminal",
+      "label": "Send form back to office",
+      "actor": "Meridian",
+      "subprocess": "off_label_review",
+      "status": "stated",
+      "detail": "If it's off-label they send it back to the office.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0007",
+          "quote": "If it's off-label they"
+        },
+        {
+          "statement_id": "s_0008",
+          "quote": "send it back to the office."
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "gw_missing_info",
+      "type": "gateway",
+      "label": "Anything missing from the form?",
+      "actor": "PAM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0009",
+          "quote": "If anything is missing from the form, the PAM follows up with the office until it's complete."
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "pam_follow_up_office",
+      "type": "task",
+      "label": "Chase office and patient for missing information",
+      "actor": "PAM",
+      "subprocess": "missing_info_hcp",
+      "status": "stated",
+      "detail": "If anything is missing from the form, the PAM follows up with the office until it's complete; both the office and the patient get chased.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0009",
+          "quote": "If anything is missing from the form, the PAM follows up with the office until it's complete."
+        },
+        {
+          "statement_id": "s_0023",
+          "quote": "The office will get chased, as well as the patient."
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "gw_chase_limit_reached",
+      "type": "gateway",
+      "label": "Chased three times without completion?",
+      "actor": "PAM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "The office and patient are chased a maximum of three times before the enrollment is cancelled.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0024",
+          "quote": "A maximum of three times before the enrollment is cancelled."
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "enrollment_cancelled",
+      "type": "terminal",
+      "label": "Enrollment cancelled",
+      "actor": "PAM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "After a maximum of three chases without the form being completed, the enrollment is cancelled.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0024",
+          "quote": "before the enrollment is cancelled."
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "gw_hipaa_signed",
+      "type": "gateway",
+      "label": "HIPAA section signed?",
+      "actor": "PAM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "The HIPAA section has to be signed before we can do anything with the patient.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0010",
+          "quote": "The HIPAA section has to be signed before we can do anything with the patient."
+        },
+        {
+          "statement_id": "s_0019",
+          "quote": "If that form isn't signed, we will follow up and send a DocuSign link to them."
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "follow_up_docusign",
+      "type": "task",
+      "label": "Follow up and send DocuSign link",
+      "actor": "PAM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If that form isn't signed, we will follow up and send a DocuSign link to them.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0019",
+          "quote": "If that form isn't signed, we will follow up and send a DocuSign link to them."
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "create_assign_case",
+      "type": "task",
+      "label": "Create case and assign by territory",
+      "actor": "Atlas",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "Once the form is complete, a case is created and assigned by territory",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0011",
+          "quote": "Once the form is complete, a case is created and assigned by territory, and the patient moves"
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "capture_consent_rule",
+      "type": "annotation",
+      "label": "Capture text and email consent",
+      "actor": "PAM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "We capture text and email consent.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0018",
+          "quote": "We capture text and email consent."
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "move_to_bv",
+      "type": "terminal",
+      "label": "Patient moves on to BV",
+      "actor": "PAM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "the patient moves on to BV.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0011",
+          "quote": "the patient moves"
+        },
+        {
+          "statement_id": "s_0012",
+          "quote": "on to BV."
+        }
+      ],
+      "origin": "source"
+    }
+  ],
+  "edges": [
+    {
+      "from_id": "receive_enrollment_form",
+      "to_id": "key_pef_into_atlas",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0,
+      "evidence": []
+    },
+    {
+      "from_id": "key_pef_into_atlas",
+      "to_id": "gw_patient_exists",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0,
+      "evidence": []
+    },
+    {
+      "from_id": "gw_patient_exists",
+      "to_id": "handle_duplicate",
+      "type": "branch",
+      "condition": "patient is already in the system",
+      "answer": "yes",
+      "order": 0,
+      "evidence": [
+        {
+          "statement_id": "s_0005",
+          "quote": "if they are, they figure out what to do with it"
+        }
+      ]
+    },
+    {
+      "from_id": "gw_patient_exists",
+      "to_id": "check_diagnosis_code",
+      "type": "branch",
+      "condition": "patient is not already in the system",
+      "answer": "no",
+      "order": 1,
+      "evidence": [
+        {
+          "statement_id": "s_0004",
+          "quote": "Meridian also checks whether the"
+        },
+        {
+          "statement_id": "s_0006",
+          "quote": "They check the diagnosis code on the form against the approved codes."
+        }
+      ]
+    },
+    {
+      "from_id": "handle_duplicate",
+      "to_id": "check_diagnosis_code",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0,
+      "evidence": []
+    },
+    {
+      "from_id": "check_diagnosis_code",
+      "to_id": "gw_off_label",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0,
+      "evidence": []
+    },
+    {
+      "from_id": "gw_off_label",
+      "to_id": "send_back_to_office",
+      "type": "branch",
+      "condition": "it's off-label",
+      "answer": "yes",
+      "order": 0,
+      "evidence": [
+        {
+          "statement_id": "s_0007",
+          "quote": "If it's off-label they"
+        },
+        {
+          "statement_id": "s_0008",
+          "quote": "send it back to the office."
+        }
+      ]
+    },
+    {
+      "from_id": "gw_off_label",
+      "to_id": "gw_missing_info",
+      "type": "branch",
+      "condition": "it is not off-label (on-label)",
+      "answer": "no",
+      "order": 1,
+      "evidence": [
+        {
+          "statement_id": "s_0006",
+          "quote": "They check the diagnosis code on the form against the approved codes."
+        }
+      ]
+    },
+    {
+      "from_id": "gw_missing_info",
+      "to_id": "pam_follow_up_office",
+      "type": "branch",
+      "condition": "anything is missing from the form",
+      "answer": "yes",
+      "order": 0,
+      "evidence": [
+        {
+          "statement_id": "s_0009",
+          "quote": "If anything is missing from the form, the PAM follows up with the office until it's complete."
+        }
+      ]
+    },
+    {
+      "from_id": "gw_missing_info",
+      "to_id": "gw_hipaa_signed",
+      "type": "branch",
+      "condition": "nothing missing; form is complete",
+      "answer": "no",
+      "order": 1,
+      "evidence": [
+        {
+          "statement_id": "s_0011",
+          "quote": "Once the form is complete, a case is created and assigned by territory, and the patient moves"
+        }
+      ]
+    },
+    {
+      "from_id": "create_assign_case",
+      "to_id": "move_to_bv",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0,
+      "evidence": []
+    },
+    {
+      "from_id": "age_eligibility_rule",
+      "to_id": "check_diagnosis_code",
+      "type": "annotates",
+      "condition": null,
+      "answer": null,
+      "order": 0,
+      "evidence": []
+    },
+    {
+      "from_id": "capture_consent_rule",
+      "to_id": "create_assign_case",
+      "type": "annotates",
+      "condition": null,
+      "answer": null,
+      "order": 0,
+      "evidence": []
+    },
+    {
+      "from_id": "gw_hipaa_signed",
+      "to_id": "follow_up_docusign",
+      "type": "branch",
+      "condition": "HIPAA form isn't signed",
+      "answer": "no",
+      "order": 0,
+      "evidence": [
+        {
+          "statement_id": "s_0019",
+          "quote": "If that form isn't signed, we will follow up and send a DocuSign link to them."
+        }
+      ]
+    },
+    {
+      "from_id": "gw_hipaa_signed",
+      "to_id": "create_assign_case",
+      "type": "branch",
+      "condition": "HIPAA section is signed",
+      "answer": "yes",
+      "order": 1,
+      "evidence": [
+        {
+          "statement_id": "s_0010",
+          "quote": "The HIPAA section has to be signed before we can do anything with the patient."
+        }
+      ]
+    },
+    {
+      "from_id": "follow_up_docusign",
+      "to_id": "gw_hipaa_signed",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0,
+      "evidence": []
+    },
+    {
+      "from_id": "prescription_required_rule",
+      "to_id": "key_pef_into_atlas",
+      "type": "annotates",
+      "condition": null,
+      "answer": null,
+      "order": 0,
+      "evidence": []
+    },
+    {
+      "from_id": "pam_follow_up_office",
+      "to_id": "gw_chase_limit_reached",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0,
+      "evidence": []
+    },
+    {
+      "from_id": "gw_chase_limit_reached",
+      "to_id": "enrollment_cancelled",
+      "type": "branch",
+      "condition": "chased three times and the form is still not complete",
+      "answer": "yes",
+      "order": 0,
+      "evidence": [
+        {
+          "statement_id": "s_0024",
+          "quote": "A maximum of three times before the enrollment is cancelled."
+        }
+      ]
+    },
+    {
+      "from_id": "gw_chase_limit_reached",
+      "to_id": "gw_hipaa_signed",
+      "type": "branch",
+      "condition": "form completed within three chases",
+      "answer": "no",
+      "order": 1,
+      "evidence": [
+        {
+          "statement_id": "s_0009",
+          "quote": "the PAM follows up with the office until it's complete"
+        }
+      ]
+    }
+  ]
+}

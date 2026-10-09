@@ -45,7 +45,7 @@ from render.assets import AssetError, ViewerAssets
 from session.closeout import DOWNLOADS, PAGE_FILENAME, NothingToDraw, finalise, list_outputs
 from session.focus import valid_scope
 from session.ledger import coverage, open_items
-from session.models import Phase, Session, TurnStatus
+from session.models import Phase, Role, Session, TurnStatus
 from session.orchestrator import NOT_UPDATED, Progress, TurnInput, TurnRejected, new_session, run_close, run_turn
 from session.slicing import SliceError
 from session.store import SessionNotFound, SessionStore
@@ -68,6 +68,18 @@ STATUS_LABELS = {
     TurnStatus.FAILED: "That turn did not complete.",
 }
 """What each status says on the page. Written here so the browser only prints it."""
+
+PHASE_LABELS = {
+    Phase.DESCRIBING: "Not started",
+    Phase.PROBING: "In progress",
+    Phase.CLOSING: "Finishing",
+    Phase.COMPLETE: "Finished",
+    Phase.ABANDONED: "Abandoned",
+}
+"""What each phase is called in the list of sessions."""
+
+TITLE_CHARS = 90
+"""How much of a description's first line the list shows."""
 
 _IN_FLIGHT = frozenset(
     {
@@ -308,6 +320,40 @@ def create_session_router(
         start_turn(session, TurnInput(description=description))
         return {"session_id": session.id}
 
+    @router.get("/sessions")
+    def sessions() -> list[dict[str, object]]:
+        """Every stored session, most recently worked on first, for the start screen.
+
+        Enough to recognise one -- its process, how its description began, how
+        far it got -- and no more: the whole session is a request away. One that
+        cannot be read is left out and logged, since a damaged file should cost
+        that session's row, not the list.
+        """
+        found = []
+        for session_id in store.list():
+            try:
+                session = store.load(session_id)
+                process = domain_for(session.process_id).process
+            except (SessionNotFound, OSError, ValueError) as error:
+                logger.warning("session %s is not listed: %s", session_id, error)
+                continue
+            if session.turn == 0:
+                # Its first turn never completed, so there is nothing in it to go back to.
+                continue
+            found.append(
+                {
+                    "id": session.id,
+                    "process_name": process.display_name,
+                    "title": _title(session),
+                    "turn": session.turn,
+                    "phase": session.phase,
+                    "phase_label": PHASE_LABELS[session.phase],
+                    "updated_at": session.updated_at.isoformat(),
+                    "flows": len(list_outputs(session, domain_for(session.process_id), store)),
+                }
+            )
+        return sorted(found, key=lambda row: str(row["updated_at"]), reverse=True)
+
     @router.get("/sessions/{session_id}")
     def state(session_id: str) -> dict[str, object]:
         """Everything the page shows: transcript, questions, coverage, views."""
@@ -418,6 +464,13 @@ def create_session_router(
         return HTMLResponse(path.read_text(encoding="utf-8"))
 
     return router
+
+
+def _title(session: Session) -> str:
+    """How a session's description began: the line a person recognises it by."""
+    first = next((message.text for message in session.transcript if message.role is Role.USER), "")
+    line = first.strip().splitlines()[0].strip() if first.strip() else "No description yet"
+    return line if len(line) <= TITLE_CHARS else line[: TITLE_CHARS - 1].rstrip() + "…"
 
 
 def _require_unfinished(session: Session) -> None:

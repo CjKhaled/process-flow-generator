@@ -98,3 +98,70 @@ def test_a_sessions_flows_are_written_beside_it(tmp_path: Path) -> None:
     assert store.path_for_outputs("abc123", "off_label_review") == tmp_path / "abc123" / "flows" / "off_label_review"
     with pytest.raises(ValueError):
         store.path_for_outputs("abc123", "../../elsewhere")
+
+
+# ── seeds ────────────────────────────────────────────────────────────────────
+
+
+def seeds(tmp_path: Path, domain: DomainKnowledge, *session_ids: str) -> Path:
+    """A seeds folder holding these sessions, each with one finished flow file."""
+    folder = tmp_path / "seeds"
+    shipped = FileSessionStore(folder)
+    for session_id in session_ids:
+        shipped.create(new_session(session_id, domain))
+        outputs = shipped.path_for_outputs(session_id, "main") / "outputs"
+        outputs.mkdir(parents=True)
+        (outputs / "diagram.html").write_text("<h1>finished</h1>", encoding="utf-8")
+    return folder
+
+
+def test_seeds_are_restored_into_an_empty_store_with_their_flows(tmp_path: Path, domain: DomainKnowledge) -> None:
+    """A host that loses its disk starts every boot with nothing; this is what puts them back."""
+    store = FileSessionStore(tmp_path / "sessions")
+
+    restored = store.restore_seeds(seeds(tmp_path, domain, "bbb", "aaa"))
+
+    assert restored == ("aaa", "bbb")
+    assert store.list() == ("aaa", "bbb")
+    assert (store.path_for_outputs("aaa", "main") / "outputs" / "diagram.html").read_text(
+        "utf-8"
+    ) == "<h1>finished</h1>"
+
+
+def test_a_session_already_in_the_store_is_never_overwritten_by_its_seed(
+    tmp_path: Path, domain: DomainKnowledge
+) -> None:
+    """Once restored, a session belongs to whoever carries it on."""
+    store = FileSessionStore(tmp_path / "sessions")
+    carried_on = new_session("aaa", domain)
+    carried_on.phase = Phase.CLOSING
+    store.create(carried_on)
+
+    restored = store.restore_seeds(seeds(tmp_path, domain, "aaa", "bbb"))
+
+    assert restored == ("bbb",)
+    assert store.load("aaa").phase is Phase.CLOSING
+
+
+def test_restoring_twice_restores_nothing_the_second_time(tmp_path: Path, domain: DomainKnowledge) -> None:
+    store = FileSessionStore(tmp_path / "sessions")
+    folder = seeds(tmp_path, domain, "aaa")
+
+    assert store.restore_seeds(folder) == ("aaa",)
+    assert store.restore_seeds(folder) == ()
+
+
+def test_a_missing_seeds_folder_restores_nothing(tmp_path: Path) -> None:
+    store = FileSessionStore(tmp_path / "sessions")
+
+    assert store.restore_seeds(tmp_path / "no-seeds-here") == ()
+    assert store.list() == ()
+
+
+def test_a_folder_that_could_not_be_a_session_is_not_restored(tmp_path: Path, domain: DomainKnowledge) -> None:
+    folder = seeds(tmp_path, domain, "aaa")
+    (folder / "not a session id").mkdir()
+    (folder / "not a session id" / "session.json").write_text("{}", encoding="utf-8")
+    (folder / "notes").mkdir()
+
+    assert FileSessionStore(tmp_path / "sessions").restore_seeds(folder) == ("aaa",)

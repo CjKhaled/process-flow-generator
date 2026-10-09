@@ -1,0 +1,3466 @@
+{
+  "id": "8526a42cc71b43a1",
+  "process_id": "enrollment_and_intake",
+  "schema_version": 1,
+  "created_at": "2026-10-09T05:55:47.088725Z",
+  "updated_at": "2026-10-09T06:22:07.181353Z",
+  "phase": "complete",
+  "focus": "main",
+  "requested_focus": null,
+  "turn": 5,
+  "turn_status": "idle",
+  "turn_error": null,
+  "corpus": [
+    {
+      "id": "s_0001",
+      "origin": "initial_description",
+      "turn": 1,
+      "raw_text": "Enrollment forms come in from the HCP office by fax or through the provider portal.",
+      "restatement": null,
+      "question_id": null,
+      "topic_ids": [
+        "intake.channels"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0002",
+      "origin": "initial_description",
+      "turn": 1,
+      "raw_text": "Our hub",
+      "restatement": null,
+      "question_id": null,
+      "topic_ids": [],
+      "scope": "main"
+    },
+    {
+      "id": "s_0003",
+      "origin": "initial_description",
+      "turn": 1,
+      "raw_text": "vendor, Meridian, picks them up and keys the PEF into Atlas.",
+      "restatement": null,
+      "question_id": null,
+      "topic_ids": [
+        "intake.keying",
+        "record.model"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0004",
+      "origin": "initial_description",
+      "turn": 1,
+      "raw_text": "Meridian also checks whether the",
+      "restatement": null,
+      "question_id": null,
+      "topic_ids": [
+        "duplicate.check_point"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0005",
+      "origin": "initial_description",
+      "turn": 1,
+      "raw_text": "patient is already in the system, and if they are, they figure out what to do with it.",
+      "restatement": null,
+      "question_id": null,
+      "topic_ids": [
+        "duplicate.check_point",
+        "duplicate_handling.confirmer"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0006",
+      "origin": "initial_description",
+      "turn": 1,
+      "raw_text": "They check the diagnosis code on the form against the approved codes.",
+      "restatement": null,
+      "question_id": null,
+      "topic_ids": [
+        "eligibility.criteria",
+        "eligibility.source_of_truth",
+        "eligibility.judgement_owner",
+        "eligibility.off_label_detection"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0007",
+      "origin": "initial_description",
+      "turn": 1,
+      "raw_text": "If it's off-label they",
+      "restatement": null,
+      "question_id": null,
+      "topic_ids": [
+        "eligibility.off_label_detection",
+        "off_label_review.outcome"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0008",
+      "origin": "initial_description",
+      "turn": 1,
+      "raw_text": "send it back to the office.",
+      "restatement": null,
+      "question_id": null,
+      "topic_ids": [
+        "off_label_review.outcome",
+        "off_label_review.notification"
+      ],
+      "scope": "off_label_review"
+    },
+    {
+      "id": "s_0009",
+      "origin": "initial_description",
+      "turn": 1,
+      "raw_text": "If anything is missing from the form, the PAM follows up with the office until it's complete.",
+      "restatement": null,
+      "question_id": null,
+      "topic_ids": [
+        "missing_info.detection",
+        "missing_info_hcp.who_reaches_out",
+        "missing_info_hcp.attempts"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0010",
+      "origin": "initial_description",
+      "turn": 1,
+      "raw_text": "The HIPAA section has to be signed before we can do anything with the patient.",
+      "restatement": null,
+      "question_id": null,
+      "topic_ids": [
+        "consent.types",
+        "consent.gate"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0011",
+      "origin": "initial_description",
+      "turn": 1,
+      "raw_text": "Once the form is complete, a case is created and assigned by territory, and the patient moves",
+      "restatement": null,
+      "question_id": null,
+      "topic_ids": [
+        "conversion.criteria",
+        "conversion.trigger",
+        "conversion.records_created",
+        "routing.zip_basis",
+        "exit.bi_trigger"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0012",
+      "origin": "initial_description",
+      "turn": 1,
+      "raw_text": "on to BV.",
+      "restatement": null,
+      "question_id": null,
+      "topic_ids": [
+        "exit.bi_trigger"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0013",
+      "origin": "answer",
+      "turn": 2,
+      "raw_text": "Nope, none of the products in this program have REMS.",
+      "restatement": "None of the products in this program have REMS.",
+      "question_id": "q_0001",
+      "topic_ids": [
+        "program.rems"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0014",
+      "origin": "answer",
+      "turn": 2,
+      "raw_text": "The program does not offer nurse or clinical educator support.",
+      "restatement": null,
+      "question_id": "q_0002",
+      "topic_ids": [
+        "program.nurse"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0015",
+      "origin": "answer",
+      "turn": 2,
+      "raw_text": "No a patient cannot do that.",
+      "restatement": "A patient cannot start an enrollment themselves, without the HCP.",
+      "question_id": "q_0003",
+      "topic_ids": [
+        "program.self_enrollment"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0016",
+      "origin": "answer",
+      "turn": 3,
+      "raw_text": "No it does not.",
+      "restatement": "The program does not enroll any patients under 18.",
+      "question_id": "q_0004",
+      "topic_ids": [
+        "program.pediatric"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0017",
+      "origin": "answer",
+      "turn": 3,
+      "raw_text": "They attach it to the existing patient.",
+      "restatement": "When Meridian finds the patient is already in the system, they attach it to the existing patient.",
+      "question_id": "q_0005",
+      "topic_ids": [
+        "duplicate_handling.outcomes",
+        "duplicate_handling.exit"
+      ],
+      "scope": "duplicate_handling"
+    },
+    {
+      "id": "s_0018",
+      "origin": "answer",
+      "turn": 3,
+      "raw_text": "We capture text and email consent.",
+      "restatement": null,
+      "question_id": "q_0006",
+      "topic_ids": [
+        "consent.methods"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0019",
+      "origin": "answer",
+      "turn": 3,
+      "raw_text": "If that form isn't signed, we will follow up and send a DocuSign link to them.",
+      "restatement": null,
+      "question_id": "q_0006",
+      "topic_ids": [
+        "consent.methods",
+        "missing_info_patient.consent_specific"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0020",
+      "origin": "answer",
+      "turn": 4,
+      "raw_text": "Not sure yet",
+      "restatement": null,
+      "question_id": null,
+      "topic_ids": [
+        "intake.work_pool",
+        "record.model",
+        "prescriber.lookup"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0021",
+      "origin": "answer",
+      "turn": 5,
+      "raw_text": "yes it needs to be part of submission.",
+      "restatement": "A prescription needs to be part of the submission.",
+      "question_id": "q_0010",
+      "topic_ids": [
+        "rx.requirement"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0022",
+      "origin": "answer",
+      "turn": 5,
+      "raw_text": "IT never isn't. No cases like this exist.",
+      "restatement": "A submission without a prescription never happens; no cases exist where the prescription isn't part of the submission.",
+      "question_id": "q_0010",
+      "topic_ids": [
+        "rx.requirement"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0023",
+      "origin": "answer",
+      "turn": 5,
+      "raw_text": "The office will get chased, as well as the patient.",
+      "restatement": "When something is missing from the form, both the office and the patient get chased.",
+      "question_id": "q_0012",
+      "topic_ids": [
+        "missing_info.party_routing"
+      ],
+      "scope": "main"
+    },
+    {
+      "id": "s_0024",
+      "origin": "answer",
+      "turn": 5,
+      "raw_text": "A maximum of three times before the enrollment is cancelled.",
+      "restatement": "The office and patient are chased a maximum of three times before the enrollment is cancelled.",
+      "question_id": "q_0012",
+      "topic_ids": [
+        "missing_info_hcp.attempts",
+        "missing_info_patient.attempts",
+        "missing_info_hcp.ending",
+        "missing_info_patient.ending"
+      ],
+      "scope": "unknown"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "user",
+      "text": "Enrollment forms come in from the HCP office by fax or through the provider portal. Our hub\nvendor, Meridian, picks them up and keys the PEF into Atlas. Meridian also checks whether the\npatient is already in the system, and if they are, they figure out what to do with it.\n\nThey check the diagnosis code on the form against the approved codes. If it's off-label they\nsend it back to the office.\n\nIf anything is missing from the form, the PAM follows up with the office until it's complete.\nThe HIPAA section has to be signed before we can do anything with the patient.\n\nOnce the form is complete, a case is created and assigned by territory, and the patient moves\non to BV.",
+      "turn": 1,
+      "questions": []
+    },
+    {
+      "role": "assistant",
+      "text": "Thanks — that gives me a clear spine for the main flow: a form arrives, Meridian keys it into Atlas, you check for an existing patient, check the diagnosis code, chase anything missing, then create and assign a case before the patient moves on to BV. A few quick questions about the program as a whole will tell me which branches to dig into, and I'd also like to pin down what actually happens once you spot a duplicate.",
+      "turn": 1,
+      "questions": [
+        {
+          "id": "q_0001",
+          "turn": 1,
+          "kind": "screening",
+          "topic_ids": [
+            "program.rems"
+          ],
+          "node_ids": [],
+          "scope": "main",
+          "text": "Do any of the products in this program have a REMS?",
+          "subject": null
+        },
+        {
+          "id": "q_0002",
+          "turn": 1,
+          "kind": "screening",
+          "topic_ids": [
+            "program.nurse"
+          ],
+          "node_ids": [],
+          "scope": "main",
+          "text": "Does the program offer nurse or clinical educator support?",
+          "subject": null
+        },
+        {
+          "id": "q_0003",
+          "turn": 1,
+          "kind": "screening",
+          "topic_ids": [
+            "program.self_enrollment"
+          ],
+          "node_ids": [],
+          "scope": "main",
+          "text": "Can a patient start an enrollment themselves, without the HCP?",
+          "subject": null
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "text": "Nope, none of the products in this program have REMS. The program does not offer nurse or clinical educator support. No a patient cannot do that.",
+      "turn": 2,
+      "questions": []
+    },
+    {
+      "role": "assistant",
+      "text": "Thanks — that's helpful, and I've kept your note that the HIPAA section has to be signed before anything can be done with the patient. I'd like to firm up one screening question, then come back to what Meridian actually does when they spot an existing patient, since the flow leaves that open.",
+      "turn": 2,
+      "questions": [
+        {
+          "id": "q_0004",
+          "turn": 2,
+          "kind": "screening",
+          "topic_ids": [
+            "program.pediatric"
+          ],
+          "node_ids": [],
+          "scope": "main",
+          "text": "Does the program enroll any patients under 18?",
+          "subject": null
+        },
+        {
+          "id": "q_0005",
+          "turn": 2,
+          "kind": "suggested",
+          "topic_ids": [],
+          "node_ids": [
+            "handle_duplicate"
+          ],
+          "scope": "main",
+          "text": "When Meridian finds the patient is already in the system, what do they actually do with it — for example attach it to the existing patient, treat it as a new product, or something else? Does each of those go down a different path?",
+          "subject": null
+        },
+        {
+          "id": "q_0006",
+          "turn": 2,
+          "kind": "gap",
+          "topic_ids": [
+            "consent.methods"
+          ],
+          "node_ids": [],
+          "scope": "main",
+          "text": "You mentioned the HIPAA section is signed on the form — are there other consents collected from the patient, and are there other ways consent can be captured if that form section isn't signed?",
+          "subject": null
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "text": "No it does not. They attach it to the existing patient. We capture text and email consent. If that form isn't signed, we will follow up and send a DocuSign link to them.",
+      "turn": 3,
+      "questions": []
+    },
+    {
+      "role": "assistant",
+      "text": "Thanks — that settles the screening questions, so I won't need to branch for REMS, nurse support, self-enrollment or minors. Let me fill in the front of the main flow next: where new forms wait, what record gets created, and how the prescriber gets linked.",
+      "turn": 3,
+      "questions": [
+        {
+          "id": "q_0007",
+          "turn": 3,
+          "kind": "gap",
+          "topic_ids": [
+            "intake.work_pool"
+          ],
+          "node_ids": [],
+          "scope": "main",
+          "text": "Once a form comes in by fax or the provider portal, where does it sit before Meridian starts working it — is there a queue or inbox it lands in, and is it one pool for both channels?",
+          "subject": null
+        },
+        {
+          "id": "q_0008",
+          "turn": 3,
+          "kind": "gap",
+          "topic_ids": [
+            "record.model"
+          ],
+          "node_ids": [],
+          "scope": "main",
+          "text": "When Meridian keys the PEF into Atlas, what kind of record gets created for the person at that point, and does that record change type or status later?",
+          "subject": null
+        },
+        {
+          "id": "q_0009",
+          "turn": 3,
+          "kind": "gap",
+          "topic_ids": [
+            "prescriber.lookup"
+          ],
+          "node_ids": [],
+          "scope": "main",
+          "text": "How is the prescriber found and linked to the patient's record, and which identifiers are used to match them?",
+          "subject": null
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "text": "Not sure yet",
+      "turn": 4,
+      "questions": []
+    },
+    {
+      "role": "assistant",
+      "text": "Thanks — I've captured that a matched submission is attached to the existing patient, that you collect text and email consent, and that an unsigned HIPAA section means a follow-up with a DocuSign link. I'll keep moving through the main line now and pin down the prescription rule and the ways a submission can end without the patient being enrolled.",
+      "turn": 4,
+      "questions": [
+        {
+          "id": "q_0010",
+          "turn": 4,
+          "kind": "gap",
+          "topic_ids": [
+            "rx.requirement"
+          ],
+          "node_ids": [],
+          "scope": "main",
+          "text": "Does a prescription need to be part of the submission? What happens if it isn't, and does a prescription arriving later change the patient's enrollment in any way?",
+          "subject": null
+        },
+        {
+          "id": "q_0011",
+          "turn": 4,
+          "kind": "gap",
+          "topic_ids": [
+            "exit.not_enrolled_outcomes"
+          ],
+          "node_ids": [],
+          "scope": "main",
+          "text": "Besides sending an off-label form back to the office, in what ways can a submission end without the patient being enrolled? Is anyone notified when that happens?",
+          "subject": null
+        },
+        {
+          "id": "q_0012",
+          "turn": 4,
+          "kind": "gap",
+          "topic_ids": [
+            "missing_info.party_routing"
+          ],
+          "node_ids": [],
+          "scope": "main",
+          "text": "When something is missing from the form, is it always the office that gets chased, or does the patient sometimes get contacted too? How is that decided?",
+          "subject": null
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "text": "yes it needs to be part of submission. IT never isn't. No cases like this exist. The office will get chased, as well as the patient. A maximum of three times before the enrollment is cancelled.",
+      "turn": 5,
+      "questions": []
+    },
+    {
+      "role": "assistant",
+      "text": "Thanks — I'll keep moving through the main line toward the hand-off to benefits investigation, since the flow is thinnest at that end. Let me ask about whether anyone reaches out to the patient once they're enrolled, and how benefits investigation gets started.",
+      "turn": 5,
+      "questions": [
+        {
+          "id": "q_0013",
+          "turn": 5,
+          "kind": "gap",
+          "topic_ids": [
+            "welcome.call"
+          ],
+          "node_ids": [],
+          "scope": "main",
+          "text": "Once a patient is enrolled, is there a welcome contact with them? If so, who makes it and when — and what happens if the patient can't be reached?",
+          "subject": null
+        },
+        {
+          "id": "q_0014",
+          "turn": 5,
+          "kind": "gap",
+          "topic_ids": [
+            "exit.bi_overlap"
+          ],
+          "node_ids": [],
+          "scope": "main",
+          "text": "When a patient moves on to BV, can benefits investigation start while parts of enrollment are still outstanding, or does everything have to be in place first?",
+          "subject": null
+        },
+        {
+          "id": "q_0015",
+          "turn": 5,
+          "kind": "gap",
+          "topic_ids": [
+            "conversion.partial_tier"
+          ],
+          "node_ids": [],
+          "scope": "main",
+          "text": "Can a patient be partly enrolled — receiving some support before everything is in place — or is it all or nothing?",
+          "subject": null
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "text": "Thanks for working through all of that. We've covered a lot, and here's what's still open if you'd like to fill any of it in:\n\nMain flow\n- Where new work lands before Meridian picks it up\n- What record is first created when the PEF is keyed\n- How the prescriber is found and linked\n- Whether a patient can be partly enrolled\n- Whether there's a welcome contact once enrolled\n- Whether benefits investigation can start before enrollment is fully complete\n- The ways a submission can end without the patient enrolled\n\nDuplicate handling\n- How Meridian confirms a match and what the outcomes are\n\nOff-label review\n- Whether the prescriber is ever contacted about the diagnosis\n\nMissing information (HCP)\n- Whether the three attempts are for the office alone or shared across both parties\n- What happens when the office doesn't respond — any escalation\n\nMissing information (patient)\n- Who contacts the patient\n- Whether the three attempts are for the patient alone or shared\n- What happens when the patient doesn't respond\n\nWould you like to pick any of these up, or shall we finish here?",
+      "turn": 5,
+      "questions": []
+    }
+  ],
+  "lanes": [
+    {
+      "name": "Meridian",
+      "persona": "external_vendor",
+      "description": "Hub vendor that picks up enrollment forms, keys the PEF into Atlas, checks for existing patients, and checks the diagnosis code against approved codes.",
+      "evidence": [
+        "s_0002",
+        "s_0003",
+        "s_0004",
+        "s_0005",
+        "s_0006",
+        "s_0007",
+        "s_0008"
+      ],
+      "status": "proposed"
+    },
+    {
+      "name": "PAM",
+      "persona": "hub_case_owner",
+      "description": "Follows up with the HCP office for missing information until the form is complete.",
+      "evidence": [
+        "s_0009"
+      ],
+      "status": "proposed"
+    },
+    {
+      "name": "Atlas",
+      "persona": "crm_automation",
+      "description": "System the PEF is keyed into.",
+      "evidence": [
+        "s_0003"
+      ],
+      "status": "proposed"
+    }
+  ],
+  "default_lane": "Atlas",
+  "glossary": [
+    {
+      "term": "Meridian",
+      "meaning": "The hub vendor",
+      "evidence": [
+        "s_0002",
+        "s_0003"
+      ]
+    },
+    {
+      "term": "Atlas",
+      "meaning": "The system the PEF is keyed into",
+      "evidence": [
+        "s_0003"
+      ]
+    }
+  ],
+  "unknown_terms": [],
+  "facts": {
+    "product.has_rems": false,
+    "program.has_nurse_program": false,
+    "program.patient_self_enrollment": false,
+    "product.pediatric_population": false
+  },
+  "graph": {
+    "process_name": "enrollment_and_intake",
+    "nodes": [
+      {
+        "id": "receive_enrollment_form",
+        "type": "start",
+        "label": "Receive enrollment form",
+        "actor": "Meridian",
+        "subprocess": null,
+        "status": "stated",
+        "detail": "Enrollment forms come in from the HCP office by fax or through the provider portal.",
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0001",
+            "quote": "Enrollment forms come in from the HCP office by fax or through the provider portal."
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "key_pef_into_atlas",
+        "type": "task",
+        "label": "Key PEF into Atlas",
+        "actor": "Meridian",
+        "subprocess": null,
+        "status": "stated",
+        "detail": "Our hub vendor, Meridian, picks them up and keys the PEF into Atlas.",
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0002",
+            "quote": "Our hub"
+          },
+          {
+            "statement_id": "s_0003",
+            "quote": "vendor, Meridian, picks them up and keys the PEF into Atlas."
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "prescription_required_rule",
+        "type": "annotation",
+        "label": "Prescription must be part of submission",
+        "actor": "Meridian",
+        "subprocess": null,
+        "status": "stated",
+        "detail": "A prescription needs to be part of the submission; it never isn't -- no cases exist where the prescription isn't part of the submission.",
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0021",
+            "quote": "yes it needs to be part of submission."
+          },
+          {
+            "statement_id": "s_0022",
+            "quote": "IT never isn't. No cases like this exist."
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "gw_patient_exists",
+        "type": "gateway",
+        "label": "Patient already in system?",
+        "actor": "Meridian",
+        "subprocess": null,
+        "status": "stated",
+        "detail": "Meridian also checks whether the patient is already in the system",
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0004",
+            "quote": "Meridian also checks whether the"
+          },
+          {
+            "statement_id": "s_0005",
+            "quote": "patient is already in the system"
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "handle_duplicate",
+        "type": "task",
+        "label": "Attach to existing patient",
+        "actor": "Meridian",
+        "subprocess": "duplicate_handling",
+        "status": "stated",
+        "detail": "When Meridian finds the patient is already in the system, they attach it to the existing patient.",
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0005",
+            "quote": "if they are, they figure out what to do with it"
+          },
+          {
+            "statement_id": "s_0017",
+            "quote": "They attach it to the existing patient."
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "check_diagnosis_code",
+        "type": "task",
+        "label": "Check diagnosis code against approved codes",
+        "actor": "Meridian",
+        "subprocess": null,
+        "status": "stated",
+        "detail": "They check the diagnosis code on the form against the approved codes.",
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0006",
+            "quote": "They check the diagnosis code on the form against the approved codes."
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "age_eligibility_rule",
+        "type": "annotation",
+        "label": "Program does not enroll any patients under 18",
+        "actor": "Meridian",
+        "subprocess": null,
+        "status": "stated",
+        "detail": "The program does not enroll any patients under 18.",
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0016",
+            "quote": "No it does not."
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "gw_off_label",
+        "type": "gateway",
+        "label": "Is it off-label?",
+        "actor": "Meridian",
+        "subprocess": null,
+        "status": "stated",
+        "detail": null,
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0006",
+            "quote": "They check the diagnosis code on the form against the approved codes."
+          },
+          {
+            "statement_id": "s_0007",
+            "quote": "If it's off-label they"
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "send_back_to_office",
+        "type": "terminal",
+        "label": "Send form back to office",
+        "actor": "Meridian",
+        "subprocess": "off_label_review",
+        "status": "stated",
+        "detail": "If it's off-label they send it back to the office.",
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0007",
+            "quote": "If it's off-label they"
+          },
+          {
+            "statement_id": "s_0008",
+            "quote": "send it back to the office."
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "gw_missing_info",
+        "type": "gateway",
+        "label": "Anything missing from the form?",
+        "actor": "PAM",
+        "subprocess": null,
+        "status": "stated",
+        "detail": null,
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0009",
+            "quote": "If anything is missing from the form, the PAM follows up with the office until it's complete."
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "pam_follow_up_office",
+        "type": "task",
+        "label": "Chase office and patient for missing information",
+        "actor": "PAM",
+        "subprocess": "missing_info_hcp",
+        "status": "stated",
+        "detail": "If anything is missing from the form, the PAM follows up with the office until it's complete; both the office and the patient get chased.",
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0009",
+            "quote": "If anything is missing from the form, the PAM follows up with the office until it's complete."
+          },
+          {
+            "statement_id": "s_0023",
+            "quote": "The office will get chased, as well as the patient."
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "gw_chase_limit_reached",
+        "type": "gateway",
+        "label": "Chased three times without completion?",
+        "actor": "PAM",
+        "subprocess": null,
+        "status": "stated",
+        "detail": "The office and patient are chased a maximum of three times before the enrollment is cancelled.",
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0024",
+            "quote": "A maximum of three times before the enrollment is cancelled."
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "enrollment_cancelled",
+        "type": "terminal",
+        "label": "Enrollment cancelled",
+        "actor": "PAM",
+        "subprocess": null,
+        "status": "stated",
+        "detail": "After a maximum of three chases without the form being completed, the enrollment is cancelled.",
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0024",
+            "quote": "before the enrollment is cancelled."
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "gw_hipaa_signed",
+        "type": "gateway",
+        "label": "HIPAA section signed?",
+        "actor": "PAM",
+        "subprocess": null,
+        "status": "stated",
+        "detail": "The HIPAA section has to be signed before we can do anything with the patient.",
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0010",
+            "quote": "The HIPAA section has to be signed before we can do anything with the patient."
+          },
+          {
+            "statement_id": "s_0019",
+            "quote": "If that form isn't signed, we will follow up and send a DocuSign link to them."
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "follow_up_docusign",
+        "type": "task",
+        "label": "Follow up and send DocuSign link",
+        "actor": "PAM",
+        "subprocess": null,
+        "status": "stated",
+        "detail": "If that form isn't signed, we will follow up and send a DocuSign link to them.",
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0019",
+            "quote": "If that form isn't signed, we will follow up and send a DocuSign link to them."
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "create_assign_case",
+        "type": "task",
+        "label": "Create case and assign by territory",
+        "actor": "Atlas",
+        "subprocess": null,
+        "status": "stated",
+        "detail": "Once the form is complete, a case is created and assigned by territory",
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0011",
+            "quote": "Once the form is complete, a case is created and assigned by territory, and the patient moves"
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "capture_consent_rule",
+        "type": "annotation",
+        "label": "Capture text and email consent",
+        "actor": "PAM",
+        "subprocess": null,
+        "status": "stated",
+        "detail": "We capture text and email consent.",
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0018",
+            "quote": "We capture text and email consent."
+          }
+        ],
+        "origin": "source"
+      },
+      {
+        "id": "move_to_bv",
+        "type": "terminal",
+        "label": "Patient moves on to BV",
+        "actor": "PAM",
+        "subprocess": null,
+        "status": "stated",
+        "detail": "the patient moves on to BV.",
+        "alternatives": [],
+        "evidence": [
+          {
+            "statement_id": "s_0011",
+            "quote": "the patient moves"
+          },
+          {
+            "statement_id": "s_0012",
+            "quote": "on to BV."
+          }
+        ],
+        "origin": "source"
+      }
+    ],
+    "edges": [
+      {
+        "from_id": "receive_enrollment_form",
+        "to_id": "key_pef_into_atlas",
+        "type": "precedes",
+        "condition": null,
+        "answer": null,
+        "order": 0,
+        "evidence": []
+      },
+      {
+        "from_id": "key_pef_into_atlas",
+        "to_id": "gw_patient_exists",
+        "type": "precedes",
+        "condition": null,
+        "answer": null,
+        "order": 0,
+        "evidence": []
+      },
+      {
+        "from_id": "gw_patient_exists",
+        "to_id": "handle_duplicate",
+        "type": "branch",
+        "condition": "patient is already in the system",
+        "answer": "yes",
+        "order": 0,
+        "evidence": [
+          {
+            "statement_id": "s_0005",
+            "quote": "if they are, they figure out what to do with it"
+          }
+        ]
+      },
+      {
+        "from_id": "gw_patient_exists",
+        "to_id": "check_diagnosis_code",
+        "type": "branch",
+        "condition": "patient is not already in the system",
+        "answer": "no",
+        "order": 1,
+        "evidence": [
+          {
+            "statement_id": "s_0004",
+            "quote": "Meridian also checks whether the"
+          },
+          {
+            "statement_id": "s_0006",
+            "quote": "They check the diagnosis code on the form against the approved codes."
+          }
+        ]
+      },
+      {
+        "from_id": "handle_duplicate",
+        "to_id": "check_diagnosis_code",
+        "type": "precedes",
+        "condition": null,
+        "answer": null,
+        "order": 0,
+        "evidence": []
+      },
+      {
+        "from_id": "check_diagnosis_code",
+        "to_id": "gw_off_label",
+        "type": "precedes",
+        "condition": null,
+        "answer": null,
+        "order": 0,
+        "evidence": []
+      },
+      {
+        "from_id": "gw_off_label",
+        "to_id": "send_back_to_office",
+        "type": "branch",
+        "condition": "it's off-label",
+        "answer": "yes",
+        "order": 0,
+        "evidence": [
+          {
+            "statement_id": "s_0007",
+            "quote": "If it's off-label they"
+          },
+          {
+            "statement_id": "s_0008",
+            "quote": "send it back to the office."
+          }
+        ]
+      },
+      {
+        "from_id": "gw_off_label",
+        "to_id": "gw_missing_info",
+        "type": "branch",
+        "condition": "it is not off-label (on-label)",
+        "answer": "no",
+        "order": 1,
+        "evidence": [
+          {
+            "statement_id": "s_0006",
+            "quote": "They check the diagnosis code on the form against the approved codes."
+          }
+        ]
+      },
+      {
+        "from_id": "gw_missing_info",
+        "to_id": "pam_follow_up_office",
+        "type": "branch",
+        "condition": "anything is missing from the form",
+        "answer": "yes",
+        "order": 0,
+        "evidence": [
+          {
+            "statement_id": "s_0009",
+            "quote": "If anything is missing from the form, the PAM follows up with the office until it's complete."
+          }
+        ]
+      },
+      {
+        "from_id": "gw_missing_info",
+        "to_id": "gw_hipaa_signed",
+        "type": "branch",
+        "condition": "nothing missing; form is complete",
+        "answer": "no",
+        "order": 1,
+        "evidence": [
+          {
+            "statement_id": "s_0011",
+            "quote": "Once the form is complete, a case is created and assigned by territory, and the patient moves"
+          }
+        ]
+      },
+      {
+        "from_id": "create_assign_case",
+        "to_id": "move_to_bv",
+        "type": "precedes",
+        "condition": null,
+        "answer": null,
+        "order": 0,
+        "evidence": []
+      },
+      {
+        "from_id": "age_eligibility_rule",
+        "to_id": "check_diagnosis_code",
+        "type": "annotates",
+        "condition": null,
+        "answer": null,
+        "order": 0,
+        "evidence": []
+      },
+      {
+        "from_id": "capture_consent_rule",
+        "to_id": "create_assign_case",
+        "type": "annotates",
+        "condition": null,
+        "answer": null,
+        "order": 0,
+        "evidence": []
+      },
+      {
+        "from_id": "gw_hipaa_signed",
+        "to_id": "follow_up_docusign",
+        "type": "branch",
+        "condition": "HIPAA form isn't signed",
+        "answer": "no",
+        "order": 0,
+        "evidence": [
+          {
+            "statement_id": "s_0019",
+            "quote": "If that form isn't signed, we will follow up and send a DocuSign link to them."
+          }
+        ]
+      },
+      {
+        "from_id": "gw_hipaa_signed",
+        "to_id": "create_assign_case",
+        "type": "branch",
+        "condition": "HIPAA section is signed",
+        "answer": "yes",
+        "order": 1,
+        "evidence": [
+          {
+            "statement_id": "s_0010",
+            "quote": "The HIPAA section has to be signed before we can do anything with the patient."
+          }
+        ]
+      },
+      {
+        "from_id": "follow_up_docusign",
+        "to_id": "gw_hipaa_signed",
+        "type": "precedes",
+        "condition": null,
+        "answer": null,
+        "order": 0,
+        "evidence": []
+      },
+      {
+        "from_id": "prescription_required_rule",
+        "to_id": "key_pef_into_atlas",
+        "type": "annotates",
+        "condition": null,
+        "answer": null,
+        "order": 0,
+        "evidence": []
+      },
+      {
+        "from_id": "pam_follow_up_office",
+        "to_id": "gw_chase_limit_reached",
+        "type": "precedes",
+        "condition": null,
+        "answer": null,
+        "order": 0,
+        "evidence": []
+      },
+      {
+        "from_id": "gw_chase_limit_reached",
+        "to_id": "enrollment_cancelled",
+        "type": "branch",
+        "condition": "chased three times and the form is still not complete",
+        "answer": "yes",
+        "order": 0,
+        "evidence": [
+          {
+            "statement_id": "s_0024",
+            "quote": "A maximum of three times before the enrollment is cancelled."
+          }
+        ]
+      },
+      {
+        "from_id": "gw_chase_limit_reached",
+        "to_id": "gw_hipaa_signed",
+        "type": "branch",
+        "condition": "form completed within three chases",
+        "answer": "no",
+        "order": 1,
+        "evidence": [
+          {
+            "statement_id": "s_0009",
+            "quote": "the PAM follows up with the office until it's complete"
+          }
+        ]
+      }
+    ]
+  },
+  "versions": [
+    {
+      "turn": 1,
+      "patch": {
+        "operations": [
+          {
+            "op": "add_node",
+            "node": {
+              "id": "receive_enrollment_form",
+              "type": "start",
+              "label": "Receive enrollment form",
+              "actor": "Meridian",
+              "subprocess": null,
+              "status": "stated",
+              "detail": "Enrollment forms come in from the HCP office by fax or through the provider portal.",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0001",
+                  "quote": "Enrollment forms come in from the HCP office by fax or through the provider portal."
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "key_pef_into_atlas",
+              "type": "task",
+              "label": "Key PEF into Atlas",
+              "actor": "Meridian",
+              "subprocess": null,
+              "status": "stated",
+              "detail": "Our hub vendor, Meridian, picks them up and keys the PEF into Atlas.",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0002",
+                  "quote": "Our hub"
+                },
+                {
+                  "statement_id": "s_0003",
+                  "quote": "vendor, Meridian, picks them up and keys the PEF into Atlas."
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "gw_patient_exists",
+              "type": "gateway",
+              "label": "Patient already in system?",
+              "actor": "Meridian",
+              "subprocess": null,
+              "status": "stated",
+              "detail": "Meridian also checks whether the patient is already in the system",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0004",
+                  "quote": "Meridian also checks whether the"
+                },
+                {
+                  "statement_id": "s_0005",
+                  "quote": "patient is already in the system"
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "handle_duplicate",
+              "type": "task",
+              "label": "Determine what to do with duplicate",
+              "actor": "Meridian",
+              "subprocess": "duplicate_handling",
+              "status": "needs_clarification",
+              "detail": "if they are, they figure out what to do with it. The source does not state what is actually done with an existing patient.",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0005",
+                  "quote": "if they are, they figure out what to do with it"
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "check_diagnosis_code",
+              "type": "task",
+              "label": "Check diagnosis code against approved codes",
+              "actor": "Meridian",
+              "subprocess": null,
+              "status": "stated",
+              "detail": "They check the diagnosis code on the form against the approved codes.",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0006",
+                  "quote": "They check the diagnosis code on the form against the approved codes."
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "gw_off_label",
+              "type": "gateway",
+              "label": "Is it off-label?",
+              "actor": "Meridian",
+              "subprocess": null,
+              "status": "stated",
+              "detail": null,
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0006",
+                  "quote": "They check the diagnosis code on the form against the approved codes."
+                },
+                {
+                  "statement_id": "s_0007",
+                  "quote": "If it's off-label they"
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "send_back_to_office",
+              "type": "terminal",
+              "label": "Send form back to office",
+              "actor": "Meridian",
+              "subprocess": "off_label_review",
+              "status": "stated",
+              "detail": "If it's off-label they send it back to the office.",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0007",
+                  "quote": "If it's off-label they"
+                },
+                {
+                  "statement_id": "s_0008",
+                  "quote": "send it back to the office."
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "gw_missing_info",
+              "type": "gateway",
+              "label": "Anything missing from the form?",
+              "actor": "PAM",
+              "subprocess": null,
+              "status": "stated",
+              "detail": null,
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0009",
+                  "quote": "If anything is missing from the form, the PAM follows up with the office until it's complete."
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "pam_follow_up_office",
+              "type": "task",
+              "label": "Follow up with office until form complete",
+              "actor": "PAM",
+              "subprocess": "missing_info_hcp",
+              "status": "stated",
+              "detail": "If anything is missing from the form, the PAM follows up with the office until it's complete.",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0009",
+                  "quote": "If anything is missing from the form, the PAM follows up with the office until it's complete."
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "create_assign_case",
+              "type": "task",
+              "label": "Create case and assign by territory",
+              "actor": "Atlas",
+              "subprocess": null,
+              "status": "stated",
+              "detail": "Once the form is complete, a case is created and assigned by territory",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0011",
+                  "quote": "Once the form is complete, a case is created and assigned by territory, and the patient moves"
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "move_to_bv",
+              "type": "terminal",
+              "label": "Patient moves on to BV",
+              "actor": "PAM",
+              "subprocess": null,
+              "status": "stated",
+              "detail": "the patient moves on to BV.",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0011",
+                  "quote": "the patient moves"
+                },
+                {
+                  "statement_id": "s_0012",
+                  "quote": "on to BV."
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "hipaa_rule",
+              "type": "annotation",
+              "label": "HIPAA section must be signed before anything can be done with the patient",
+              "actor": "PAM",
+              "subprocess": null,
+              "status": "stated",
+              "detail": "The HIPAA section has to be signed before we can do anything with the patient.",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0010",
+                  "quote": "The HIPAA section has to be signed before we can do anything with the patient."
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "receive_enrollment_form",
+              "to_id": "key_pef_into_atlas",
+              "type": "precedes",
+              "condition": null,
+              "answer": null,
+              "order": 0,
+              "evidence": []
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "key_pef_into_atlas",
+              "to_id": "gw_patient_exists",
+              "type": "precedes",
+              "condition": null,
+              "answer": null,
+              "order": 0,
+              "evidence": []
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "gw_patient_exists",
+              "to_id": "handle_duplicate",
+              "type": "branch",
+              "condition": "patient is already in the system",
+              "answer": "yes",
+              "order": 0,
+              "evidence": [
+                {
+                  "statement_id": "s_0005",
+                  "quote": "if they are, they figure out what to do with it"
+                }
+              ]
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "gw_patient_exists",
+              "to_id": "check_diagnosis_code",
+              "type": "branch",
+              "condition": "patient is not already in the system",
+              "answer": "no",
+              "order": 1,
+              "evidence": [
+                {
+                  "statement_id": "s_0004",
+                  "quote": "Meridian also checks whether the"
+                },
+                {
+                  "statement_id": "s_0006",
+                  "quote": "They check the diagnosis code on the form against the approved codes."
+                }
+              ]
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "handle_duplicate",
+              "to_id": "check_diagnosis_code",
+              "type": "precedes",
+              "condition": null,
+              "answer": null,
+              "order": 0,
+              "evidence": []
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "check_diagnosis_code",
+              "to_id": "gw_off_label",
+              "type": "precedes",
+              "condition": null,
+              "answer": null,
+              "order": 0,
+              "evidence": []
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "gw_off_label",
+              "to_id": "send_back_to_office",
+              "type": "branch",
+              "condition": "it's off-label",
+              "answer": "yes",
+              "order": 0,
+              "evidence": [
+                {
+                  "statement_id": "s_0007",
+                  "quote": "If it's off-label they"
+                },
+                {
+                  "statement_id": "s_0008",
+                  "quote": "send it back to the office."
+                }
+              ]
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "gw_off_label",
+              "to_id": "gw_missing_info",
+              "type": "branch",
+              "condition": "it is not off-label (on-label)",
+              "answer": "no",
+              "order": 1,
+              "evidence": [
+                {
+                  "statement_id": "s_0006",
+                  "quote": "They check the diagnosis code on the form against the approved codes."
+                }
+              ]
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "gw_missing_info",
+              "to_id": "pam_follow_up_office",
+              "type": "branch",
+              "condition": "anything is missing from the form",
+              "answer": "yes",
+              "order": 0,
+              "evidence": [
+                {
+                  "statement_id": "s_0009",
+                  "quote": "If anything is missing from the form, the PAM follows up with the office until it's complete."
+                }
+              ]
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "gw_missing_info",
+              "to_id": "create_assign_case",
+              "type": "branch",
+              "condition": "nothing missing; form is complete",
+              "answer": "no",
+              "order": 1,
+              "evidence": [
+                {
+                  "statement_id": "s_0011",
+                  "quote": "Once the form is complete, a case is created and assigned by territory, and the patient moves"
+                }
+              ]
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "pam_follow_up_office",
+              "to_id": "create_assign_case",
+              "type": "precedes",
+              "condition": null,
+              "answer": null,
+              "order": 0,
+              "evidence": []
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "create_assign_case",
+              "to_id": "move_to_bv",
+              "type": "precedes",
+              "condition": null,
+              "answer": null,
+              "order": 0,
+              "evidence": []
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "hipaa_rule",
+              "to_id": "key_pef_into_atlas",
+              "type": "annotates",
+              "condition": null,
+              "answer": null,
+              "order": 0,
+              "evidence": []
+            }
+          }
+        ]
+      },
+      "updated": true,
+      "attempts": 1,
+      "structural": [],
+      "resolution": [
+        {
+          "code": "needs_clarification",
+          "severity": "resolution",
+          "message": "node 'handle_duplicate' (Determine what to do with duplicate) needs human confirmation: if they are, they figure out what to do with it. The source does not state what is actually done with an existing patient.",
+          "node_ids": [
+            "handle_duplicate"
+          ]
+        }
+      ],
+      "timings": [
+        {
+          "step": "interpreter",
+          "attempt": 1,
+          "seconds": 17.135057167033665
+        },
+        {
+          "step": "extractor",
+          "attempt": 1,
+          "seconds": 31.66115484299371
+        },
+        {
+          "step": "navigator",
+          "attempt": 1,
+          "seconds": 7.082397709018551
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "patch": {
+        "operations": []
+      },
+      "updated": true,
+      "attempts": 1,
+      "structural": [],
+      "resolution": [
+        {
+          "code": "needs_clarification",
+          "severity": "resolution",
+          "message": "node 'handle_duplicate' (Determine what to do with duplicate) needs human confirmation: if they are, they figure out what to do with it. The source does not state what is actually done with an existing patient.",
+          "node_ids": [
+            "handle_duplicate"
+          ]
+        }
+      ],
+      "timings": [
+        {
+          "step": "interpreter",
+          "attempt": 1,
+          "seconds": 6.342220170015935
+        },
+        {
+          "step": "extractor",
+          "attempt": 1,
+          "seconds": 3.370195596013218
+        },
+        {
+          "step": "navigator",
+          "attempt": 1,
+          "seconds": 7.735008007963188
+        }
+      ]
+    },
+    {
+      "turn": 3,
+      "patch": {
+        "operations": [
+          {
+            "op": "update_node",
+            "id": "handle_duplicate",
+            "fields": {
+              "type": null,
+              "label": "Attach to existing patient",
+              "actor": null,
+              "subprocess": null,
+              "status": "stated",
+              "detail": "When Meridian finds the patient is already in the system, they attach it to the existing patient.",
+              "alternatives": null,
+              "evidence": [
+                {
+                  "statement_id": "s_0005",
+                  "quote": "if they are, they figure out what to do with it"
+                },
+                {
+                  "statement_id": "s_0017",
+                  "quote": "They attach it to the existing patient."
+                }
+              ],
+              "origin": null,
+              "clear": []
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "age_eligibility_rule",
+              "type": "annotation",
+              "label": "Program does not enroll any patients under 18",
+              "actor": "Meridian",
+              "subprocess": null,
+              "status": "stated",
+              "detail": "The program does not enroll any patients under 18.",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0016",
+                  "quote": "No it does not."
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "age_eligibility_rule",
+              "to_id": "check_diagnosis_code",
+              "type": "annotates",
+              "condition": null,
+              "answer": null,
+              "order": 0,
+              "evidence": []
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "capture_consent_rule",
+              "type": "annotation",
+              "label": "Capture text and email consent",
+              "actor": "PAM",
+              "subprocess": null,
+              "status": "stated",
+              "detail": "We capture text and email consent.",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0018",
+                  "quote": "We capture text and email consent."
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "capture_consent_rule",
+              "to_id": "create_assign_case",
+              "type": "annotates",
+              "condition": null,
+              "answer": null,
+              "order": 0,
+              "evidence": []
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "gw_hipaa_signed",
+              "type": "gateway",
+              "label": "HIPAA section signed?",
+              "actor": "PAM",
+              "subprocess": null,
+              "status": "stated",
+              "detail": "The HIPAA section has to be signed before we can do anything with the patient.",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0010",
+                  "quote": "The HIPAA section has to be signed before we can do anything with the patient."
+                },
+                {
+                  "statement_id": "s_0019",
+                  "quote": "If that form isn't signed, we will follow up and send a DocuSign link to them."
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "follow_up_docusign",
+              "type": "task",
+              "label": "Follow up and send DocuSign link",
+              "actor": "PAM",
+              "subprocess": null,
+              "status": "stated",
+              "detail": "If that form isn't signed, we will follow up and send a DocuSign link to them.",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0019",
+                  "quote": "If that form isn't signed, we will follow up and send a DocuSign link to them."
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "gw_hipaa_signed",
+              "to_id": "follow_up_docusign",
+              "type": "branch",
+              "condition": "HIPAA form isn't signed",
+              "answer": "no",
+              "order": 0,
+              "evidence": [
+                {
+                  "statement_id": "s_0019",
+                  "quote": "If that form isn't signed, we will follow up and send a DocuSign link to them."
+                }
+              ]
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "gw_hipaa_signed",
+              "to_id": "create_assign_case",
+              "type": "branch",
+              "condition": "HIPAA section is signed",
+              "answer": "yes",
+              "order": 1,
+              "evidence": [
+                {
+                  "statement_id": "s_0010",
+                  "quote": "The HIPAA section has to be signed before we can do anything with the patient."
+                }
+              ]
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "follow_up_docusign",
+              "to_id": "gw_hipaa_signed",
+              "type": "precedes",
+              "condition": null,
+              "answer": null,
+              "order": 0,
+              "evidence": []
+            }
+          },
+          {
+            "op": "update_edge",
+            "from_id": "gw_missing_info",
+            "to_id": "create_assign_case",
+            "order": 1,
+            "fields": {
+              "to_id": "gw_hipaa_signed",
+              "type": null,
+              "condition": null,
+              "answer": null,
+              "order": null,
+              "evidence": null,
+              "clear": []
+            }
+          },
+          {
+            "op": "update_edge",
+            "from_id": "pam_follow_up_office",
+            "to_id": "create_assign_case",
+            "order": 0,
+            "fields": {
+              "to_id": "gw_hipaa_signed",
+              "type": null,
+              "condition": null,
+              "answer": null,
+              "order": null,
+              "evidence": null,
+              "clear": []
+            }
+          },
+          {
+            "op": "remove_edge",
+            "from_id": "hipaa_rule",
+            "to_id": "key_pef_into_atlas",
+            "order": 0,
+            "reason_statement_ids": [
+              "s_0019"
+            ]
+          },
+          {
+            "op": "remove_node",
+            "id": "hipaa_rule",
+            "reason_statement_ids": [
+              "s_0019"
+            ]
+          }
+        ]
+      },
+      "updated": true,
+      "attempts": 1,
+      "structural": [],
+      "resolution": [],
+      "timings": [
+        {
+          "step": "interpreter",
+          "attempt": 1,
+          "seconds": 8.88976394297788
+        },
+        {
+          "step": "extractor",
+          "attempt": 1,
+          "seconds": 22.042950470990036
+        },
+        {
+          "step": "navigator",
+          "attempt": 1,
+          "seconds": 8.579297967022285
+        }
+      ]
+    },
+    {
+      "turn": 4,
+      "patch": null,
+      "updated": true,
+      "attempts": 0,
+      "structural": [],
+      "resolution": [],
+      "timings": [
+        {
+          "step": "interpreter",
+          "attempt": 1,
+          "seconds": 4.099738018005155
+        },
+        {
+          "step": "navigator",
+          "attempt": 1,
+          "seconds": 8.206484452006407
+        }
+      ]
+    },
+    {
+      "turn": 5,
+      "patch": {
+        "operations": [
+          {
+            "op": "add_node",
+            "node": {
+              "id": "prescription_required_rule",
+              "type": "annotation",
+              "label": "Prescription must be part of submission",
+              "actor": "Meridian",
+              "subprocess": null,
+              "status": "stated",
+              "detail": "A prescription needs to be part of the submission; it never isn't -- no cases exist where the prescription isn't part of the submission.",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0021",
+                  "quote": "yes it needs to be part of submission."
+                },
+                {
+                  "statement_id": "s_0022",
+                  "quote": "IT never isn't. No cases like this exist."
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "prescription_required_rule",
+              "to_id": "key_pef_into_atlas",
+              "type": "annotates",
+              "condition": null,
+              "answer": null,
+              "order": 0,
+              "evidence": []
+            }
+          },
+          {
+            "op": "update_node",
+            "id": "pam_follow_up_office",
+            "fields": {
+              "type": null,
+              "label": "Chase office and patient for missing information",
+              "actor": null,
+              "subprocess": null,
+              "status": null,
+              "detail": "If anything is missing from the form, the PAM follows up with the office until it's complete; both the office and the patient get chased.",
+              "alternatives": null,
+              "evidence": [
+                {
+                  "statement_id": "s_0009",
+                  "quote": "If anything is missing from the form, the PAM follows up with the office until it's complete."
+                },
+                {
+                  "statement_id": "s_0023",
+                  "quote": "The office will get chased, as well as the patient."
+                }
+              ],
+              "origin": null,
+              "clear": []
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "gw_chase_limit_reached",
+              "type": "gateway",
+              "label": "Chased three times without completion?",
+              "actor": "PAM",
+              "subprocess": null,
+              "status": "stated",
+              "detail": "The office and patient are chased a maximum of three times before the enrollment is cancelled.",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0024",
+                  "quote": "A maximum of three times before the enrollment is cancelled."
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "add_node",
+            "node": {
+              "id": "enrollment_cancelled",
+              "type": "terminal",
+              "label": "Enrollment cancelled",
+              "actor": "PAM",
+              "subprocess": null,
+              "status": "stated",
+              "detail": "After a maximum of three chases without the form being completed, the enrollment is cancelled.",
+              "alternatives": [],
+              "evidence": [
+                {
+                  "statement_id": "s_0024",
+                  "quote": "before the enrollment is cancelled."
+                }
+              ],
+              "origin": "source"
+            }
+          },
+          {
+            "op": "remove_edge",
+            "from_id": "pam_follow_up_office",
+            "to_id": "gw_hipaa_signed",
+            "order": 0,
+            "reason_statement_ids": [
+              "s_0024"
+            ]
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "pam_follow_up_office",
+              "to_id": "gw_chase_limit_reached",
+              "type": "precedes",
+              "condition": null,
+              "answer": null,
+              "order": 0,
+              "evidence": []
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "gw_chase_limit_reached",
+              "to_id": "enrollment_cancelled",
+              "type": "branch",
+              "condition": "chased three times and the form is still not complete",
+              "answer": "yes",
+              "order": 0,
+              "evidence": [
+                {
+                  "statement_id": "s_0024",
+                  "quote": "A maximum of three times before the enrollment is cancelled."
+                }
+              ]
+            }
+          },
+          {
+            "op": "add_edge",
+            "edge": {
+              "from_id": "gw_chase_limit_reached",
+              "to_id": "gw_hipaa_signed",
+              "type": "branch",
+              "condition": "form completed within three chases",
+              "answer": "no",
+              "order": 1,
+              "evidence": [
+                {
+                  "statement_id": "s_0009",
+                  "quote": "the PAM follows up with the office until it's complete"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "updated": true,
+      "attempts": 1,
+      "structural": [],
+      "resolution": [],
+      "timings": [
+        {
+          "step": "interpreter",
+          "attempt": 1,
+          "seconds": 9.870639303000644
+        },
+        {
+          "step": "extractor",
+          "attempt": 1,
+          "seconds": 15.779979129962157
+        },
+        {
+          "step": "navigator",
+          "attempt": 1,
+          "seconds": 7.904492667992599
+        }
+      ]
+    }
+  ],
+  "ledger": [
+    {
+      "topic_id": "program.rems",
+      "scope": "main",
+      "priority": "high",
+      "status": "confirmed_absent",
+      "evidence": [
+        "s_0013"
+      ],
+      "node_ids": [],
+      "asked_count": 1,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "program.nurse",
+      "scope": "main",
+      "priority": "high",
+      "status": "confirmed_absent",
+      "evidence": [
+        "s_0014"
+      ],
+      "node_ids": [],
+      "asked_count": 1,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "program.self_enrollment",
+      "scope": "main",
+      "priority": "high",
+      "status": "confirmed_absent",
+      "evidence": [
+        "s_0015"
+      ],
+      "node_ids": [],
+      "asked_count": 1,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "program.pediatric",
+      "scope": "main",
+      "priority": "high",
+      "status": "confirmed_absent",
+      "evidence": [
+        "s_0016"
+      ],
+      "node_ids": [
+        "age_eligibility_rule"
+      ],
+      "asked_count": 1,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "intake.channels",
+      "scope": "main",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0001"
+      ],
+      "node_ids": [
+        "receive_enrollment_form"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "intake.channel_paths",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "intake.self_enrollment",
+      "scope": "main",
+      "priority": "high",
+      "status": "not_applicable",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "sp.enrollment_role",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "intake.acknowledgement",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "intake.work_pool",
+      "scope": "main",
+      "priority": "high",
+      "status": "deferred",
+      "evidence": [
+        "s_0020"
+      ],
+      "node_ids": [],
+      "asked_count": 1,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "intake.claim",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "intake.keying",
+      "scope": "main",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0003"
+      ],
+      "node_ids": [
+        "key_pef_into_atlas"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "intake.keying_automation",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "record.model",
+      "scope": "main",
+      "priority": "high",
+      "status": "deferred",
+      "evidence": [
+        "s_0020"
+      ],
+      "node_ids": [],
+      "asked_count": 1,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "record.lead_like_state",
+      "scope": "main",
+      "priority": "low",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "record.product_enrollment",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "record.system_handoffs",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "prescriber.lookup",
+      "scope": "main",
+      "priority": "high",
+      "status": "deferred",
+      "evidence": [
+        "s_0020"
+      ],
+      "node_ids": [],
+      "asked_count": 1,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "prescriber.not_found",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "eligibility.criteria",
+      "scope": "main",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0006"
+      ],
+      "node_ids": [
+        "check_diagnosis_code",
+        "gw_off_label"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "eligibility.source_of_truth",
+      "scope": "main",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0006"
+      ],
+      "node_ids": [
+        "check_diagnosis_code",
+        "gw_off_label"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "eligibility.judgement_owner",
+      "scope": "main",
+      "priority": "normal",
+      "status": "present",
+      "evidence": [
+        "s_0006"
+      ],
+      "node_ids": [
+        "check_diagnosis_code",
+        "gw_off_label"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "eligibility.off_label_detection",
+      "scope": "main",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0006",
+        "s_0007"
+      ],
+      "node_ids": [
+        "check_diagnosis_code",
+        "gw_off_label",
+        "send_back_to_office"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "rx.requirement",
+      "scope": "main",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0021",
+        "s_0022"
+      ],
+      "node_ids": [
+        "prescription_required_rule"
+      ],
+      "asked_count": 1,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "rx.entry_rule",
+      "scope": "main",
+      "priority": "low",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "hcp_signature.requirement",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "duplicate.check_point",
+      "scope": "main",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0004",
+        "s_0005"
+      ],
+      "node_ids": [
+        "gw_patient_exists",
+        "handle_duplicate"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info.detection",
+      "scope": "main",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0009"
+      ],
+      "node_ids": [
+        "gw_missing_info",
+        "pam_follow_up_office"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info.party_routing",
+      "scope": "main",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0023"
+      ],
+      "node_ids": [
+        "pam_follow_up_office"
+      ],
+      "asked_count": 1,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "consent.types",
+      "scope": "main",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0010"
+      ],
+      "node_ids": [
+        "gw_hipaa_signed"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "consent.methods",
+      "scope": "main",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0018",
+        "s_0019"
+      ],
+      "node_ids": [
+        "gw_hipaa_signed",
+        "follow_up_docusign",
+        "capture_consent_rule"
+      ],
+      "asked_count": 1,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "consent.gate",
+      "scope": "main",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0010"
+      ],
+      "node_ids": [
+        "gw_hipaa_signed"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "consent.verbal",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "consent.representative",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "consent.minors",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_applicable",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "consent.validity",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "consent.expiry_enforcement",
+      "scope": "main",
+      "priority": "low",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "consent.renewal",
+      "scope": "main",
+      "priority": "low",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "routing.zip_basis",
+      "scope": "main",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0011"
+      ],
+      "node_ids": [
+        "create_assign_case",
+        "move_to_bv"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "routing.roles",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "routing.unmatched",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "routing.realignment",
+      "scope": "main",
+      "priority": "low",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "conversion.criteria",
+      "scope": "main",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0011"
+      ],
+      "node_ids": [
+        "create_assign_case",
+        "move_to_bv"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "conversion.trigger",
+      "scope": "main",
+      "priority": "normal",
+      "status": "present",
+      "evidence": [
+        "s_0011"
+      ],
+      "node_ids": [
+        "create_assign_case",
+        "move_to_bv"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "conversion.records_created",
+      "scope": "main",
+      "priority": "normal",
+      "status": "present",
+      "evidence": [
+        "s_0011"
+      ],
+      "node_ids": [
+        "create_assign_case",
+        "move_to_bv"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "conversion.partial_tier",
+      "scope": "main",
+      "priority": "high",
+      "status": "asked",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 1,
+      "asked_from": "not_yet_covered",
+      "note": null
+    },
+    {
+      "topic_id": "conversion.tier_upgrade",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "conversion.lead_after",
+      "scope": "main",
+      "priority": "low",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "nurse.offer",
+      "scope": "main",
+      "priority": "high",
+      "status": "not_applicable",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "nurse.order",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_applicable",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "nurse.timing",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_applicable",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "rems.requirements",
+      "scope": "main",
+      "priority": "high",
+      "status": "not_applicable",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "rems.who_tracks",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_applicable",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "rems.intake_gate",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_applicable",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "welcome.call",
+      "scope": "main",
+      "priority": "high",
+      "status": "asked",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 1,
+      "asked_from": "not_yet_covered",
+      "note": null
+    },
+    {
+      "topic_id": "welcome.materials",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "welcome.parallel_clinical",
+      "scope": "main",
+      "priority": "low",
+      "status": "not_applicable",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "welcome.gate",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "exit.bi_trigger",
+      "scope": "main",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0011",
+        "s_0012"
+      ],
+      "node_ids": [
+        "create_assign_case",
+        "move_to_bv"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "exit.bi_overlap",
+      "scope": "main",
+      "priority": "high",
+      "status": "asked",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 1,
+      "asked_from": "not_yet_covered",
+      "note": null
+    },
+    {
+      "topic_id": "exit.hcp_notified_enrolled",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "exit.not_enrolled_outcomes",
+      "scope": "main",
+      "priority": "high",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 1,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "tasks.creation_and_closure",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "roles.keying_vs_relationship",
+      "scope": "main",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "duplicate_handling.match_keys",
+      "scope": "duplicate_handling",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "duplicate_handling.confirmer",
+      "scope": "duplicate_handling",
+      "priority": "normal",
+      "status": "needs_clarification",
+      "evidence": [
+        "s_0005"
+      ],
+      "node_ids": [
+        "gw_patient_exists",
+        "handle_duplicate"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": "Meridian figures out what to do with an existing match, but it is not stated how they decide or what the outcomes are"
+    },
+    {
+      "topic_id": "duplicate_handling.outcomes",
+      "scope": "duplicate_handling",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0017"
+      ],
+      "node_ids": [
+        "handle_duplicate"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "duplicate_handling.restart_switch",
+      "scope": "duplicate_handling",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "duplicate_handling.merge",
+      "scope": "duplicate_handling",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "duplicate_handling.later_found",
+      "scope": "duplicate_handling",
+      "priority": "low",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "duplicate_handling.exit",
+      "scope": "duplicate_handling",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0017"
+      ],
+      "node_ids": [
+        "handle_duplicate"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "off_label_review.ambiguous",
+      "scope": "off_label_review",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "off_label_review.clarification",
+      "scope": "off_label_review",
+      "priority": "high",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "off_label_review.diagnostic_support",
+      "scope": "off_label_review",
+      "priority": "low",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "off_label_review.override",
+      "scope": "off_label_review",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "off_label_review.outcome",
+      "scope": "off_label_review",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0007",
+        "s_0008"
+      ],
+      "node_ids": [
+        "gw_off_label",
+        "send_back_to_office"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "off_label_review.notification",
+      "scope": "off_label_review",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "off_label_review.corrected_return",
+      "scope": "off_label_review",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info_hcp.detection_alert",
+      "scope": "missing_info_hcp",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info_hcp.who_reaches_out",
+      "scope": "missing_info_hcp",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0009"
+      ],
+      "node_ids": [
+        "gw_missing_info",
+        "pam_follow_up_office"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info_hcp.channels",
+      "scope": "missing_info_hcp",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info_hcp.attempts",
+      "scope": "missing_info_hcp",
+      "priority": "normal",
+      "status": "needs_clarification",
+      "evidence": [
+        "s_0009",
+        "s_0024"
+      ],
+      "node_ids": [
+        "gw_missing_info",
+        "pam_follow_up_office",
+        "gw_chase_limit_reached",
+        "enrollment_cancelled"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": "User says a maximum of three times, but it isn't clear whether three attempts applies separately to the HCP office or is shared across both parties."
+    },
+    {
+      "topic_id": "missing_info_hcp.escalation",
+      "scope": "missing_info_hcp",
+      "priority": "high",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info_hcp.escalation_trigger",
+      "scope": "missing_info_hcp",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info_hcp.phi_limits",
+      "scope": "missing_info_hcp",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info_hcp.ending",
+      "scope": "missing_info_hcp",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0024"
+      ],
+      "node_ids": [
+        "gw_chase_limit_reached",
+        "enrollment_cancelled"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": "Outreach ends with the enrollment being cancelled after a maximum of three attempts."
+    },
+    {
+      "topic_id": "missing_info_hcp.closure_approval",
+      "scope": "missing_info_hcp",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info_hcp.automation_role",
+      "scope": "missing_info_hcp",
+      "priority": "low",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info_patient.detection_alert",
+      "scope": "missing_info_patient",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info_patient.who_reaches_out",
+      "scope": "missing_info_patient",
+      "priority": "high",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info_patient.channels",
+      "scope": "missing_info_patient",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info_patient.attempts",
+      "scope": "missing_info_patient",
+      "priority": "normal",
+      "status": "needs_clarification",
+      "evidence": [
+        "s_0024"
+      ],
+      "node_ids": [
+        "gw_chase_limit_reached",
+        "enrollment_cancelled"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": "User says a maximum of three times, but it isn't clear whether three attempts applies separately to the patient or is shared across both parties."
+    },
+    {
+      "topic_id": "missing_info_patient.consent_specific",
+      "scope": "missing_info_patient",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0019"
+      ],
+      "node_ids": [
+        "gw_hipaa_signed",
+        "follow_up_docusign"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info_patient.escalation",
+      "scope": "missing_info_patient",
+      "priority": "high",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info_patient.letters",
+      "scope": "missing_info_patient",
+      "priority": "low",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info_patient.ending",
+      "scope": "missing_info_patient",
+      "priority": "high",
+      "status": "present",
+      "evidence": [
+        "s_0024"
+      ],
+      "node_ids": [
+        "gw_chase_limit_reached",
+        "enrollment_cancelled"
+      ],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": "Outreach ends with the enrollment being cancelled after a maximum of three attempts."
+    },
+    {
+      "topic_id": "missing_info_patient.closure_approval",
+      "scope": "missing_info_patient",
+      "priority": "normal",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    },
+    {
+      "topic_id": "missing_info_patient.automation_role",
+      "scope": "missing_info_patient",
+      "priority": "low",
+      "status": "not_yet_covered",
+      "evidence": [],
+      "node_ids": [],
+      "asked_count": 0,
+      "asked_from": null,
+      "note": null
+    }
+  ],
+  "pending": [],
+  "question_count": 15,
+  "retry_statement_ids": [],
+  "accepted_open_items": [
+    "topic:intake.work_pool",
+    "topic:record.model",
+    "topic:prescriber.lookup",
+    "topic:conversion.partial_tier",
+    "topic:welcome.call",
+    "topic:exit.bi_overlap",
+    "topic:exit.not_enrolled_outcomes",
+    "topic:duplicate_handling.confirmer",
+    "topic:off_label_review.clarification",
+    "topic:missing_info_hcp.attempts",
+    "topic:missing_info_hcp.escalation",
+    "topic:missing_info_patient.who_reaches_out",
+    "topic:missing_info_patient.attempts",
+    "topic:missing_info_patient.escalation"
+  ]
+}

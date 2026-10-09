@@ -1,0 +1,70 @@
+{
+  "process_name": "enrollment_and_intake_duplicate_handling",
+  "nodes": [
+    {
+      "id": "slice_start",
+      "type": "start",
+      "label": "A possible match with an existing patient is found",
+      "actor": "Meridian",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": [],
+      "evidence": [],
+      "origin": "slice"
+    },
+    {
+      "id": "handle_duplicate",
+      "type": "task",
+      "label": "Attach to existing patient",
+      "actor": "Meridian",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "When Meridian finds the patient is already in the system, they attach it to the existing patient.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0005",
+          "quote": "if they are, they figure out what to do with it"
+        },
+        {
+          "statement_id": "s_0017",
+          "quote": "They attach it to the existing patient."
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "slice_exit_check_diagnosis_code",
+      "type": "terminal",
+      "label": "Return to main flow: Check diagnosis code against approved codes",
+      "actor": "Meridian",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": [],
+      "evidence": [],
+      "origin": "slice"
+    }
+  ],
+  "edges": [
+    {
+      "from_id": "slice_start",
+      "to_id": "handle_duplicate",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0,
+      "evidence": []
+    },
+    {
+      "from_id": "handle_duplicate",
+      "to_id": "slice_exit_check_diagnosis_code",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0,
+      "evidence": []
+    }
+  ]
+}

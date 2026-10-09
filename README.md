@@ -318,7 +318,10 @@ page doesn't wait for an answer: it sends yours, gets an acknowledgement back, a
 every second or so. That's also what lets it tell you *which* step is running rather than
 just spinning.
 
-The page has two views. **Requirements** is where the conversation happens, in three parts:
+The start screen lists earlier sessions under the form, most recently worked on first, so
+one can be picked up without keeping its link.
+
+Inside a session the page has two views. **Requirements** is where the conversation happens, in three parts:
 the chat on the left, the flow in the middle with a tab for each subprocess, and on the right
 either where the selected step came from or how much of the process is covered.
 **Diagrams** appears once a session has been finished, and shows the finished BPMN pages.
@@ -417,9 +420,15 @@ What to know before sharing the link:
   link they are given, and nothing records who did what. It is sent with each request, so it
   is only as private as the connection — Render serves HTTPS, which is what makes it
   acceptable.
-- **Sessions do not survive a restart.** They are files on the instance's disk, and Render's
-  free plan does not keep that disk across a redeploy or a restart. A conversation in
-  progress is lost. Finish and download before redeploying.
+- **Sessions do not survive a restart, except the ones that ship.** They are files on the
+  instance's disk, and Render's free plan does not keep that disk across a redeploy or a
+  restart. A conversation in progress is lost. Finish and download before redeploying.
+- **`seed_sessions/` is the exception.** Sessions committed there are restored every time
+  the service starts, so they are always there to go back to. Two things follow. Whatever
+  you do to one of them on the server is undone at the next restart, when the committed copy
+  returns. And they are **as public as the repository**: anyone who can read the code can
+  read those sessions, whatever the password is. To add or update one, copy its folder from
+  `sessions/<id>/` into `seed_sessions/` and commit.
 - **The free plan sleeps** after fifteen idle minutes and takes about a minute to wake.
 - **One instance only.** Which sessions have a turn running is held in memory.
 - The image logs at `INFO`. Set `PFG_LOG_LEVEL=DEBUG` on the service to see every prompt and
@@ -449,6 +458,7 @@ locally does not bake your key or anyone's conversations into it.
 | `PFG_NAVIGATOR_MODEL_ID` | `PFG_MODEL_ID` | The navigator's model. |
 | `PFG_DOMAIN_DIR` | `domain_knowledge` | The knowledge base. Read-only at run time. |
 | `PFG_SESSIONS_DIR` | `sessions` | Where sessions are written. Gitignored. |
+| `PFG_SEED_SESSIONS_DIR` | `seed_sessions` | Sessions committed with the code, restored at startup wherever they are missing. |
 | `PFG_LOG_LEVEL` | `DEBUG` | How much the application says. `INFO` is what happened and why; `DEBUG` adds every prompt and response in full. |
 | `PFG_LOG_DIR` | `logs` | Where `app.log` and `trace.jsonl` are written. Gitignored. |
 | `PFG_LAYOUT_BIN` | pinned install | The `bpmn-auto-layout` executable. Empty uses the version pinned in `js/`. |
@@ -541,6 +551,8 @@ and 3 by themselves and for their tests.
 - `pipelines/` — `stage2.py` and `stage3.py`: each stage as a command over one flow folder.
   Stage 1 has no entry here; it is `session/`.
 - `utils/` — typed environment settings, logging and the model trace, and a JSON writer.
+- `seed_sessions/` — sessions that ship with the repository and are restored at startup.
+  Public, like everything else committed.
 - `processes/<name>/` — example flow folders, data only: `enrollment` and
   `coverage_determination`.
 - `tests/` — the schema, both validators, the knowledge base's own consistency, each

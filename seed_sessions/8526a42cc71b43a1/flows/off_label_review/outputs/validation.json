@@ -1,0 +1,10 @@
+{
+  "findings": [
+    {
+      "code": "open_topic",
+      "severity": "resolution",
+      "message": "'Clarifying with the prescriber' was not covered",
+      "node_ids": []
+    }
+  ]
+}

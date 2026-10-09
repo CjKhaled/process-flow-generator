@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_enrollment_and_intake" targetNamespace="http://process-flow-generator/bpmn">
+  <bpmn:collaboration id="Collaboration_enrollment_and_intake">
+    <bpmn:participant id="Participant_enrollment_and_intake" name="Intake &amp; Enrollment" processRef="Process_enrollment_and_intake" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_enrollment_and_intake" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Process_enrollment_and_intake">
+      <bpmn:lane id="Lane_Meridian" name="Meridian">
+        <bpmn:flowNodeRef>Node_receive_enrollment_form</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_key_pef_into_atlas</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_patient_exists</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_sub_duplicate_handling</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_check_diagnosis_code</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_off_label</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_sub_off_label_review</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_PAM" name="PAM">
+        <bpmn:flowNodeRef>Node_gw_missing_info</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_sub_missing_info_hcp</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_gw_hipaa_signed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_follow_up_docusign</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_move_to_bv</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Atlas" name="Atlas">
+        <bpmn:flowNodeRef>Node_create_assign_case</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Node_receive_enrollment_form" name="Receive enrollment form" />
+    <bpmn:task id="Node_key_pef_into_atlas" name="Key PEF into Atlas" />
+    <bpmn:exclusiveGateway id="Node_gw_patient_exists" name="Patient already in system?" />
+    <bpmn:subProcess id="Node_sub_duplicate_handling" name="Duplicate handling" />
+    <bpmn:task id="Node_check_diagnosis_code" name="Check diagnosis code against approved codes" />
+    <bpmn:exclusiveGateway id="Node_gw_off_label" name="Is it off-label?" />
+    <bpmn:subProcess id="Node_sub_off_label_review" name="Off-label review" />
+    <bpmn:exclusiveGateway id="Node_gw_missing_info" name="Anything missing from the form?" />
+    <bpmn:subProcess id="Node_sub_missing_info_hcp" name="Missing information outreach (HCP)" />
+    <bpmn:exclusiveGateway id="Node_gw_hipaa_signed" name="HIPAA section signed?" />
+    <bpmn:task id="Node_follow_up_docusign" name="Follow up and send DocuSign link" />
+    <bpmn:task id="Node_create_assign_case" name="Create case and assign by territory" />
+    <bpmn:endEvent id="Node_move_to_bv" name="Patient moves on to BV" />
+    <bpmn:sequenceFlow id="Flow_0" sourceRef="Node_receive_enrollment_form" targetRef="Node_key_pef_into_atlas" />
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="Node_key_pef_into_atlas" targetRef="Node_gw_patient_exists" />
+    <bpmn:sequenceFlow id="Flow_2" name="Yes" sourceRef="Node_gw_patient_exists" targetRef="Node_sub_duplicate_handling" />
+    <bpmn:sequenceFlow id="Flow_3" name="No" sourceRef="Node_gw_patient_exists" targetRef="Node_check_diagnosis_code" />
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="Node_check_diagnosis_code" targetRef="Node_gw_off_label" />
+    <bpmn:sequenceFlow id="Flow_6" name="Yes" sourceRef="Node_gw_off_label" targetRef="Node_sub_off_label_review" />
+    <bpmn:sequenceFlow id="Flow_7" name="No" sourceRef="Node_gw_off_label" targetRef="Node_gw_missing_info" />
+    <bpmn:sequenceFlow id="Flow_8" name="Yes" sourceRef="Node_gw_missing_info" targetRef="Node_sub_missing_info_hcp" />
+    <bpmn:sequenceFlow id="Flow_9" name="No" sourceRef="Node_gw_missing_info" targetRef="Node_gw_hipaa_signed" />
+    <bpmn:sequenceFlow id="Flow_13" name="No" sourceRef="Node_gw_hipaa_signed" targetRef="Node_follow_up_docusign" />
+    <bpmn:sequenceFlow id="Flow_14" name="Yes" sourceRef="Node_gw_hipaa_signed" targetRef="Node_create_assign_case" />
+    <bpmn:sequenceFlow id="Flow_15" sourceRef="Node_follow_up_docusign" targetRef="Node_gw_hipaa_signed" />
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="Node_create_assign_case" targetRef="Node_move_to_bv" />
+    <bpmn:textAnnotation id="Note_prescription_required_rule">
+      <bpmn:text>Prescription must be part of submission</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_age_eligibility_rule">
+      <bpmn:text>Program does not enroll any patients under 18</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_capture_consent_rule">
+      <bpmn:text>Capture text and email consent</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_11" associationDirection="None" sourceRef="Node_check_diagnosis_code" targetRef="Note_age_eligibility_rule" />
+    <bpmn:association id="Association_12" associationDirection="None" sourceRef="Node_create_assign_case" targetRef="Note_capture_consent_rule" />
+    <bpmn:association id="Association_16" associationDirection="None" sourceRef="Node_key_pef_into_atlas" targetRef="Note_prescription_required_rule" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Collaboration_enrollment_and_intake">
+    <bpmndi:BPMNPlane id="BPMNPlane_Collaboration_enrollment_and_intake" bpmnElement="Collaboration_enrollment_and_intake">
+      <bpmndi:BPMNShape id="BPMNShape_Participant_enrollment_and_intake" bpmnElement="Participant_enrollment_and_intake" isHorizontal="true">
+        <dc:Bounds x="80" y="80" width="1882" height="1010" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Lane_Meridian" bpmnElement="Lane_Meridian" isHorizontal="true">
+        <dc:Bounds x="110" y="80" width="1852" height="400" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Lane_PAM" bpmnElement="Lane_PAM" isHorizontal="true">
+        <dc:Bounds x="110" y="480" width="1852" height="370" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Lane_Atlas" bpmnElement="Lane_Atlas" isHorizontal="true">
+        <dc:Bounds x="110" y="850" width="1852" height="240" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_receive_enrollment_form" bpmnElement="Node_receive_enrollment_form" color:background-color="#E3F3E7" color:border-color="#1A1628">
+        <dc:Bounds x="128" y="180" width="80" height="40" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="130" y="223" width="77" height="42" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_key_pef_into_atlas" bpmnElement="Node_key_pef_into_atlas">
+        <dc:Bounds x="286" y="160" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_patient_exists" bpmnElement="Node_gw_patient_exists" isMarkerVisible="false">
+        <dc:Bounds x="431" y="140" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="471" y="170" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_sub_duplicate_handling" bpmnElement="Node_sub_duplicate_handling" color:background-color="#EEEDF3" color:border-color="#3A3650">
+        <dc:Bounds x="636" y="320" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_check_diagnosis_code" bpmnElement="Node_check_diagnosis_code">
+        <dc:Bounds x="636" y="160" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_off_label" bpmnElement="Node_gw_off_label" isMarkerVisible="false">
+        <dc:Bounds x="781" y="140" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="821" y="170" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_sub_off_label_review" bpmnElement="Node_sub_off_label_review" color:background-color="#EEEDF3" color:border-color="#3A3650">
+        <dc:Bounds x="986" y="320" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_missing_info" bpmnElement="Node_gw_missing_info" isMarkerVisible="false">
+        <dc:Bounds x="1131" y="525" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1171" y="555" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_sub_missing_info_hcp" bpmnElement="Node_sub_missing_info_hcp" color:background-color="#EEEDF3" color:border-color="#3A3650">
+        <dc:Bounds x="1336" y="690" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_gw_hipaa_signed" bpmnElement="Node_gw_hipaa_signed" isMarkerVisible="false">
+        <dc:Bounds x="1481" y="525" width="160" height="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1521" y="555" width="80" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_follow_up_docusign" bpmnElement="Node_follow_up_docusign">
+        <dc:Bounds x="1686" y="690" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_create_assign_case" bpmnElement="Node_create_assign_case">
+        <dc:Bounds x="1686" y="930" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_move_to_bv" bpmnElement="Node_move_to_bv" color:background-color="#E3F3E7" color:border-color="#1A1628">
+        <dc:Bounds x="1864" y="565" width="80" height="40" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1865" y="520" width="78" height="42" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Note_age_eligibility_rule" bpmnElement="Note_age_eligibility_rule">
+        <dc:Bounds x="576" y="92" width="220" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Note_prescription_required_rule" bpmnElement="Note_prescription_required_rule">
+        <dc:Bounds x="266" y="260" width="140" height="62" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Note_capture_consent_rule" bpmnElement="Note_capture_consent_rule">
+        <dc:Bounds x="1666" y="862" width="140" height="48" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_0" bpmnElement="Flow_0">
+        <di:waypoint x="208" y="200" />
+        <di:waypoint x="286" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_1" bpmnElement="Flow_1">
+        <di:waypoint x="386" y="200" />
+        <di:waypoint x="431" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_3" bpmnElement="Flow_3">
+        <di:waypoint x="591" y="200" />
+        <di:waypoint x="636" y="200" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="576" y="178" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_5" bpmnElement="Flow_5">
+        <di:waypoint x="736" y="200" />
+        <di:waypoint x="781" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_7" bpmnElement="Flow_7">
+        <di:waypoint x="941" y="200" />
+        <di:waypoint x="1211" y="200" />
+        <di:waypoint x="1211" y="525" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1114" y="178" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_9" bpmnElement="Flow_9">
+        <di:waypoint x="1291" y="585" />
+        <di:waypoint x="1481" y="585" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1451" y="563" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_14" bpmnElement="Flow_14">
+        <di:waypoint x="1561" y="645" />
+        <di:waypoint x="1561" y="970" />
+        <di:waypoint x="1686" y="970" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1566" y="873" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_10" bpmnElement="Flow_10">
+        <di:waypoint x="1786" y="970" />
+        <di:waypoint x="1904" y="970" />
+        <di:waypoint x="1904" y="605" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_2" bpmnElement="Flow_2">
+        <di:waypoint x="511" y="260" />
+        <di:waypoint x="511" y="360" />
+        <di:waypoint x="636" y="360" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="516" y="286" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_6" bpmnElement="Flow_6">
+        <di:waypoint x="861" y="260" /><di:waypoint x="861" y="360" /><di:waypoint x="986" y="360" /><bpmndi:BPMNLabel>
+          <dc:Bounds x="867" y="303" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_8" bpmnElement="Flow_8">
+        <di:waypoint x="1211" y="645" /><di:waypoint x="1211" y="730" /><di:waypoint x="1336" y="730" /><bpmndi:BPMNLabel>
+          <dc:Bounds x="1217" y="680.5" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_13" bpmnElement="Flow_13">
+        <di:waypoint x="1561" y="645" /><di:waypoint x="1561" y="730" /><di:waypoint x="1686" y="730" /><bpmndi:BPMNLabel>
+          <dc:Bounds x="1567" y="680.5" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_15" bpmnElement="Flow_15">
+        <di:waypoint x="1736" y="770" />
+        <di:waypoint x="1736" y="790" />
+        <di:waypoint x="1561" y="790" />
+        <di:waypoint x="1561" y="645" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Association_11" bpmnElement="Association_11">
+        <di:waypoint x="686" y="160" />
+        <di:waypoint x="686" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Association_16" bpmnElement="Association_16">
+        <di:waypoint x="336" y="240" />
+        <di:waypoint x="336" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Association_12" bpmnElement="Association_12">
+        <di:waypoint x="1736" y="930" />
+        <di:waypoint x="1736" y="910" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Node_sub_duplicate_handling">
+    <bpmndi:BPMNPlane id="BPMNPlane_Node_sub_duplicate_handling" bpmnElement="Node_sub_duplicate_handling" />
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Node_sub_off_label_review">
+    <bpmndi:BPMNPlane id="BPMNPlane_Node_sub_off_label_review" bpmnElement="Node_sub_off_label_review" />
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Node_sub_missing_info_hcp">
+    <bpmndi:BPMNPlane id="BPMNPlane_Node_sub_missing_info_hcp" bpmnElement="Node_sub_missing_info_hcp" />
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

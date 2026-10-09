@@ -1,0 +1,70 @@
+{
+  "process_name": "enrollment_and_intake_missing_info_hcp",
+  "nodes": [
+    {
+      "id": "slice_start",
+      "type": "start",
+      "label": "Required items from the HCP office are missing",
+      "actor": "PAM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": [],
+      "evidence": [],
+      "origin": "slice"
+    },
+    {
+      "id": "pam_follow_up_office",
+      "type": "task",
+      "label": "Chase office and patient for missing information",
+      "actor": "PAM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": "If anything is missing from the form, the PAM follows up with the office until it's complete; both the office and the patient get chased.",
+      "alternatives": [],
+      "evidence": [
+        {
+          "statement_id": "s_0009",
+          "quote": "If anything is missing from the form, the PAM follows up with the office until it's complete."
+        },
+        {
+          "statement_id": "s_0023",
+          "quote": "The office will get chased, as well as the patient."
+        }
+      ],
+      "origin": "source"
+    },
+    {
+      "id": "slice_exit_gw_chase_limit_reached",
+      "type": "terminal",
+      "label": "Return to main flow: Chased three times without completion?",
+      "actor": "PAM",
+      "subprocess": null,
+      "status": "stated",
+      "detail": null,
+      "alternatives": [],
+      "evidence": [],
+      "origin": "slice"
+    }
+  ],
+  "edges": [
+    {
+      "from_id": "slice_start",
+      "to_id": "pam_follow_up_office",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0,
+      "evidence": []
+    },
+    {
+      "from_id": "pam_follow_up_office",
+      "to_id": "slice_exit_gw_chase_limit_reached",
+      "type": "precedes",
+      "condition": null,
+      "answer": null,
+      "order": 0,
+      "evidence": []
+    }
+  ]
+}

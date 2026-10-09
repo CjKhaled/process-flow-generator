@@ -19,13 +19,14 @@ from fastapi.testclient import TestClient
 from agents.interpreter import InterpretedStatement, InterpretResult, TopicReading
 from agents.navigator import NavigatorQuestion, NavigatorResult
 from api.app import create_app
-from api.sessions import BUSY, INTERRUPTED, QUICK_REPLIES, REOPEN, STALE, UNCONFIGURED
+from api.sessions import BUSY, INTERRUPTED, QUICK_REPLIES, REOPEN, STALE, TITLE_CHARS, UNCONFIGURED, _title
 from bpmn.document import BPMN_NS
 from extractors.conversation import EXTRACTOR, INTERPRETER
 from extractors.errors import ModelUnavailableError, SchemaCallError
+from knowledge.loader import DomainKnowledge
 from render.assets import ViewerAssets
-from session.models import TurnStatus
-from session.orchestrator import NOT_UPDATED, RESEND
+from session.models import Message, Role, TurnStatus
+from session.orchestrator import NOT_UPDATED, RESEND, new_session
 from session.store import FileSessionStore
 from tests.conftest import DOMAIN_DIR, DOMAIN_PROCESS, echo_layouter
 from tests.fakes import FakeConversations
@@ -542,6 +543,71 @@ def test_the_service_runs_without_a_built_page(client: TestClient) -> None:
     """How the tests and a ``vite dev`` session both use it: the API alone."""
     assert client.get("/").status_code == 404
     assert client.get("/health").status_code == 200
+
+
+# ── the list of sessions ─────────────────────────────────────────────────────
+
+
+def test_with_no_sessions_the_list_is_empty(client: TestClient) -> None:
+    assert client.get("/sessions").json() == []
+
+
+def test_sessions_are_listed_most_recently_worked_on_first(client: TestClient, fake: FakeConversations) -> None:
+    first = started(client)["id"]
+    fake.interpreter(FIRST_READING).extractor(first_patch()).navigator(says("Got it.", "c1"))
+    second = started(client)["id"]
+
+    assert [row["id"] for row in client.get("/sessions").json()] == [second, first]
+
+    fake.interpreter(reads("More on the first.")).extractor(patch()).navigator(says("Noted."))
+    send(client, first, text="More on the first.")
+
+    assert [row["id"] for row in client.get("/sessions").json()] == [first, second]
+
+
+def test_a_listed_session_is_recognisable_without_opening_it(client: TestClient) -> None:
+    session_id = started(client)["id"]
+
+    (row,) = client.get("/sessions").json()
+
+    assert row["id"] == session_id
+    assert row["process_name"] == "Intake & Enrollment"
+    assert row["title"] == "The HCP faxes the enrollment form to the vendor."
+    assert (row["turn"], row["phase"], row["phase_label"], row["flows"]) == (1, "probing", "In progress", 0)
+
+
+def test_a_finished_session_is_listed_as_finished_with_its_flows(client: TestClient) -> None:
+    session_id = started(client)["id"]
+    client.post(f"/sessions/{session_id}/accept")
+    settled(client, session_id)
+
+    (row,) = client.get("/sessions").json()
+
+    assert (row["phase_label"], row["flows"]) == ("Finished", 1)
+
+
+def test_a_long_first_line_is_shortened_in_the_list(domain: DomainKnowledge) -> None:
+    session = new_session("long", domain)
+    session.transcript.append(Message(role=Role.USER, text="word " * 60 + "\nsecond line", turn=1))
+
+    title = _title(session)
+
+    assert len(title) == TITLE_CHARS and title.endswith("…")
+    assert _title(new_session("empty", domain)) == "No description yet"
+
+
+def test_a_session_whose_first_turn_never_completed_is_not_listed(client: TestClient, fake: FakeConversations) -> None:
+    """There is nothing in it to go back to, and a failed start should not leave a row behind."""
+    fake.scripts[INTERPRETER].clear()
+    fake.interpreter(SchemaCallError("x"), SchemaCallError("x"))
+    settled(client, begin(client))
+
+    assert client.get("/sessions").json() == []
+
+
+def test_the_list_of_sessions_is_behind_the_password_too(locked: TestClient) -> None:
+    assert locked.get("/sessions").status_code == 401
+    assert locked.get("/sessions", auth=KEY).json() == []
 
 
 # ── the shared password ──────────────────────────────────────────────────────

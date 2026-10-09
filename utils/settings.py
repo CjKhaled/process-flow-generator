@@ -119,6 +119,15 @@ class SessionSettings(BaseSettings):
             "the repository root. Gitignored: a session holds what somebody typed."
         ),
     )
+    seed_sessions_dir: Path = Field(
+        default=Path("seed_sessions"),
+        alias="PFG_SEED_SESSIONS_DIR",
+        description=(
+            "Sessions that ship with the repository and are restored at startup wherever "
+            "they are missing. A relative path is taken from the repository root. Unlike "
+            "sessions_dir this one is committed, so what is in it is as public as the code."
+        ),
+    )
 
 
 class LogSettings(BaseSettings):
@@ -232,6 +241,7 @@ def load_session_settings() -> SessionSettings:
         update={
             "domain_dir": _from_root(settings.domain_dir),
             "sessions_dir": _from_root(settings.sessions_dir),
+            "seed_sessions_dir": _from_root(settings.seed_sessions_dir),
         }
     )
 

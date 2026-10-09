@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_enrollment_and_intake_missing_info_hcp" targetNamespace="http://process-flow-generator/bpmn">
+  <bpmn:collaboration id="Collaboration_enrollment_and_intake_missing_info_hcp">
+    <bpmn:participant id="Participant_enrollment_and_intake_missing_info_hcp" name="Intake &amp; Enrollment: Missing information outreach (HCP)" processRef="Process_enrollment_and_intake_missing_info_hcp" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_enrollment_and_intake_missing_info_hcp" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Process_enrollment_and_intake_missing_info_hcp">
+      <bpmn:lane id="Lane_PAM" name="PAM">
+        <bpmn:flowNodeRef>Node_slice_start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_pam_follow_up_office</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_slice_exit_gw_chase_limit_reached</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Node_slice_start" name="Required items from the HCP office are missing" />
+    <bpmn:task id="Node_pam_follow_up_office" name="Chase office and patient for missing information" />
+    <bpmn:endEvent id="Node_slice_exit_gw_chase_limit_reached" name="Return to main flow: Chased three times without completion?" />
+    <bpmn:sequenceFlow id="Flow_0" sourceRef="Node_slice_start" targetRef="Node_pam_follow_up_office" />
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="Node_pam_follow_up_office" targetRef="Node_slice_exit_gw_chase_limit_reached" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Collaboration_enrollment_and_intake_missing_info_hcp">
+    <bpmndi:BPMNPlane id="BPMNPlane_Collaboration_enrollment_and_intake_missing_info_hcp" bpmnElement="Collaboration_enrollment_and_intake_missing_info_hcp">
+      <bpmndi:BPMNShape id="BPMNShape_Participant_enrollment_and_intake_missing_info_hcp" bpmnElement="Participant_enrollment_and_intake_missing_info_hcp" isHorizontal="true">
+        <dc:Bounds x="80" y="80" width="482" height="240" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Lane_PAM" bpmnElement="Lane_PAM" isHorizontal="true">
+        <dc:Bounds x="110" y="80" width="452" height="240" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_slice_start" bpmnElement="Node_slice_start" color:background-color="#E3F3E7" color:border-color="#1A1628">
+        <dc:Bounds x="128" y="180" width="80" height="40" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="130" y="223" width="77" height="70" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_pam_follow_up_office" bpmnElement="Node_pam_follow_up_office">
+        <dc:Bounds x="286" y="160" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_slice_exit_gw_chase_limit_reached" bpmnElement="Node_slice_exit_gw_chase_limit_reached" color:background-color="#E3F3E7" color:border-color="#1A1628">
+        <dc:Bounds x="464" y="180" width="80" height="40" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="461" y="223" width="87" height="84" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_0" bpmnElement="Flow_0">
+        <di:waypoint x="208" y="200" />
+        <di:waypoint x="286" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_1" bpmnElement="Flow_1">
+        <di:waypoint x="386" y="200" />
+        <di:waypoint x="464" y="200" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

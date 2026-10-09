@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_enrollment_and_intake_off_label_review" targetNamespace="http://process-flow-generator/bpmn">
+  <bpmn:collaboration id="Collaboration_enrollment_and_intake_off_label_review">
+    <bpmn:participant id="Participant_enrollment_and_intake_off_label_review" name="Intake &amp; Enrollment: Off-label review" processRef="Process_enrollment_and_intake_off_label_review" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_enrollment_and_intake_off_label_review" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Process_enrollment_and_intake_off_label_review">
+      <bpmn:lane id="Lane_Meridian" name="Meridian">
+        <bpmn:flowNodeRef>Node_slice_start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_send_back_to_office</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Node_slice_start" name="The submission doesn't clearly meet the eligibility criteria" />
+    <bpmn:endEvent id="Node_send_back_to_office" name="Send form back to office" />
+    <bpmn:sequenceFlow id="Flow_0" sourceRef="Node_slice_start" targetRef="Node_send_back_to_office" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Collaboration_enrollment_and_intake_off_label_review">
+    <bpmndi:BPMNPlane id="BPMNPlane_Collaboration_enrollment_and_intake_off_label_review" bpmnElement="Collaboration_enrollment_and_intake_off_label_review">
+      <bpmndi:BPMNShape id="BPMNShape_Participant_enrollment_and_intake_off_label_review" bpmnElement="Participant_enrollment_and_intake_off_label_review" isHorizontal="true">
+        <dc:Bounds x="80" y="80" width="410" height="196" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Lane_Meridian" bpmnElement="Lane_Meridian" isHorizontal="true">
+        <dc:Bounds x="110" y="80" width="380" height="196" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_slice_start" bpmnElement="Node_slice_start" color:background-color="#E3F3E7" color:border-color="#1A1628">
+        <dc:Bounds x="128" y="158" width="80" height="40" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="124" y="281" width="88" height="98" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_send_back_to_office" bpmnElement="Node_send_back_to_office" color:background-color="#E3F3E7" color:border-color="#1A1628">
+        <dc:Bounds x="264" y="158" width="80" height="40" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="270" y="201" width="69" height="42" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_0" bpmnElement="Flow_0">
+        <di:waypoint x="208" y="178" />
+        <di:waypoint x="264" y="178" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

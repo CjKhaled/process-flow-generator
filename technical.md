@@ -116,6 +116,14 @@ so the page, which polls while a turn runs, never reads half a session. Session 
 names become folder names and arrive from URLs, so both are matched against
 `[A-Za-z0-9_-]{1,64}` before any path is built.
 
+**Seeds.** `FileSessionStore.restore_seeds(seeds_dir)` copies each session folder under
+`seed_sessions/` into the store, flows included, wherever no session with that id exists.
+`api/app.py` calls it when it builds the default store, so a host that keeps no disk gets
+them back on every boot, and a machine that does keep its disk gets each once and never has
+it overwritten. `tests/test_seed_sessions.py` loads every committed seed through the current
+schema and serves it, because a file written by an older version of the code is exactly what
+goes stale unnoticed.
+
 **Lanes.** A session starts with one lane, `System (unconfirmed)`, in the process's default
 persona. It is where unattributed work goes until the user names the system that does it.
 When a lane in that persona is learned, or the user answers the default-lane question, every
@@ -539,6 +547,7 @@ starts work answers `202`.
 | --- | --- |
 | `GET /health` | Liveness |
 | `GET /processes` | The processes in `domain_knowledge/`, for the picker |
+| `GET /sessions` | Every session that got past its first turn, most recently updated first: id, process, the first line of its description, turn, phase and its label, flows finished |
 | `POST /sessions` | `{process_id, description}` → `{session_id}`, and queues turn 1. `422` empty, `413` over `PFG_MAX_SOURCE_CHARS`, `404` unknown process |
 | `GET /sessions/{id}` | Phase, focus, turn, status and its sentence, transcript, pending questions, lanes, coverage, views with rationale, open items, outputs |
 | `POST /sessions/{id}/messages` | `{text, quick_reply, question_id, item_key}`. `409` if a turn is running. On a finished session it reopens it |

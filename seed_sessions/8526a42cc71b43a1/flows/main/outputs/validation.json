@@ -1,0 +1,46 @@
+{
+  "findings": [
+    {
+      "code": "deferred_topic",
+      "severity": "resolution",
+      "message": "'Where new work lands' was put off to check later",
+      "node_ids": []
+    },
+    {
+      "code": "deferred_topic",
+      "severity": "resolution",
+      "message": "'First record created' was put off to check later",
+      "node_ids": []
+    },
+    {
+      "code": "deferred_topic",
+      "severity": "resolution",
+      "message": "'Prescriber lookup' was put off to check later",
+      "node_ids": []
+    },
+    {
+      "code": "open_topic",
+      "severity": "resolution",
+      "message": "'Partial enrollment' was not covered",
+      "node_ids": []
+    },
+    {
+      "code": "open_topic",
+      "severity": "resolution",
+      "message": "'Welcome call' was not covered",
+      "node_ids": []
+    },
+    {
+      "code": "open_topic",
+      "severity": "resolution",
+      "message": "'Benefits investigation before enrollment completes' was not covered",
+      "node_ids": []
+    },
+    {
+      "code": "open_topic",
+      "severity": "resolution",
+      "message": "'Not-enrolled outcomes' was not covered",
+      "node_ids": []
+    }
+  ]
+}

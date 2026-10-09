@@ -244,6 +244,68 @@ a {
   border: 0;
 }
 
+/* Earlier sessions, to go back to. Each row is one button: the whole of it opens the session. */
+.previous {
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.previous h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.previous ul {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.start-screen .previous button {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  margin: 0;
+  padding: 12px 16px;
+  text-align: left;
+  box-shadow: var(--shadow);
+}
+
+.previous .title {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.previous .meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.previous .pill {
+  background: var(--inferred-bg);
+  color: var(--inferred-ink);
+}
+
+.previous .pill.complete {
+  background: var(--from-you-bg);
+  color: var(--from-you-ink);
+}
+
 /* ── the top bar ─────────────────────────────────────────────────── */
 
 .topbar {

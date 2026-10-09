@@ -14,6 +14,11 @@ os.environ["PFG_LOG_LEVEL"] = "WARNING"
 # password or an allowed origin set there for local use would otherwise fail tests that
 # have nothing to do with either. The tests that want one set it themselves.
 os.environ["PFG_ACCESS_PASSWORD"] = ""
+
+# Importing ``api.app`` builds the real application, which restores seed sessions into the
+# sessions directory. Both are pointed away from the repository so the suite never writes one.
+os.environ["PFG_SESSIONS_DIR"] = tempfile.mkdtemp(prefix="pfg-test-sessions-")
+os.environ["PFG_SEED_SESSIONS_DIR"] = tempfile.mkdtemp(prefix="pfg-test-seeds-")
 os.environ["PFG_ALLOWED_ORIGIN"] = ""
 
 from pathlib import Path
@@ -33,6 +38,8 @@ PROCESSES_ROOT = REPO_ROOT / "processes"
 ENROLLMENT_DIR = PROCESSES_ROOT / "enrollment"
 COVERAGE_DETERMINATION_DIR = PROCESSES_ROOT / "coverage_determination"
 DOMAIN_DIR = REPO_ROOT / "domain_knowledge"
+SEED_SESSIONS_DIR = REPO_ROOT / "seed_sessions"
+"""The sessions that ship with the repository and are restored wherever they are missing."""
 DOMAIN_PROCESS = "enrollment_and_intake"
 ENROLLMENT_DESCRIPTION = REPO_ROOT / "tests" / "fixtures" / "enrollment_description.md"
 """A real written description of enrollment: what a user would paste to begin a session."""

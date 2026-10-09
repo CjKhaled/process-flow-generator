@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_enrollment_and_intake_duplicate_handling" targetNamespace="http://process-flow-generator/bpmn">
+  <bpmn:collaboration id="Collaboration_enrollment_and_intake_duplicate_handling">
+    <bpmn:participant id="Participant_enrollment_and_intake_duplicate_handling" name="Intake &amp; Enrollment: Duplicate handling" processRef="Process_enrollment_and_intake_duplicate_handling" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_enrollment_and_intake_duplicate_handling" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Process_enrollment_and_intake_duplicate_handling">
+      <bpmn:lane id="Lane_Meridian" name="Meridian">
+        <bpmn:flowNodeRef>Node_slice_start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_handle_duplicate</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Node_slice_exit_check_diagnosis_code</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Node_slice_start" name="A possible match with an existing patient is found" />
+    <bpmn:task id="Node_handle_duplicate" name="Attach to existing patient" />
+    <bpmn:endEvent id="Node_slice_exit_check_diagnosis_code" name="Return to main flow: Check diagnosis code against approved codes" />
+    <bpmn:sequenceFlow id="Flow_0" sourceRef="Node_slice_start" targetRef="Node_handle_duplicate" />
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="Node_handle_duplicate" targetRef="Node_slice_exit_check_diagnosis_code" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Collaboration_enrollment_and_intake_duplicate_handling">
+    <bpmndi:BPMNPlane id="BPMNPlane_Collaboration_enrollment_and_intake_duplicate_handling" bpmnElement="Collaboration_enrollment_and_intake_duplicate_handling">
+      <bpmndi:BPMNShape id="BPMNShape_Participant_enrollment_and_intake_duplicate_handling" bpmnElement="Participant_enrollment_and_intake_duplicate_handling" isHorizontal="true">
+        <dc:Bounds x="80" y="80" width="482" height="240" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Lane_Meridian" bpmnElement="Lane_Meridian" isHorizontal="true">
+        <dc:Bounds x="110" y="80" width="452" height="240" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_slice_start" bpmnElement="Node_slice_start" color:background-color="#E3F3E7" color:border-color="#1A1628">
+        <dc:Bounds x="128" y="180" width="80" height="40" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="129" y="223" width="78" height="70" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_handle_duplicate" bpmnElement="Node_handle_duplicate">
+        <dc:Bounds x="286" y="160" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_Node_slice_exit_check_diagnosis_code" bpmnElement="Node_slice_exit_check_diagnosis_code" color:background-color="#E3F3E7" color:border-color="#1A1628">
+        <dc:Bounds x="464" y="180" width="80" height="40" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="462" y="323" width="85" height="98" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_0" bpmnElement="Flow_0">
+        <di:waypoint x="208" y="200" />
+        <di:waypoint x="286" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_Flow_1" bpmnElement="Flow_1">
+        <di:waypoint x="386" y="200" />
+        <di:waypoint x="464" y="200" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

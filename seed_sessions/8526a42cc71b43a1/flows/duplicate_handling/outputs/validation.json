@@ -1,0 +1,12 @@
+{
+  "findings": [
+    {
+      "code": "open_topic",
+      "severity": "resolution",
+      "message": "'Who confirms a match' still needs clarifying: Meridian figures out what to do with an existing match, but it is not stated how they decide or what the outcomes are",
+      "node_ids": [
+        "handle_duplicate"
+      ]
+    }
+  ]
+}

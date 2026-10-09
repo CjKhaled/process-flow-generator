@@ -17,6 +17,7 @@ turn runs -- sees the session before the turn or after it and never half of one.
 
 import os
 import re
+import shutil
 import tempfile
 from pathlib import Path
 from typing import Protocol
@@ -149,6 +150,36 @@ class FileSessionStore:
             ValueError: If either name is not safe to use as a folder name.
         """
         return self._folder(session_id) / FLOWS_DIRNAME / _safe(flow, "flow name")
+
+    def restore_seeds(self, seeds_dir: Path) -> tuple[str, ...]:
+        """Copy in every seed session this store does not already hold.
+
+        A host whose disk does not outlive a restart starts every boot with no
+        sessions at all. Seeds are sessions committed beside the code -- a
+        session file and its finished flows -- and this puts each one back.
+
+        Only where it is missing. A session already in the store is never
+        overwritten, so on a machine that keeps its disk a seed is restored once
+        and then belongs to whoever carries it on. The other side of that: on a
+        host that does lose its disk, whatever was done to a seeded session
+        there is gone at the next restart, and the committed copy returns.
+
+        Args:
+            seeds_dir: A folder laid out like the store itself. Missing is fine.
+
+        Returns:
+            The ids restored, in sorted order.
+        """
+        if not seeds_dir.is_dir():
+            return ()
+        restored = []
+        for seed in sorted(path.parent for path in seeds_dir.glob(f"*/{SESSION_FILENAME}")):
+            if not _SAFE_NAME.fullmatch(seed.name) or (self._root / seed.name).exists():
+                continue
+            self._root.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(seed, self._root / seed.name)
+            restored.append(seed.name)
+        return tuple(restored)
 
     def _folder(self, session_id: str) -> Path:
         return self._root / _safe(session_id, "session id")

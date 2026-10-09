@@ -108,9 +108,19 @@ def create_app(
         """Liveness, and something cheap to wake a sleeping instance with."""
         return {"status": "ok"}
 
+    if session_store is None:
+        # The default store, so this is a real start-up and not a test with a store
+        # of its own: put back any shipped session the disk does not have.
+        directories = load_session_settings()
+        files = FileSessionStore(directories.sessions_dir)
+        restored = files.restore_seeds(directories.seed_sessions_dir)
+        if restored:
+            logger.info("restored %d seed session(s): %s", len(restored), ", ".join(restored))
+        session_store = files
+
     app.include_router(
         create_session_router(
-            store=session_store or FileSessionStore(load_session_settings().sessions_dir),
+            store=session_store,
             conversations=conversations,
             layout=layout,
             assets=assets,
