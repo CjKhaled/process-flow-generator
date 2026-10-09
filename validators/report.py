@@ -35,8 +35,8 @@ class FindingCode(StrEnum):
     MISSING_CLARIFICATION_DETAIL = "missing_clarification_detail"
     MISSING_SWIMLANE = "missing_swimlane"
 
-    # Structural tier, conversation only: raised by validators.session_checks, which
-    # can see the statements and lanes a one-shot extraction never has.
+    # Structural tier, raised by validators.session_checks, which judges a graph
+    # against the session it belongs to: its statements and its process definition.
     MISSING_EVIDENCE = "missing_evidence"
     EVIDENCE_NOT_FOUND = "evidence_not_found"
     UNKNOWN_SCOPE = "unknown_scope"

@@ -1,16 +1,13 @@
-"""The seam every conversational agent talks to a model through.
+"""The seam every agent talks to a model through.
 
-:class:`~extractors.process.ModelCall` serves the one-shot extraction: one prompt
-in, one :class:`~ir.models.ProcessGraph` out, system prompt fixed when it is
-built. The conversation has three agents with three output types, so this is the
-same idea made general -- and, like ``ModelCall``, it imports no SDK. Agents
-depend on these protocols; :mod:`extractors.model` implements them with Strands;
-tests implement them with a list of canned answers. That is the whole reason a
-session can be run end to end with no key and no network.
+Three agents, three output types, one way to reach a model -- and no SDK import
+here. Agents depend on these protocols; :mod:`extractors.model` implements them
+with Strands; tests implement them with a list of canned answers. That is the
+whole reason a session can be run end to end with no key and no network.
 
-The failure contract is the one the extraction loop already relies on, from
-:mod:`extractors.errors`: :class:`~extractors.errors.SchemaCallError` for a
-response that did not fit the schema, which a repair turn can fix, and
+The failure contract is in :mod:`extractors.errors`:
+:class:`~extractors.errors.SchemaCallError` for a response that did not fit the
+schema, which a repair turn can fix, and
 :class:`~extractors.errors.ModelUnavailableError` for a request the API refused,
 which nothing in a prompt can.
 """

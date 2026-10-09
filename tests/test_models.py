@@ -1,14 +1,14 @@
 """Schema round-trip tests for the IR."""
 
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
 from ir.models import BranchAnswer, Edge, EdgeType, EvidenceRef, Node, NodeOrigin, NodeStatus, NodeType, ProcessGraph
 from ir.process_config import (
     SKELETON_FILENAME,
-    Process,
     ProcessConfig,
-    list_processes,
     load_process_config,
 )
 from ir.skeleton import Skeleton, load_skeleton
@@ -146,22 +146,24 @@ def test_coverage_determination_skeleton_collapses_only_the_handoffs() -> None:
     assert [spec.name for spec in skeleton.subprocesses] == ["pap", "shipment"]
 
 
-@pytest.mark.parametrize("process", list_processes(PROCESSES_ROOT), ids=lambda p: p.name)
-def test_every_subprocess_is_drawn_in_a_declared_lane(process: Process) -> None:
+PROCESS_FOLDERS = sorted(path for path in PROCESSES_ROOT.glob("*") if (path / "metadata.yaml").is_file())
+
+
+@pytest.mark.parametrize("directory", PROCESS_FOLDERS, ids=lambda path: path.name)
+def test_every_subprocess_is_drawn_in_a_declared_lane(directory: Path) -> None:
     """A collapsed box takes its lane from the skeleton, and nothing checks an undrawn one.
 
-    Stage 2 rejects a bad lane only on a box it actually draws, so a subprocess the
-    source never mentions would slip through to a diagram missing a swimlane. This
-    is the guard, and it runs over every process folder on disk rather than a named
-    one, so a process added later is covered by existing.
+    Stage 2 draws an undeclared lane last rather than refusing it, so a typo in a
+    hand-written skeleton would quietly put a box in a lane of its own at the
+    bottom of the diagram. This is the guard for the example folders, and it runs
+    over every one on disk rather than a named one.
     """
-    directory = PROCESSES_ROOT / process.name
     skeleton = load_skeleton(directory / SKELETON_FILENAME)
     config = load_process_config(directory)
 
     undeclared = [spec.name for spec in skeleton.subprocesses if spec.actor not in config.actors]
 
-    assert not undeclared, f"{process.name}: subprocess lane(s) not in actors: {undeclared}"
+    assert not undeclared, f"{directory.name}: subprocess lane(s) not in actors: {undeclared}"
 
 
 def test_enrollment_metadata_loads() -> None:
@@ -188,7 +190,6 @@ def test_coverage_determination_metadata_loads() -> None:
     assert "SP Biologics" in config.actors["Biologics"]
     assert config.default_actor == "PSCRM"
     assert config.glossary["PAP"] == "Patient Assistance Program"
-    assert config.model_id is None
 
 
 def test_a_default_actor_must_be_a_declared_actor() -> None:

@@ -29,9 +29,8 @@ from pydantic import ValidationError
 
 from bpmn.semantics import element_ids
 from ir.models import ProcessGraph
-from ir.process_config import OUTPUTS_DIRNAME, SKELETON_FILENAME, load_process_config
+from ir.process_config import GRAPH_FILENAME, OUTPUTS_DIRNAME, REPORT_FILENAME, SKELETON_FILENAME, load_process_config
 from ir.skeleton import load_skeleton
-from pipelines.stage1 import GRAPH_FILENAME, REPORT_FILENAME
 from pipelines.stage2 import DIAGRAM_FILENAME
 from render import page
 from render.assets import AssetError, ViewerAssets, load_assets, load_template

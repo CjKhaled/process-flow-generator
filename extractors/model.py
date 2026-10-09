@@ -1,14 +1,12 @@
 """The Strands adapter: the only place in the project that talks to an LLM.
 
-Everything the SDK knows is confined here. :mod:`extractors.process` depends on
-the :class:`~extractors.process.ModelCall` protocol instead, and the
-conversation's agents on :mod:`extractors.conversation`, which is what lets the
-retry loop and a whole session be tested without a network.
+Everything the SDK knows is confined here. The conversation's agents depend on
+the protocols in :mod:`extractors.conversation` instead, which is what lets a
+whole session be tested without a network.
 
-Two adapters, one translation. :class:`StrandsModelCall` is the one-shot
-extraction's; :class:`StrandsConversation` is the general form any agent uses.
-Both turn the SDK's exceptions into the same two of ours through
-:func:`_translated`, so the retry taxonomy cannot come to differ between them.
+A model is called from exactly one place, :class:`_TracedAgent`, which times the
+call, turns the SDK's exceptions into the two of ours, and records it. That is
+what lets the trace promise it has every call.
 """
 
 import time
@@ -24,77 +22,18 @@ from strands.types.exceptions import MaxTokensReachedException, StructuredOutput
 
 from extractors.conversation import T
 from extractors.errors import ModelUnavailableError, SchemaCallError
-from extractors.prompt import build_system_prompt
-from ir.models import ProcessGraph
-from ir.process_config import ProcessConfig
-from ir.skeleton import Skeleton
 from utils.logs import record_call
 from utils.settings import Settings
 
-
-class StrandsModelCall:
-    """A :class:`~extractors.process.ModelCall` backed by a Strands agent.
-
-    The agent is held across calls on purpose: a repair turn continues the same
-    conversation, so the model sees its own previous graph next to the critique
-    rather than re-extracting from scratch.
-    """
-
-    def __init__(self, agent: "_TracedAgent") -> None:
-        self._agent = agent
-
-    def __call__(self, prompt: str) -> ProcessGraph:
-        """Send one turn and return the parsed graph.
-
-        Raises:
-            SchemaCallError: If the model failed to produce a graph in the schema.
-                Transport and API failures are deliberately left to propagate --
-                a rate limit is not something a repair prompt can fix.
-        """
-        return self._agent.ask(prompt, ProcessGraph)
-
-
-def build_model_call(settings: Settings, config: ProcessConfig, skeleton: Skeleton) -> StrandsModelCall:
-    """Build the callable the extraction loop drives.
-
-    Args:
-        settings: Global settings supplying credentials and model defaults.
-        config: Per-process settings, which may override the model.
-        skeleton: The subprocesses this process is expected to contain.
-
-    Returns:
-        A model call wrapping an agent primed with the extraction system prompt.
-    """
-    model_id = config.model_id or settings.model_id
-    system_prompt = build_system_prompt(config, skeleton)
-    model = AnthropicModel(
-        client_args=_client_args(settings),
-        model_id=model_id,
-        max_tokens=settings.max_tokens,
-        # No temperature/top_p/top_k: the current Claude models reject them.
-    )
-    return StrandsModelCall(
-        _TracedAgent(
-            Agent(model=model, system_prompt=system_prompt, callback_handler=None),
-            role=ONE_SHOT,
-            model_id=model_id,
-            system_prompt=system_prompt,
-        )
-    )
-
-
 WORKSPACE_HEADER = "anthropic-workspace-id"
-
-ONE_SHOT = "one_shot"
-"""The role the one-shot extraction is traced under, beside the conversation's three."""
 
 
 class _TracedAgent:
     """One Strands agent, with every call through it timed, translated and recorded.
 
-    Both adapters hold one of these and nothing else, so there is exactly one
-    place a model is called from -- which is what lets the trace promise it has
-    every call. The agent is built with no callback handler: Strands' default
+    Every conversation holds one of these and nothing else, so there is exactly
+    one place a model is called from -- which is what lets the trace promise it
+    has every call. The agent is built with no callback handler: Strands' default
     one prints the model's output to stdout as it streams, and what this project
     wants on the console is its own account of the call, written once it is over.
     """
@@ -173,8 +112,7 @@ class _TracedAgent:
 def _client_args(settings: Settings) -> dict[str, Any]:
     """What the Anthropic client is built with: the key, and the workspace if one is named.
 
-    One function for both adapters, so the one-shot path and the conversation
-    cannot come to authenticate differently. The workspace travels as a default
+    The workspace travels as a default
     header because that is where the API reads it: a key that is not scoped to a
     workspace is refused on every request that does not say which one to use.
     """

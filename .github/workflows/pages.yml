@@ -1,7 +1,7 @@
-# Build the demo page and publish it to GitHub Pages.
+# Build the page and publish it to GitHub Pages.
 #
-# No API key is needed: this builds the page that *asks* for a run, not a run.
-# The pipeline itself lives in the Render service the page calls, whose URL is
+# No API key is needed: this builds the page that holds the conversation, not the
+# conversation. Every turn runs in the Render service the page calls, whose URL is
 # the PFG_API_BASE repository variable (Settings -> Secrets and variables ->
 # Actions -> Variables). It is a public URL, so it is a variable and not a secret.
 #
@@ -29,31 +29,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: js/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install
-        run: |
-          uv sync --frozen
-          npm ci --prefix js
-          npm run build --prefix js
+        run: npm ci --prefix frontend
 
-      # The page inlines bpmn-js, which is why the npm install above is not
-      # optional here.
+      # The base is relative, so the same build works under the repository's
+      # sub-path here and at the root of the service that also serves it.
       - name: Build the page
-        run: uv run python -m pipelines.site --api-base "${{ vars.PFG_API_BASE }}"
+        run: npm run build --prefix frontend
+        env:
+          VITE_API_BASE: ${{ vars.PFG_API_BASE }}
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: frontend/dist
 
   deploy:
     needs: build

@@ -76,7 +76,6 @@ def test_the_main_flows_config_names_the_process_and_every_lane_it_uses(
     assert (config.process_name, config.display_name) == ("enrollment_and_intake", "Intake & Enrollment")
     assert set(config.actors) == {"HCP", "Vendor", "PSM", "Manager", "CRM"}
     assert config.default_actor == "CRM"
-    assert config.model_id is None
 
 
 def test_lanes_are_ordered_by_the_processs_usual_personas(session: Session, domain: DomainKnowledge) -> None:

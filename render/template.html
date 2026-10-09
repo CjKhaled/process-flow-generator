@@ -1,16 +1,13 @@
 <!doctype html>
 <!--
-  The page shell, used twice. render/page.py fills the PFG comment sentinels
-  below by plain string replacement -- not str.format or string.Template, since
-  this file is full of CSS braces and either would need every one of them
-  doubled. A sentinel may appear more than once, as the title does, since
-  replacement fills every occurrence.
+  The page shell for stage 3's diagram.html. render/page.py fills the PFG comment
+  sentinels below by plain string replacement -- not str.format or
+  string.Template, since this file is full of CSS braces and either would need
+  every one of them doubled. A sentinel may appear more than once, as the title
+  does, since replacement fills every occurrence.
 
-  Two pages come out of it. Stage 3's diagram.html arrives with a diagram
-  already in it and opens on the diagram. The hosted page arrives with none and
-  opens on a form, asks the API to run the pipeline, and is handed the same
-  payload the offline page inlines. From the moment it has data, they are the
-  same page.
+  The page arrives with its diagram already inlined and fetches nothing: it is
+  one self-contained file, opened from wherever the reader keeps it.
 -->
 <html lang="en">
 <head>
@@ -37,7 +34,7 @@
   * { box-sizing: border-box; }
 
   /* The attribute has to win: any rule setting `display` outranks the browser's
-     own [hidden] rule, and #progress sets display:flex to lay its spinner out. */
+     own [hidden] rule. */
   [hidden] { display: none !important; }
 
   html, body {
@@ -133,125 +130,6 @@
     font-size: 13px;
     line-height: 1.45;
     color: var(--muted);
-  }
-
-  /* Which half of the page is on show. The other is display:none, so the
-     viewer's container has no size until the diagram view is up -- which is why
-     the script flips the view before it fits the diagram. */
-  body[data-view="landing"] main,
-  body[data-view="landing"] .controls { display: none; }
-  body[data-view="diagram"] #landing { display: none; }
-
-  /* ---- the landing view ---------------------------------------------- */
-
-  #landing {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    display: flex;
-    justify-content: center;
-    padding: 32px 16px 48px;
-  }
-
-  .sheet {
-    width: 100%;
-    max-width: 720px;
-  }
-
-  .sheet h2 {
-    margin: 0 0 6px;
-    font-size: 20px;
-    font-weight: 600;
-  }
-
-  .sheet .lede {
-    margin: 0 0 24px;
-    color: var(--muted);
-  }
-
-  .field { margin-bottom: 18px; }
-
-  .field > label {
-    display: block;
-    margin-bottom: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--muted);
-  }
-
-  select, textarea {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    background: var(--panel);
-    color: var(--ink);
-    font: inherit;
-  }
-
-  textarea {
-    min-height: 320px;
-    resize: vertical;
-    line-height: 1.6;
-  }
-
-  select:focus, textarea:focus {
-    outline: 2px solid var(--accent);
-    outline-offset: -1px;
-  }
-
-  .generate {
-    height: 38px;
-    padding: 0 20px;
-    border-color: var(--accent);
-    background: var(--accent);
-    color: #fff;
-    font-weight: 600;
-  }
-
-  .generate:hover { background: #111827; }
-
-  #progress {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 20px;
-    padding: 14px 16px;
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    background: var(--panel);
-  }
-
-  .spinner {
-    width: 16px;
-    height: 16px;
-    flex: none;
-    border: 2px solid var(--line);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  @media (prefers-reduced-motion: reduce) {
-    .spinner { animation-duration: 3s; }
-    aside { transition: none !important; }
-  }
-
-  #progress .stage { flex: 1; }
-  #progress .elapsed { color: var(--muted); font-variant-numeric: tabular-nums; }
-
-  #error {
-    margin-top: 20px;
-    padding: 14px 16px;
-    border: 1px solid var(--danger);
-    border-radius: 6px;
-    background: #fef2f2;
-    color: var(--danger);
-    white-space: pre-wrap;
   }
 
   /* ---- the diagram view ---------------------------------------------- */
@@ -435,12 +313,11 @@
   }
 </style>
 </head>
-<body data-view="<!--PFG:VIEW-->" data-panel="open" data-editing="off">
+<body data-panel="open" data-editing="off">
 <header>
   <h1><!--PFG:TITLE--></h1>
   <div class="spacer"></div>
   <div class="controls">
-    <button type="button" class="restart" data-action="restart" hidden>New run</button>
     <button type="button" class="reset" data-action="reset">Reset</button>
     <button type="button" class="edit" data-action="edit" aria-pressed="false">Edit</button>
     <button type="button" class="toggle" data-action="panel" aria-expanded="true" aria-controls="panel">Open questions</button>
@@ -449,28 +326,6 @@
     <button type="button" data-zoom="in" title="Zoom in">+</button>
   </div>
 </header>
-<section id="landing">
-  <form class="sheet" id="run">
-    <h2>Generate a process flow</h2>
-    <p class="lede">Describe a patient support program process in plain English. It is read, checked for
-      what it does not say, and drawn as BPMN with one swimlane per actor.</p>
-    <div class="field">
-      <label for="process">Process</label>
-      <select id="process" name="process"><!--PFG:PROCESSES--></select>
-    </div>
-    <div class="field">
-      <label for="source">Process description</label>
-      <textarea id="source" name="source" spellcheck="false" placeholder="e.g. The HCP completes a Patient Enrollment Form and faxes it to CM360, who transcribes it into the CRM. If consent is missing, the PSM calls the patient..."></textarea>
-    </div>
-    <button type="submit" class="generate">Generate</button>
-    <div id="progress" hidden>
-      <div class="spinner"></div>
-      <div class="stage">Starting</div>
-      <div class="elapsed">0:00</div>
-    </div>
-    <p id="error" hidden></p>
-  </form>
-</section>
 <main>
   <p id="scratch">Changes are a scratchpad. Nothing is saved, and reloading restores the generated diagram.
     The open questions still describe the original.</p>
@@ -491,20 +346,11 @@
 
   var FLAGGED = 'pfg-flagged';
   var ACTIVE = 'pfg-active';
-  var POLL_MS = 1500;
-  var DEADLINE_MS = 6 * 60 * 1000;
-  var BACKOFF_MS = [1000, 2000, 4000, 8000];
 
   var data = JSON.parse(document.getElementById('pfg-data').textContent);
-  var api = data.api || '';
   var body = document.body;
-  var heading = document.querySelector('header h1');
   var panelBody = document.getElementById('questions');
   var toggle = document.querySelector('.toggle');
-  var restart = document.querySelector('.restart');
-  var form = document.getElementById('run');
-  var progress = document.getElementById('progress');
-  var errorBox = document.getElementById('error');
 
   // Everything about how a diagram is drawn -- the modules, the read-only
   // state, the shapes -- lives in js/src/ and arrives as one bundle. This
@@ -523,8 +369,6 @@
     var how = event.target.getAttribute('data-zoom');
     if (action === 'panel') {
       setPanel(body.getAttribute('data-panel') !== 'open');
-    } else if (action === 'restart') {
-      toLanding();
     } else if (action === 'edit') {
       setEditing(body.getAttribute('data-editing') !== 'on');
     } else if (action === 'reset') {
@@ -548,32 +392,14 @@
     }
   });
 
-  // Stage 3's own page arrives with its diagram already in it and shows it at
-  // once. The hosted page has to ask for one first.
-  if (data.diagram) {
-    show(data);
-  } else {
-    startApp();
-  }
+  // The page arrives with its diagram already in it, and shows it at once.
+  show(data);
 
   // ---- the diagram ------------------------------------------------------
 
   function show(payload) {
     shown = payload;
-    if (payload.title) {
-      heading.textContent = payload.title;
-      document.title = payload.title;
-    }
-    if (typeof payload.questions === 'string') {
-      panelBody.innerHTML = payload.questions;
-    }
     label(payload.count);
-
-    // Before the import, so the container has a size to be fitted to: the
-    // landing view keeps <main> display:none, and a canvas of no width would
-    // fit the diagram to nothing.
-    body.setAttribute('data-view', 'diagram');
-    canvas.resized();
 
     return viewer.importXML(payload.diagram).then(function (result) {
       if (result.warnings && result.warnings.length) {
@@ -600,8 +426,8 @@
     });
   }
 
-  // Once only: a second run re-imports the diagram, but the panel's clicks and
-  // the event bus outlive it, and registering them twice would fire twice.
+  // Once only: Reset re-imports the diagram, but the panel's clicks and the
+  // event bus outlive it, and registering them twice would fire twice.
   function wire() {
     if (wired) {
       return;
@@ -701,150 +527,6 @@
 
   function label(count) {
     toggle.textContent = typeof count === 'number' ? 'Open questions (' + count + ')' : 'Open questions';
-  }
-
-  // ---- the hosted page --------------------------------------------------
-
-  function startApp() {
-    restart.hidden = false;
-    // Render sleeps a free instance after fifteen idle minutes and takes the
-    // best part of a minute to wake. Starting that now means the wait is
-    // already spent by the time anyone presses Generate.
-    request('GET', '/health', null, 1).catch(function () {});
-
-    form.addEventListener('submit', function (event) {
-      event.preventDefault();
-      var source = document.getElementById('source').value.trim();
-      if (!source) {
-        return showError('Paste a process description first.');
-      }
-      run(document.getElementById('process').value, source);
-    });
-  }
-
-  function toLanding() {
-    body.setAttribute('data-view', 'landing');
-    // A new run arrives as a fresh diagram, so it should not arrive mid-edit.
-    setEditing(false);
-    working(false);
-  }
-
-  function run(process, source) {
-    showError(null);
-    working(true);
-
-    var started = Date.now();
-    var ticking = setInterval(function () {
-      progress.querySelector('.elapsed').textContent = clock(Date.now() - started);
-    }, 1000);
-
-    stage('Starting the run');
-    request('POST', '/runs', { process: process, source: source }, BACKOFF_MS.length)
-      .then(function (queued) { return poll(queued.id); })
-      .then(function (finished) {
-        clearInterval(ticking);
-        return show(finished.result);
-      })
-      .catch(function (error) {
-        clearInterval(ticking);
-        working(false);
-        showError(error && error.message ? error.message : String(error));
-      });
-  }
-
-  function poll(id) {
-    var deadline = Date.now() + DEADLINE_MS;
-    var consecutiveFailures = 0;
-
-    return new Promise(function (resolve, reject) {
-      (function ask() {
-        if (Date.now() > deadline) {
-          return reject(new Error('The run is taking longer than six minutes. It may still finish; reload to try again.'));
-        }
-        request('GET', '/runs/' + encodeURIComponent(id), null, 1).then(function (state) {
-          consecutiveFailures = 0;
-          if (state.status === 'done') {
-            return resolve(state);
-          }
-          if (state.status === 'failed') {
-            return reject(new Error(state.detail || 'The run failed.'));
-          }
-          stage(state.label || state.status);
-          setTimeout(ask, POLL_MS);
-        }).catch(function (error) {
-          // A dropped poll is not a failed run: the server may be restarting, or
-          // the laptop's wifi blinked. Only a run of them is worth giving up on.
-          consecutiveFailures += 1;
-          if (consecutiveFailures > 8) {
-            return reject(error);
-          }
-          setTimeout(ask, POLL_MS * 2);
-        });
-      })();
-    });
-  }
-
-  function request(method, path, payload, attempts) {
-    var options = { method: method, headers: {} };
-    if (payload) {
-      options.headers['Content-Type'] = 'application/json';
-      options.body = JSON.stringify(payload);
-    }
-
-    return fetch(api + path, options).then(function (response) {
-      if (response.ok) {
-        return response.json();
-      }
-      return response.json().catch(function () { return {}; }).then(function (problem) {
-        var error = new Error(problem.detail || ('The server answered ' + response.status + '.'));
-        // A 4xx is about what was sent and will say the same thing next time;
-        // a 5xx or a cold start is worth another go.
-        error.retryable = response.status >= 500;
-        throw error;
-      });
-    }, function () {
-      // fetch only rejects when the request never got an answer at all.
-      var error = new Error('Cannot reach the pipeline service. It may be starting up.');
-      error.retryable = true;
-      return Promise.reject(error);
-    }).catch(function (error) {
-      if (attempts > 1 && error.retryable) {
-        // Waits longer each time: a cold Render instance takes the better part
-        // of a minute to answer its first request.
-        return delay(BACKOFF_MS[Math.min(BACKOFF_MS.length - attempts, BACKOFF_MS.length - 1)]).then(function () {
-          return request(method, path, payload, attempts - 1);
-        });
-      }
-      throw error;
-    });
-  }
-
-  function delay(ms) {
-    return new Promise(function (resolve) { setTimeout(resolve, ms); });
-  }
-
-  function working(busy) {
-    progress.hidden = !busy;
-    form.querySelector('.generate').disabled = busy;
-    document.getElementById('source').readOnly = busy;
-    document.getElementById('process').disabled = busy;
-    if (!busy) {
-      progress.querySelector('.elapsed').textContent = '0:00';
-    }
-  }
-
-  function stage(text) {
-    progress.querySelector('.stage').textContent = text;
-  }
-
-  function clock(ms) {
-    var seconds = Math.floor(ms / 1000);
-    return Math.floor(seconds / 60) + ':' + ('0' + (seconds % 60)).slice(-2);
-  }
-
-  function showError(message) {
-    errorBox.hidden = !message;
-    errorBox.textContent = message || '';
   }
 
   function fail(error) {

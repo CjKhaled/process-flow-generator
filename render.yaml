@@ -1,8 +1,10 @@
-# Render blueprint for the demo's pipeline service.
+# Render blueprint for the service.
 #
 # The free plan sleeps an instance after fifteen idle minutes and takes the
-# better part of a minute to wake. The page pings /health on load to start that
-# early; if a demo cannot afford even that, this is the line to change.
+# better part of a minute to wake. The page asks for the process list on load,
+# which starts that early; if a demo cannot afford even that, this is the line
+# to change. Sessions are written to the instance's disk, which a free instance
+# does not keep across a restart: a redeploy loses conversations in progress.
 services:
   - type: web
     name: pfg-api

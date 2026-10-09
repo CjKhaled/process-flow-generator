@@ -30,7 +30,7 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
   return (await response.json()) as T;
 }
 
-export const listProcesses = () => request<ProcessOption[]>("/session-processes");
+export const listProcesses = () => request<ProcessOption[]>("/processes");
 
 export const startSession = (processId: string, description: string) =>
   request<{ session_id: string }>("/sessions", { process_id: processId, description });

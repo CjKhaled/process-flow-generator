@@ -8,8 +8,9 @@ already call:
 * per flow, a folder in the layout ``processes/<name>/`` has always had:
   ``metadata.yaml``, ``skeleton.json``, ``outputs/graph.json`` and
   ``outputs/validation.json``;
-* then the same in-memory functions ``api/pipeline.py`` and ``pipelines/stage3.py``
-  compose -- translate, render, lay out, widen, colour, build the page.
+* then the same in-memory functions ``pipelines/stage2.py`` and
+  ``pipelines/stage3.py`` compose -- translate, render, lay out, widen, colour,
+  build the page.
 
 There is no second copy of a stage here and there must never be one. A folder
 written by close-out can be re-run with ``pipelines.stage2 --processes-root`` and
@@ -33,7 +34,14 @@ import yaml
 from bpmn import colors, decisions, document, semantics
 from bpmn.autolayout import Layouter, subprocess_layouter
 from ir.models import ProcessGraph
-from ir.process_config import METADATA_FILENAME, OUTPUTS_DIRNAME, SKELETON_FILENAME, ProcessConfig
+from ir.process_config import (
+    GRAPH_FILENAME,
+    METADATA_FILENAME,
+    OUTPUTS_DIRNAME,
+    REPORT_FILENAME,
+    SKELETON_FILENAME,
+    ProcessConfig,
+)
 from ir.skeleton import Skeleton, SubprocessSpec
 from knowledge.compose import lane_description
 from knowledge.loader import DomainKnowledge
@@ -51,8 +59,6 @@ from validators.report import ValidationReport
 
 logger = logging.getLogger(__name__)
 
-GRAPH_FILENAME = "graph.json"
-REPORT_FILENAME = "validation.json"
 DIAGRAM_FILENAME = "diagram.bpmn"
 PAGE_FILENAME = "diagram.html"
 
@@ -126,7 +132,6 @@ def compose_flow(session: Session, domain: DomainKnowledge, scope: str) -> FlowB
         actors={lane: lane_description(domain, session, lane) for lane in _lane_order(session, domain, used)},
         default_actor=session.default_lane,
         glossary=_glossary(session, domain),
-        model_id=None,
     )
 
     present = {node.id for node in graph.nodes}

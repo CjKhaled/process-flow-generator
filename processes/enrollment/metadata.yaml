@@ -35,6 +35,3 @@ glossary:
   MI: Missing Information
   PHI: Protected Health Information
   JCRM: another name the source uses for PSCRM, the Salesforce platform; not a separate system
-
-# Optional override of the model used for this process. Null uses the global default.
-model_id: null

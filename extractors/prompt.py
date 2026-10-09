@@ -1,14 +1,16 @@
-"""Prompt construction for the extraction call.
+"""The conventions that make a graph *born valid*.
 
-The schema itself is supplied to the model as a tool, so the field descriptions in
+The schema is supplied to the model as a tool, so the field descriptions in
 :mod:`ir.models` already carry the per-field contract. What lives here is the
-cross-field reasoning the schema cannot express: which conventions make a graph
-*born valid*, so the structural tier passes on the first attempt.
-"""
+cross-field reasoning a schema cannot express: one start, every gateway with two
+conditioned branches, every path reaching a terminal, what is a subprocess and
+what is not, what an annotation is for. A patch that follows them passes the
+structural tier on the first attempt.
 
-from ir.process_config import ProcessConfig
-from ir.skeleton import Skeleton
-from validators.report import ValidationReport
+They are the patch extractor's, joined into its system prompt by
+:func:`agents.extractor.build_system_prompt`. "The source" throughout means the
+user's numbered statements; the prompt says so before quoting this block.
+"""
 
 CONVENTIONS = """\
 ## How to build the graph
@@ -104,116 +106,3 @@ and marking it `stated` is the one failure this stage cannot recover from.
 **Ids and ordering.** Node ids are unique and snake_case. On edges leaving the
 same node, set `order` to the sequence you want them read in, starting at 0.
 """
-
-
-# Public because the conversation's patch extractor reuses this block verbatim: the rules
-# that make a graph born valid are the same whether it arrives whole or as a patch, and a
-# second copy of them would drift.
-
-
-def build_system_prompt(config: ProcessConfig, skeleton: Skeleton) -> str:
-    """Build the system prompt: the extraction conventions plus this process's vocabulary.
-
-    Args:
-        config: Per-process settings supplying the actor vocabulary, the default lane,
-            and domain shorthand.
-        skeleton: The subprocesses this process is expected to contain.
-
-    Returns:
-        The system prompt for the extraction agent.
-    """
-    sections = [
-        (
-            f"You extract a structured process graph from a written description of the "
-            f"'{config.display_name}' business process, part of a patient support program. "
-            f"Return the graph through the supplied schema. Capture what the source says, "
-            f"and mark what it leaves open rather than filling the gap yourself."
-        ),
-        CONVENTIONS,
-        _subprocess_section(skeleton),
-    ]
-    if config.actors:
-        sections.append(_actor_section(config))
-    if config.glossary:
-        sections.append(_glossary_section(config))
-    return "\n\n".join(sections)
-
-
-def _subprocess_section(skeleton: Skeleton) -> str:
-    listed = "\n".join(f"- `{spec.name}` -- {spec.label}" for spec in skeleton.subprocesses)
-    return (
-        "## Known subprocesses\n\n"
-        "These are the only values the `subprocess` field may take. Leave it null for a node "
-        "that sits outside all of them.\n\n"
-        f"{listed}\n\n"
-        "This list is what a complete description usually covers, not a checklist to satisfy. "
-        "The source may cover them in a different sequence, and may not mention one at all. "
-        "If a subprocess is absent from the text, leave it absent from the graph -- a later "
-        "check reports it as an open question. Do not invent steps to fill it in."
-    )
-
-
-def _actor_section(config: ProcessConfig) -> str:
-    """The lane vocabulary, with what each one is and where unattributed work goes.
-
-    Rendered in declaration order rather than sorted: ``metadata.yaml`` lists actors in
-    roughly the order the process reaches them, which reads better than alphabetical.
-    """
-    listed = "\n".join(f"- **{actor}** -- {description}" for actor, description in config.actors.items())
-    default = (
-        f"\n\nWhere the source does not say who performs a step, it is automatic: use `{config.default_actor}`."
-        if config.default_actor
-        else "\n\nWhere the source does not say who performs a step, use the lane that owns the work it does."
-    )
-    return (
-        "## Swimlanes\n\n"
-        "These are the lanes of the diagram, and the only values the `actor` field may take. "
-        "Use the names verbatim. What each one is matters: it is how you tell which lane a box "
-        "belongs in. If the source attributes a step to someone outside this list, use the "
-        f"source's own wording.\n\n{listed}{default}"
-    )
-
-
-def _glossary_section(config: ProcessConfig) -> str:
-    listed = "\n".join(f"- **{term}**: {meaning}" for term, meaning in sorted(config.glossary.items()))
-    return f"## Domain shorthand\n\nThe source uses these without expanding them. They are not actors.\n\n{listed}"
-
-
-def build_extraction_prompt(source_text: str) -> str:
-    """Build the opening turn: the source text to extract from."""
-    return f"Extract the process graph from the description below.\n\n<source>\n{source_text.strip()}\n</source>"
-
-
-def build_repair_prompt(report: ValidationReport | None, *, schema_error: str | None = None) -> str:
-    """Build a repair turn naming the specific defect to fix.
-
-    Only structural defects are fed back. Resolution findings -- a missing
-    subprocess, a tagged ambiguity -- are the correct output of this stage, and
-    asking the model to "fix" them would invite it to invent content the source
-    does not support.
-
-    Args:
-        report: The report from the failed attempt, or None if it never parsed.
-        schema_error: The SDK's complaint when the response did not fit the schema.
-
-    Returns:
-        The next user turn.
-    """
-    if schema_error is not None:
-        return (
-            "That response did not fit the schema. The validator reported:\n\n"
-            f"{schema_error}\n\n"
-            "Return the graph again, correcting that. Do not change the content of the "
-            "extraction beyond what the error requires."
-        )
-
-    defects = report.structural if report is not None else ()
-    listed = "\n".join(f"- {finding.code}: {finding.message}" for finding in defects)
-    return (
-        "That graph is not structurally valid. These defects must be fixed:\n\n"
-        f"{listed}\n\n"
-        "Return the corrected graph. Fix only these defects -- keep every other node and edge "
-        "as it was. Where a defect exists because the source never states an outcome, close it "
-        "with a terminal node marked `status: needs_clarification` rather than inventing what "
-        "happens."
-    )

@@ -20,7 +20,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Credentials and model defaults for a pipeline run."""
+    """Credentials and model defaults for a session's turns."""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     model_id: str = Field(
         default="claude-opus-4-8",
         alias="PFG_MODEL_ID",
-        description="Model used for extraction unless a process overrides it.",
+        description="Model every agent runs on, unless its own setting below names another.",
     )
     max_tokens: int = Field(
         default=32000,
@@ -58,7 +58,7 @@ class Settings(BaseSettings):
         alias="PFG_MAX_EXTRACTION_ATTEMPTS",
         description=(
             "How many times to ask the model, including the first attempt. The single source "
-            "of truth for the budget: a pipeline run never falls back to another default."
+            "of truth for the patch extractor's budget."
         ),
     )
 
@@ -163,12 +163,12 @@ class Stage2Settings(BaseSettings):
 
 
 class ApiSettings(BaseSettings):
-    """Settings for the hosted demo's HTTP service. Every field has a default.
+    """Settings for the HTTP service. Every field has a default.
 
-    The service needs an ``ANTHROPIC_API_KEY`` to run a pipeline, but not to
-    start: :class:`Settings` is loaded when a run begins, so a misconfigured
-    instance answers ``/health`` and says what is wrong on the first run rather
-    than crash-looping at boot.
+    The service needs an ``ANTHROPIC_API_KEY`` to run a turn, but not to start:
+    :class:`Settings` is loaded when a turn begins, so a misconfigured instance
+    answers ``/health`` and says what is wrong on the first turn rather than
+    crash-looping at boot.
     """
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")

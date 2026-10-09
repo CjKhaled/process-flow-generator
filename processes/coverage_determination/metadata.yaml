@@ -41,6 +41,3 @@ glossary:
   Med-Part D: Medicare Part D
   active member plan: the insurance coverage record on the patient, which can be deactivated
   copay: the commercial-insurance cost-support program a patient is enrolled into
-
-# Optional override of the model used for this process. Null uses the global default.
-model_id: null

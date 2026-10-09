@@ -256,3 +256,35 @@ is the server calling a URL the client hosts, and the client is a browser tab. T
 alternatives for a browser are server-sent events or a WebSocket, both of which need a
 heartbeat to survive a host that drops quiet connections, and a polling fallback when the
 stream drops. Not changed.
+
+## The one-shot path is removed
+
+The original stage 1 — one pasted description, one extraction, no questions — is gone, by
+decision. The conversation was first built beside it, at `/app`, because the brief said to
+leave the page at `/` alone; that left two front doors on one server, and the one people
+landed on was the old flow with no conversation in it.
+
+Removed: `POST /runs`, `GET /runs/{id}`, the old `GET /processes`, `api/pipeline.py`,
+`api/runs.py`, `pipelines/stage1.py`, `pipelines/site.py`, `extractors/process.py`, the
+one-shot model adapter and prompt builders, `render/page.py::build_app` with the landing form
+and polling script in `render/template.html`, `utils/io.py::read_source`,
+`ir/process_config.py::list_processes`, `ProcessConfig.model_id`, and their tests. Stages 2
+and 3 are untouched and still run as commands over a flow folder.
+
+Changed with it: the page is served at `/`; `GET /session-processes` is now `GET /processes`;
+`GRAPH_FILENAME` and `REPORT_FILENAME` live in `ir/process_config.py`; the `Dockerfile` and
+the Pages workflow build `frontend/` instead of the old static page.
+
+**Entries above that this makes obsolete.** "`GET /processes` is pinned by an existing test",
+"`ModelCall` returns a `ProcessGraph`", "The hosted image does not build `/app`", and the
+remarks about what the one-shot path does with an unlisted lane or with Strands' console
+printing all describe a path that no longer exists. They are left as written, as a record of
+why things were built the way they were at the time.
+
+**`processes/` stays** as two example flow folders for running stages 2 and 3 by themselves
+and for their tests. Nothing lists or serves them.
+
+**The hosted copy is not yet fit to use.** The Pages workflow now publishes the conversation
+and the image builds it, but a session is a file on the instance's disk, a free instance
+loses its disk on restart, there is no login, and the log level defaults to `DEBUG`. *Decide
+where sessions live before pointing anyone at a hosted copy.*

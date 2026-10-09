@@ -1,21 +1,21 @@
 """The conversation's HTTP surface: start a session, answer, look, finish.
 
-Start-and-poll, exactly as ``/runs`` is and for the same reason: a turn is three
-model calls and takes longer than a host will hold a request open. So every
-endpoint that starts work answers ``202`` at once, and ``GET /sessions/{id}`` is
-what the page polls to find out how it is going and to collect the result.
+Start-and-poll. A turn is three model calls and takes longer than a host will
+hold a request open, so every endpoint that starts work answers ``202`` at once,
+and ``GET /sessions/{id}`` is what the page polls to find out how it is going and
+to collect the result. Polling is also what lets the page say which step is
+running instead of spinning at nothing.
 
-The difference from ``/runs`` is where state lives. A run is remembered in memory
-and forgotten; a session is a file, written after every turn. So this module
-keeps no session of its own -- only the set of ids with a turn in flight, which
-is what makes a second message to a busy session a ``409`` instead of a race.
+State lives in the session file, written after every turn. This module keeps no
+session of its own -- only the set of ids with a turn in flight, which is what
+makes a second message to a busy session a ``409`` instead of a race.
 
 **Turns are serialised per session.** Two sessions may run at once; one session
 never runs two turns, because the second would start from a state the first is
 about to replace.
 
-Like ``api/app.py``, this takes its outside dependencies as arguments -- the
-model, the layouter, the viewer's files, the store -- so the whole surface is
+It takes its outside dependencies as arguments -- the model, the layouter, the
+viewer's files, the store -- so the whole surface is
 tested with no key, no network and no Node. And it holds no logic: every turn is
 :func:`session.orchestrator.run_turn`, the same call the CLI makes.
 
@@ -35,10 +35,10 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, ValidationError
 
+from agents.extractor import DEFAULT_MAX_ATTEMPTS
 from bpmn.autolayout import Layouter, LayoutError
 from extractors.conversation import ConversationFactory
 from extractors.model import StrandsConversationFactory
-from extractors.process import DEFAULT_MAX_ATTEMPTS
 from ir.process_config import OUTPUTS_DIRNAME
 from knowledge.loader import DomainKnowledge, list_domain_processes, load_domain
 from render.assets import AssetError, ViewerAssets
@@ -228,8 +228,8 @@ def create_session_router(
     Args:
         store: Where sessions are kept.
         conversations: The agents' models. Defaults to Strands, built from the
-            environment when a turn begins -- so, like ``/runs``, a service with
-            no key still starts and says what is wrong on the first turn.
+            environment when a turn begins -- so a service with no key still
+            starts, and says what is wrong on the first turn.
         layout: The layouter for close-out. Defaults to the pinned CLI.
         assets: The viewer's files for close-out. Defaults to the built bundle.
         domain_dir: The knowledge base. Defaults to ``PFG_DOMAIN_DIR``.
@@ -247,9 +247,9 @@ def create_session_router(
     def seam() -> tuple[ConversationFactory, int]:
         """The agents' models and the extractor's attempt budget, read when a turn starts.
 
-        An injected factory comes with the fallback budget, as an injected model
-        does in ``api/pipeline.py``: the configured one lives in settings that
-        need a key, and a caller who injects a model is one who has none.
+        An injected factory comes with the fallback budget: the configured one
+        lives in settings that need a key, and a caller who injects a model is
+        one who has none.
         """
         if conversations is not None:
             return conversations, DEFAULT_MAX_ATTEMPTS
@@ -277,7 +277,7 @@ def create_session_router(
         if not runner.submit(session, work):
             raise HTTPException(status_code=409, detail=BUSY)
 
-    @router.get("/session-processes")
+    @router.get("/processes")
     def processes() -> list[dict[str, str]]:
         """The processes a conversation can be held about, for the picker."""
         return [{"id": name, "display_name": display} for name, display in list_domain_processes(domain_dir)]

@@ -4,20 +4,16 @@ Pure string assembly -- every byte it needs is passed in, so the same arguments
 always produce the same page and nothing here touches the filesystem. Reading is
 :mod:`render.assets`' job.
 
-The same template serves two deliveries, and :func:`payload` is what they share:
-
-* :func:`build` inlines a payload into the page, which is stage 3's offline
-  ``diagram.html`` -- self-contained, opened with Live Server or over ``file://``.
-* :func:`build_app` builds the hosted page instead, which starts on a form and
-  fetches the *same payload object* from the API once a run finishes.
+:func:`build` is the whole of it: stage 3's ``diagram.html``, self-contained,
+opened with Live Server or over ``file://``. :func:`payload` is the data it
+inlines, kept as a function of its own so what a page is told can be asserted
+without parsing HTML.
 
 Two decisions are load-bearing:
 
 * **The question list is built here, not in the browser.** The panel is ordinary
   HTML with the flagged BPMN ids on ``data-elements`` attributes, so what the
-  page says can be asserted by reading it -- and the hosted page receives that
-  finished HTML rather than rendering findings itself. Escaping therefore has
-  one home, whichever way the payload arrives.
+  page says can be asserted by reading it, and escaping has one home.
 * **A finding's ``node_ids`` are IR ids and the page needs BPMN ids**, so they go
   through :func:`bpmn.semantics.node_element_id`. That function is imported
   rather than reimplemented: an NCName slug rule that exists in two places will
@@ -45,15 +41,10 @@ STYLES = "<!--PFG:STYLES-->"
 VIEWER_JS = "<!--PFG:VIEWER_JS-->"
 QUESTIONS = "<!--PFG:QUESTIONS-->"
 DATA = "<!--PFG:DATA-->"
-VIEW = "<!--PFG:VIEW-->"
-PROCESSES = "<!--PFG:PROCESSES-->"
 
 EMPTY_STATE = "Nothing outstanding. Every box in this diagram is stated by the source text."
 
 LEDE = "Raised by stage 1. Select one to find it in the diagram."
-
-APP_TITLE = "Process Flow Generator"
-"""What the hosted page is called before a run has named a process."""
 
 
 def payload(
@@ -62,11 +53,7 @@ def payload(
     display_name: str,
     element_of: Mapping[str, str] | None = None,
 ) -> dict[str, object]:
-    """One finished run, as the page consumes it.
-
-    The single shape: :func:`build` inlines it, and the API returns it as JSON.
-    A change here reaches both, which is the point -- the hosted page and the
-    offline one render identical results because they are handed identical data.
+    """What a page is told: the diagram, the panel, and which elements to mark.
 
     Args:
         diagram: The laid-out BPMN document, DI included.
@@ -121,49 +108,13 @@ def build(
         template,
         assets,
         title=display_name,
-        view="diagram",
         # The panel is written into the markup, so this page reads correctly with
         # no script run at all -- and for the same reason the payload inlined
         # below leaves ``questions`` and ``title`` out rather than shipping them
         # a second time. Only what the viewer cannot read off the page travels
         # as data.
         questions=str(data["questions"]),
-        processes="",
         data={"diagram": data["diagram"], "flagged": data["flagged"], "count": data["count"]},
-    )
-
-
-def build_app(
-    assets: ViewerAssets,
-    template: str,
-    processes: Sequence[tuple[str, str]],
-    api_base: str,
-) -> str:
-    """Render the hosted page: a form first, a diagram once the API has run one.
-
-    The same shell as :func:`build`, with no diagram in it. The page asks the API
-    for a run and is handed a :func:`payload` when one finishes, so from the
-    moment it has data the two pages are the same page.
-
-    Args:
-        assets: The viewer's script and stylesheets, to inline.
-        template: The page shell, sentinels unsubstituted.
-        processes: ``(name, display_name)`` for each selectable process, in the
-            order they should be offered.
-        api_base: Where the API lives, without a trailing slash. Empty means the
-            page is served by the API itself, and requests are same-origin.
-
-    Returns:
-        A self-contained HTML document showing the landing form.
-    """
-    return _fill(
-        template,
-        assets,
-        title=APP_TITLE,
-        view="landing",
-        questions="",
-        processes="".join(_option(name, display_name) for name, display_name in processes),
-        data={"api": api_base.rstrip("/")},
     )
 
 
@@ -172,25 +123,16 @@ def _fill(
     assets: ViewerAssets,
     *,
     title: str,
-    view: str,
     questions: str,
-    processes: str,
     data: Mapping[str, object],
 ) -> str:
     """Substitute every sentinel. The one place the template's contract is spelled out."""
     page = template
     page = page.replace(TITLE, escape(title))
-    page = page.replace(VIEW, escape(view, quote=True))
     page = page.replace(QUESTIONS, questions)
-    page = page.replace(PROCESSES, processes)
     page = page.replace(STYLES, assets.styles)
     page = page.replace(VIEWER_JS, assets.script)
     return page.replace(DATA, _payload(data))
-
-
-def _option(name: str, display_name: str) -> str:
-    """One entry of the process picker."""
-    return f'<option value="{escape(name, quote=True)}">{escape(display_name)}</option>'
 
 
 def _element(node_id: str, element_of: Mapping[str, str] | None) -> str:

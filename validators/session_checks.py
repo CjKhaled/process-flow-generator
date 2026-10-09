@@ -20,9 +20,10 @@ a question. ``lanes`` stays in :func:`validate_session`'s signature because the
 session is what this validator is a function of, and a lane rule that *is*
 mechanical would belong here.
 
-Kept apart from ``validate`` rather than folded into it, so the one-shot
-pipeline's contract does not change: that path has no statements to check against
-and its graphs carry no evidence.
+Kept apart from ``validate`` rather than folded into it, because they are
+functions of different things. ``validate`` judges a graph by itself, which is
+all stage 2 has when it reads one back off disk and all a slice has when it is
+checked; these judge a graph against a session.
 
 All of these are structural. Each is a mechanical defect the model can see and
 fix from the complaint, which is exactly what a repair turn is for.

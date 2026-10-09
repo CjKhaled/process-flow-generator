@@ -5,252 +5,12 @@ What actually happens, stage by stage, at the level of files and functions. Read
 want the detail.
 
 Three stages. Only the first one calls a model; stages 2 and 3 are deterministic, and the
-same input always produces byte-identical output. Stage 1 has two ways in: one shot from a
-pasted description, and a conversation. Both end in the same validated graph.
+same input always produces byte-identical output. Stage 1 is a conversation, and it is where
+almost all of the moving parts are.
 
 ---
 
-# Stage 1 — source text to validated graph
-
-```
-processes/<name>/metadata.yaml  ─┐
-processes/<name>/skeleton.json  ─┼─► system prompt ─► LLM ─► ProcessGraph
-processes/<name>/inputs/*.md    ─┘                            │
-                                                              ▼
-                                                 validate(graph, skeleton)
-                                                   │              │
-                                        structural fail      structural pass
-                                                   │              │
-                                          repair prompt ──┘   outputs/graph.json
-                                          (bounded retry)     outputs/validation.json
-```
-
-## 1A. What the system knows before it reads a word
-
-Two of the three inputs are **process context** — things that are true of the process itself,
-not of any particular description of it. They are stated once, by hand, and reused for every
-run.
-
-| Input | What it is | What it supplies |
-| --- | --- | --- |
-| `metadata.yaml` | Context about the process | The **actors**, which we model as **swimlanes** — each with a description, so the model can fill in the dots. A **default actor** for when it cannot tell who acts. A **glossary** of domain shorthand the writer may use without expanding |
-| `skeleton.json` | The subprocesses of the main process | The named stretches of work that **collapse into a single box** in stage 2. Each has a machine name, a display label, and the lane its box is drawn in |
-| `inputs/*.md` | The free-text description | The prose to extract from. `.md` or `.txt`, sorted by filename so a run is reproducible |
-
-### `metadata.yaml` in detail
-
-| Field | Purpose |
-| --- | --- |
-| `process_name` | Machine name. **Every BPMN id in stage 2 is built from this** |
-| `display_name` | Shown in prompts, page titles, and the diagram's pool |
-| `actors` | Name → description. **Declaration order is lane order**, top to bottom. Enrollment declares 9 |
-| `default_actor` | Where a step lands when nobody is named. Must be one of `actors`, enforced by a model validator |
-| `glossary` | Shorthand → meaning. Flagged to the model as "not actors" |
-| `model_id` | Optional per-process model override |
-
-**Why descriptions and not just names.** A model told only `JCRM` cannot know it is the
-platform that runs the automations, so it cannot decide that an automated step belongs in
-that lane. The description is what makes the assignment possible.
-
-**Why a default actor.** Source documents describe automation in the passive voice
-constantly — *"the PSM is assigned via zip to territory mapping"*. Without a default, a large
-share of a real process arrives with no lane at all. Enrollment sends these to `PSCRM`.
-
-### `skeleton.json` in detail
-
-These are hardcoded because they are **agnostic across descriptions**: two people writing up
-the same enrollment process will both hand off to off-label review, whatever words they use.
-Stating them once is more reliable than rediscovering them per run.
-
-| Field | Purpose |
-| --- | --- |
-| `name` | Matched against `Node.subprocess` |
-| `label` | What the collapsed box is called |
-| `actor` | The lane the box is drawn in. **Declared, not derived** — the lane that owns a subprocess is frequently not the lane performing most of its steps, and the box has no node of its own to take a lane from |
-
-**There is no ordering field.** Declaration order in the file is presentation order: it sets
-the sequence subprocesses are listed in for the prompt and reported in by the validator.
-It is not enforced — real descriptions run subprocesses in any order — and it places nothing,
-because stage 2 draws each box where the first of its steps appeared.
-
-**This list is what collapses, not a table of contents.** The running narrative belongs to no
-subprocess and is drawn step by step. Listing a main-flow phase here would make it vanish
-into a box. Enrollment names four: off-label review, duplicate handling, and two missing-info
-paths.
-
-**The test of that rule is the second process.** `coverage_determination` describes four
-named phases — PAP, shipment, prior authorization and appeals — and declares only the first
-two. The rule that decides it is not "is this a phase?" but **does the source continue past
-it?** Collapsing a box drops the edges leaving it and prunes whatever they alone led to. PAP
-and shipment qualify because the document stops at them. Prior authorization and appeals do
-not: both send a status back and the text runs on for another twelve lines, so collapsing
-either would delete the appeal arc, the retry loop, the affordability checks — and PAP and
-shipment along with them, since the only routes there run through prior authorization. It
-would still validate, because a collapsed box is a legitimate end of a path. That is what
-makes this the easiest field in the project to get quietly wrong.
-
-The collapse pays for itself here. PAP is reached from four points in that document and
-shipment from three; stage 2 re-points every entering edge at the box and de-duplicates, so
-those seven arrows converge on two boxes instead of seven scattered end events.
-
-### `inputs/` is CLI-only
-
-Worth stating plainly, because it is the easiest thing to misread. `metadata.yaml` and
-`skeleton.json` are read from disk on **every** run, hosted or local. `inputs/` is **not**:
-`api/pipeline.py` never imports `read_source`. Deployed, the text pasted into the form takes
-its place, and nothing is read from `inputs/` at all.
-
-## 1B. What the system prompt enforces
-
-The schema carries per-field meaning. The prompt carries what a schema cannot express —
-rules that span several fields or several objects. Together they aim at a graph that is
-*born valid*, so the structural tier passes on the first attempt.
-
-| Group | Rules |
-| --- | --- |
-| **Graph shape** | The graph is flat, never nested. Exactly one `start`, even where the source names several intake channels — those go in that node's label and detail. Every path reaches a terminal; loops are fine as long as some route out reaches one |
-| **Decisions** | Every gateway gets at least two branches, each carrying a condition. Where the source gives only the happy path, emit the other branch, point it at a terminal, and mark that terminal `needs_clarification` — do not invent the outcome. Set `answer` to yes or no on each branch of a yes/no question, and still fill in `condition`. Keep a combined condition whole: *"18 or older AND the code is in the document"* is one condition, not two gateways |
-| **Subprocess tagging** | A subprocess is work the source **hands off** at a decision, or a stretch the document gives its own heading. Tag every node on that path until it rejoins the main line. **The deciding gateway itself stays on the main line**, untagged, and so does the running narrative. Tagging stays flat — tagged steps are ordinary tasks and gateways with a tag, never a nested graph |
-| **Honesty** | Two statuses and no middle ground. Competing outcomes with no stated rule go in `alternatives`, not into an invented gateway. Business rules and record values are annotations, never tasks, and never wired into the sequence flow |
-| **Swimlanes** | Every box sits in one. A start, task or gateway takes the lane of whoever performs or decides. A **terminal takes the lane that owns the outcome**, which is often not the lane of the box pointing at it. An annotation takes the lane of the box it describes. Where nobody is named, the default lane |
-| **Ids and order** | Unique snake_case ids. On edges leaving the same node, `order` starts at 0 and sets the sequence they are read in |
-
-Assembled in four parts by `build_system_prompt`:
-
-| Part | Contents |
-| --- | --- |
-| Role line | Names the process by `display_name` and states the job: capture what the source says, mark what it leaves open |
-| Conventions | The fixed block above |
-| Known subprocesses | The skeleton's names in declaration order, as the only values `subprocess` may take — explicitly *"not a checklist to satisfy"* |
-| Swimlanes | The actors in declaration order with descriptions, plus the default-lane sentence. Omitted if none declared |
-| Domain shorthand | The glossary, sorted. Omitted if empty |
-
-## 1C. The call
-
-| Step | Detail |
-| --- | --- |
-| Model | Strands `AnthropicModel`. `model_id` is the process override or the global default; `max_tokens` from settings. No temperature or top-p — current Claude models reject them |
-| Schema delivery | The Pydantic model is handed over as a **tool**, via `structured_output_model=ProcessGraph`. Not requested in prose, so there is no parser to write for the ways a model can be slightly wrong |
-| Conversation | The `Agent` is **held across calls**, so a repair turn continues the same conversation and the model sees its own previous graph beside the critique, rather than re-extracting from scratch |
-| First turn | One line plus the source wrapped in `<source>` tags |
-
-**The retry taxonomy** lives in the exception translation, and it is the whole of the
-distinction:
-
-| SDK failure | Becomes | Effect |
-| --- | --- | --- |
-| `StructuredOutputException` | `SchemaCallError` | Retry, quoting the complaint |
-| `MaxTokensReachedException` | `SchemaCallError` | Retry — the graph was cut off mid-generation |
-| `APIStatusError` | `ModelUnavailableError` | **Abort immediately.** No repair prompt fixes a bad key, a bad model id, or a quota |
-
-`extractors/model.py` is the only file in the project that imports the SDK. The loop depends
-on a `ModelCall` protocol instead, which is what lets it be tested with no network.
-
-## 1D. Validation
-
-`validate(graph, skeleton)` is a pure function — it returns findings and never touches the
-graph.
-
-**`flow_view` first.** The graph is projected onto its control-flow subgraph: annotation
-nodes and `annotates` edges removed, adjacency built once for the predicates to share.
-Without this, a well-formed graph looks full of orphans and dead ends, because annotations
-carry no sequence flow.
-
-**Check order is load-bearing.** `duplicate_node_id` and `dangling_edge_ref` run first. If
-either fires, **every flow predicate is skipped**. They index nodes by id and follow edges
-between them, so on a graph with duplicate ids or dangling references they produce noise
-rather than signal.
-
-### Why a validator at all, when structured output exists
-
-Structured output guarantees each `Node` and `Edge` **in isolation**: correct types,
-non-empty strings, valid enum members, `order >= 0`, no extra fields. Pydantic validates one
-object at a time and never sees the others.
-
-Every structural check is a claim about **how objects relate**. Of the ten below, eight are
-flatly impossible in a per-object schema. The other two could be schema rules and are
-deliberately not: `actor` is typed `str | None` on purpose, because `ir/models.py` is kept
-shape-only so the validator's own tests can construct broken graphs to prove the checks fire.
-Make the model reject them and those tests cannot be written.
-
-Three layers, each doing something the others cannot: the **schema** fixes shape, the
-**prompt** states intent, the **validator** enforces relationships.
-
-### The 10 structural codes — the graph is malformed and must not be emitted
-
-These are `validate`'s own. The conversation adds seven more, raised by a separate validator
-that can see the statements and the lanes; they are in section C6.
-
-| Code | Fires when | In a schema? |
-| --- | --- | --- |
-| `duplicate_node_id` | Two or more nodes share an id | No — cross-object |
-| `dangling_edge_ref` | An edge's `from_id` or `to_id` names no node | No — cross-object |
-| `start_node_count` | Zero start nodes, or more than one | No — cross-object |
-| `gateway_branches` | A gateway has fewer than two branches, **or** any branch has a null or blank condition | No — cross-object |
-| `orphan_node` | A non-start with no incoming flow, or a non-terminal with no outgoing | No — cross-object |
-| `terminal_unreachable` | No terminal exists, or some node reaches none. Walked **backwards from the terminals**, so a rework loop is not mistaken for a dead end | No — global |
-| `unreachable_from_start` | A node not reachable forward from the start. Catches a self-consistent island that passes every local rule but is not part of the process | No — global |
-| `malformed_annotation` | Four cases: an `annotates` edge leaving a non-annotation; one pointing *at* an annotation; an annotation wired into the flow by `precedes`/`branch`; an annotation describing nothing | No — cross-object |
-| `missing_clarification_detail` | `needs_clarification` with an empty `detail`. An open question that does not say what is open tells a reviewer nothing, and it is a mechanical omission the model can fix from its own extraction | Yes, deliberately not |
-| `missing_swimlane` | `actor` null or blank on any node. A box with no lane is one the renderer cannot place | Yes, deliberately not |
-
-### The 3 resolution codes — well formed, but a human must resolve something
-
-| Code | Fires when |
-| --- | --- |
-| `missing_required_subprocess` | The skeleton declares one no node claims — *"the source does not describe this; confirm it is genuinely absent"* |
-| `unknown_subprocess` | A node claims a subprocess the skeleton does not declare |
-| `needs_clarification` | One per tagged node, carrying its `detail` |
-
-Severity is derived from the code by a lookup table inside `Finding.of`, so the two cannot
-drift apart.
-
-**The split is the point of the stage.** Structural findings are mechanical — the model can
-see the complaint and fix it, so they earn a repair turn. Resolution findings are ambiguity
-in the source, which is *the product of this stage*, and are never retried. Retrying them
-would only pressure the model into inventing content the source does not support, and an
-invented step is indistinguishable from a real one everywhere downstream.
-
-**One thing the validator cannot check.** It is never given `metadata.yaml` — the signature
-is `validate(graph, skeleton)`. So it can require that a node names *a* lane, but has no list
-to check the name against. A lane the config never declared reaches disk looking like any
-other, and stage 2 draws it — after the declared lanes, with a warning in the log.
-
-## 1E. The retry loop
-
-Budget is `PFG_MAX_EXTRACTION_ATTEMPTS`, default 3, **including the first attempt**.
-
-| Attempt outcome | Next prompt |
-| --- | --- |
-| `SchemaCallError` | Validation is skipped. Repair turn quotes the SDK's complaint and says to correct that and change nothing else |
-| Structurally invalid | Repair turn lists `code: message` for each structural finding |
-| Structurally valid | Return the graph, its report, and the attempt count |
-
-The structural repair prompt says **"Fix only these defects — keep every other node and edge
-as it was"**, and adds that where a defect exists because the source never states an outcome,
-close it with a `needs_clarification` terminal rather than inventing what happens. Only
-`report.structural` is ever fed back; resolution findings are never mentioned to the model.
-
-Exhausting the budget raises `ExtractionError`, carrying the attempt count, the last report,
-and the last schema complaint.
-
-## 1F. Writing out
-
-| Behaviour | Detail |
-| --- | --- |
-| Failure | A graph failing the structural tier is **never written**. Later stages may assume anything in `outputs/` is well formed |
-| Name mismatch | If `graph.process_name` disagrees with the folder it is a **warning, not a failure** — a mislabelled but sound graph is worth keeping. Live example: enrollment's `graph.json` says `"Intake & Enrollment"`. Stage 2 therefore ignores that field entirely and builds ids from `metadata.yaml` |
-| Files | `graph.json` and `validation.json`, two-space indented, `ensure_ascii=False`, trailing newline |
-| Exit codes | `0` success · `1` extraction failed, nothing written · `2` process or configuration unreadable |
-
-**What a real run produces.** The committed enrollment extraction has four findings, all
-`needs_clarification`, all on terminals: the prescriber disagreeing, duplicate handling
-resolved, an HCP still unresponsive, a manager not approving. Every one is a point where the
-source stops before saying what happens next. That is the stage working as intended.
-
----
-
-# Stage 1, as a conversation
+# Stage 1 — the conversation
 
 ```
 description ─► split into statements                              session.json
@@ -264,9 +24,8 @@ description ─► split into statements                              session.js
  accept ─► freeze the graph ─► slice each subprocess ─► per-flow folder ─► stages 2 and 3
 ```
 
-The same stage 1 output — a validated `ProcessGraph` — reached over many turns instead of
-one. Everything in sections 1A to 1F still exists and is still what `pipelines/stage1.py` and
-`/runs` do. This section is the second way in.
+A validated `ProcessGraph`, reached over as many turns as the user cares to take. After
+every reply the pipeline stops and waits for a person; nothing runs between turns.
 
 | | |
 | --- | --- |
@@ -285,7 +44,7 @@ loop; here the pause is *between* turns, every agent call runs to completion, an
 needs resuming. For the same reason no Strands session manager is attached: the agents are
 built fresh each turn and have no state of their own to persist.
 
-## C1. The knowledge base and who reads it
+## 1A. The knowledge base and who reads it
 
 `domain_knowledge/agnostic/` holds `personas.yaml`, `glossary.yaml` and markdown that applies
 to any process. `domain_knowledge/<process>/` holds `process.yaml`, `checklist.yaml` and that
@@ -316,7 +75,7 @@ defined, every markdown path mentioned in a body resolving.
 `program.patient_self_enrollment`, `product.pediatric_population` — switch topics off. A fact
 is unknown until the user states it, and an unknown fact never filters.
 
-## C2. What was added to the IR
+## 1B. What was added to the IR
 
 All optional with defaults, so every graph already on disk still parses and stage 2 is
 undisturbed:
@@ -329,7 +88,7 @@ undisturbed:
 `NodeStatus` stays binary. Whether a node rests on the first description or on a later answer
 is read off the statements its evidence cites, not stored on the node.
 
-## C3. The session file
+## 1C. The session file
 
 `session/models.py::Session`, versioned by `schema_version`. The records inside are frozen;
 the session is not, and a turn works on a deep copy that replaces the original only if the
@@ -364,20 +123,29 @@ node in the placeholder moves to the named lane and the placeholder is dropped. 
 interpreter proposes is usable at once — the extractor needs somewhere to put work the user
 has already attributed.
 
-## C4. The model seam
+## 1D. The model seam
 
-`extractors/conversation.py` is the one-shot path's `ModelCall` made general, and like it
-imports no SDK:
+`extractors/conversation.py` is what the agents depend on, and it imports no SDK:
 
 | Protocol | Method |
 | --- | --- |
 | `ConversationFactory` | `open(role, system_prompt, cached_context=None) -> StructuredConversation` |
 | `StructuredConversation` | `send(prompt, output: type[T]) -> T` |
 
-`extractors/model.py` implements both with Strands and is still the only file that imports
-it. The exception translation is shared with `StrandsModelCall` through one context manager,
-so the retry taxonomy cannot differ between the two paths: `SchemaCallError` is repairable,
-`ModelUnavailableError` is not. The model per role comes from `PFG_INTERPRETER_MODEL_ID`,
+`extractors/model.py` implements both with Strands and is the only file that imports it. The
+schema is handed to the model as a **tool** (`structured_output_model=`), not requested in
+prose, so there is no parser to write for the ways a model can be slightly wrong. No
+temperature or top-p is set: current Claude models reject them.
+
+**The retry taxonomy** lives in the exception translation, and it is the whole of the
+distinction:
+
+| SDK failure | Becomes | Effect |
+| --- | --- | --- |
+| `StructuredOutputException` | `SchemaCallError` | Retry, quoting the complaint |
+| `MaxTokensReachedException` | `SchemaCallError` | Retry — the graph was cut off mid-generation |
+| `APIStatusError` | `ModelUnavailableError` | **Abort immediately.** No repair prompt fixes a bad key, a bad model id, or a quota |
+ The model per role comes from `PFG_INTERPRETER_MODEL_ID`,
 `PFG_EXTRACTOR_MODEL_ID` and `PFG_NAVIGATOR_MODEL_ID`, each falling back to `PFG_MODEL_ID`.
 
 **Caching.** `cached_context` is sent as the opening exchange of the conversation, ending in a
@@ -386,7 +154,7 @@ prompt as a plain string, which drops a cache point placed there; one inside a m
 honoured. The navigator's knowledge is the same text on every turn of every session about a
 process, so it is the block this exists for.
 
-## C5. The interpreter
+## 1E. The interpreter
 
 *What did the user just say, in relation to what was asked?* One fresh conversation per turn.
 It never sees the graph.
@@ -412,14 +180,14 @@ unexplained term is reported, never guessed.
 Its output is a *reading*. Every change it implies is applied by code, which drops what does
 not hold up — a persona that does not exist, a topic not in the checklist.
 
-## C6. The extractor, and patches
+## 1F. The extractor, and patches
 
 *Turn new statements into graph changes. Nothing else.*
 
 | | |
 | --- | --- |
 | Reads | The master graph as JSON, every statement with this turn's marked `NEW` and owed ones `RETRY`, this turn's corrections |
-| System prompt | `extractor_patch.md` + the conventions block from `extractors/prompt.py`, verbatim + `extractor_context` |
+| System prompt | `extractor_patch.md` + the conventions block from `extractors/prompt.py` + `extractor_context` |
 | Returns | `GraphPatch`: a list of operations |
 | Conversation | Held across repair attempts within a turn, never across turns |
 
@@ -444,12 +212,29 @@ repair turn can name everything wrong with a patch at once. Nodes a patch adds a
 just after the step that leads to them, because stage 2 lays out by node order and a patch
 can only append.
 
-### The checks, and the 7 codes the conversation adds
+### The conventions
 
-After a patch is applied, `agents/extractor.py::check` runs `validate(graph, skeleton)`
-unchanged and then `validators/session_checks.py::validate_session(graph, corpus, lanes,
-process)`. The second exists because a session holds what the first never sees: the
-statements, the lanes, the process definition. All seven are structural.
+The schema carries per-field meaning. `extractors/prompt.py::CONVENTIONS` carries what a
+schema cannot express — rules that span several fields or several objects. Together they aim
+at a patch that leaves the graph *born valid*, so the structural tier passes on the first
+attempt. "The source" in that block means the user's numbered statements.
+
+| Group | Rules |
+| --- | --- |
+| **Graph shape** | The graph is flat, never nested. Exactly one `start`, even where the source names several intake channels — those go in that node's label and detail. Every path reaches a terminal; loops are fine as long as some route out reaches one |
+| **Decisions** | Every gateway gets at least two branches, each carrying a condition. Where the source gives only the happy path, emit the other branch, point it at a terminal, and mark that terminal `needs_clarification` — do not invent the outcome. Set `answer` to yes or no on each branch of a yes/no question, and still fill in `condition`. Keep a combined condition whole: *"18 or older AND the code is in the document"* is one condition, not two gateways |
+| **Subprocess tagging** | A subprocess is work the source **hands off** at a decision, or a stretch the document gives its own heading. Tag every node on that path until it rejoins the main line. **The deciding gateway itself stays on the main line**, untagged, and so does the running narrative. Tagging stays flat — tagged steps are ordinary tasks and gateways with a tag, never a nested graph |
+| **Honesty** | Two statuses and no middle ground. Competing outcomes with no stated rule go in `alternatives`, not into an invented gateway. Business rules and record values are annotations, never tasks, and never wired into the sequence flow |
+| **Swimlanes** | Every box sits in one. A start, task or gateway takes the lane of whoever performs or decides. A **terminal takes the lane that owns the outcome**, which is often not the lane of the box pointing at it. An annotation takes the lane of the box it describes. Where nobody is named, the default lane |
+| **Ids and order** | Unique snake_case ids. On edges leaving the same node, `order` starts at 0 and sets the sequence they are read in |
+
+### The checks, and the 7 session codes
+
+After a patch is applied, `agents/extractor.py::check` runs two validators.
+`validate(graph, skeleton)` judges the graph by itself and is described in the next section.
+`validators/session_checks.py::validate_session(graph, corpus, lanes, process)` judges it
+against the session: the statements, the process definition. Its seven codes are all
+structural.
 
 | Code | Fires when |
 | --- | --- |
@@ -472,20 +257,96 @@ node that rests on a paraphrase is sent back.
 
 ### The repair loop
 
-Section 1E's loop, unchanged in spirit: only structural findings are fed back, in the held
-conversation, with "fix only these defects; keep every other node and edge". Each repair is a
-whole corrected patch against the *original* graph — a rejected patch was never applied.
-Budget is `PFG_MAX_EXTRACTION_ATTEMPTS`, first attempt included.
+| Attempt outcome | Next |
+| --- | --- |
+| `SchemaCallError` | Validation is skipped. The repair turn quotes the SDK's complaint and says to correct that and change nothing else |
+| Structurally invalid | The repair turn lists `code: message` for each structural finding |
+| Structurally valid | The graph is accepted, with its resolution findings |
 
-What differs is the ending. The one-shot loop raises when the budget runs out, having nothing
-to fall back on. A session always has last turn's graph, which is valid, so here it is an
-outcome: the graph is kept, the turn's statements go to `retry_statement_ids`, the next
+Only structural findings are ever fed back, in the held conversation, with "fix only these
+defects; keep every other node and edge". Each repair is a whole corrected patch against the
+*original* graph — a rejected patch was never applied. Budget is
+`PFG_MAX_EXTRACTION_ATTEMPTS`, first attempt included.
+
+Running out of attempts is an outcome, not an error. A session always has last turn's graph,
+which is valid: the graph is kept, the turn's statements go to `retry_statement_ids`, the next
 turn's prompt marks them `RETRY`, and the page says the flow was not updated.
 
 The extractor is not called at all when a turn described nothing — a quick reply, or a
 message about the session itself — unless statements are owed or something was corrected.
 
-## C7. The ledger, the candidates, and focus
+## 1G. The graph validator
+
+`validate(graph, skeleton)` is a pure function — it returns findings and never touches the
+graph.
+
+**`flow_view` first.** The graph is projected onto its control-flow subgraph: annotation
+nodes and `annotates` edges removed, adjacency built once for the predicates to share.
+Without this, a well-formed graph looks full of orphans and dead ends, because annotations
+carry no sequence flow.
+
+**Check order is load-bearing.** `duplicate_node_id` and `dangling_edge_ref` run first. If
+either fires, **every flow predicate is skipped**. They index nodes by id and follow edges
+between them, so on a graph with duplicate ids or dangling references they produce noise
+rather than signal.
+
+### Why a validator at all, when structured output exists
+
+Structured output guarantees each `Node` and `Edge` **in isolation**: correct types,
+non-empty strings, valid enum members, `order >= 0`, no extra fields. Pydantic validates one
+object at a time and never sees the others.
+
+Every structural check is a claim about **how objects relate**. Of the ten below, eight are
+flatly impossible in a per-object schema. The other two could be schema rules and are
+deliberately not: `actor` is typed `str | None` on purpose, because `ir/models.py` is kept
+shape-only so the validator's own tests can construct broken graphs to prove the checks fire.
+Make the model reject them and those tests cannot be written.
+
+Three layers, each doing something the others cannot: the **schema** fixes shape, the
+**prompt** states intent, the **validator** enforces relationships.
+
+### The 10 structural codes — the graph is malformed and must not be emitted
+
+These are `validate`'s own. The seven that need a session are in the section before this one.
+
+| Code | Fires when | In a schema? |
+| --- | --- | --- |
+| `duplicate_node_id` | Two or more nodes share an id | No — cross-object |
+| `dangling_edge_ref` | An edge's `from_id` or `to_id` names no node | No — cross-object |
+| `start_node_count` | Zero start nodes, or more than one | No — cross-object |
+| `gateway_branches` | A gateway has fewer than two branches, **or** any branch has a null or blank condition | No — cross-object |
+| `orphan_node` | A non-start with no incoming flow, or a non-terminal with no outgoing | No — cross-object |
+| `terminal_unreachable` | No terminal exists, or some node reaches none. Walked **backwards from the terminals**, so a rework loop is not mistaken for a dead end | No — global |
+| `unreachable_from_start` | A node not reachable forward from the start. Catches a self-consistent island that passes every local rule but is not part of the process | No — global |
+| `malformed_annotation` | Four cases: an `annotates` edge leaving a non-annotation; one pointing *at* an annotation; an annotation wired into the flow by `precedes`/`branch`; an annotation describing nothing | No — cross-object |
+| `missing_clarification_detail` | `needs_clarification` with an empty `detail`. An open question that does not say what is open tells a reviewer nothing, and it is a mechanical omission the model can fix from its own extraction | Yes, deliberately not |
+| `missing_swimlane` | `actor` null or blank on any node. A box with no lane is one the renderer cannot place | Yes, deliberately not |
+
+### The 3 resolution codes — well formed, but a human must resolve something
+
+| Code | Fires when |
+| --- | --- |
+| `missing_required_subprocess` | The skeleton declares one no node claims — *"the source does not describe this; confirm it is genuinely absent"* |
+| `unknown_subprocess` | A node claims a subprocess the skeleton does not declare |
+| `needs_clarification` | One per tagged node, carrying its `detail` |
+
+Severity is derived from the code by a lookup table inside `Finding.of`, so the two cannot
+drift apart.
+
+The ledger adds three more resolution codes of its own, described with it below.
+
+**The split is the point of the stage.** Structural findings are mechanical — the model can
+see the complaint and fix it, so they earn a repair turn. Resolution findings are ambiguity
+in the source, which is *the product of this stage*, and are never retried. Retrying them
+would only pressure the model into inventing content the source does not support, and an
+invented step is indistinguishable from a real one everywhere downstream.
+
+**One thing the validator cannot check.** It is never given `metadata.yaml` — the signature
+is `validate(graph, skeleton)`. So it can require that a node names *a* lane, but has no list
+to check the name against. A lane the config never declared reaches disk looking like any
+other, and stage 2 draws it — after the declared lanes, with a warning in the log.
+
+## 1H. The ledger, the candidates, and focus
 
 All three are code. What counts as covered, what matters most next and where the discussion
 is should not depend on a model's reading of a long conversation.
@@ -531,7 +392,7 @@ nothing more pressing is open on the main flow. It returns when the subprocess h
 high-priority topic and no open outcome. The navigator proposes; code accepts only what
 these rules allow.
 
-## C8. The navigator
+## 1I. The navigator
 
 *What to ask next, where to focus, and what to say.* One conversation per turn. It cannot
 edit the graph.
@@ -553,7 +414,7 @@ Its style rules are in `agents/prompts/navigator.md`: open questions, never lead
 user's own words; never another client's name or setup; never advice, never a comment on
 compliance.
 
-## C9. What each failure does
+## 1J. What each failure does
 
 | Failure | Behaviour |
 | --- | --- |
@@ -566,7 +427,7 @@ compliance.
 The duration of every step — the interpreter, each extraction attempt, the navigator — is
 written to that turn's version record.
 
-## C10. Slicing and the live views
+## 1K. Slicing and the live views
 
 `session/slicing.py::slice_subprocess` cuts a subprocess out of the master graph: the tagged
 nodes and the edges among them; one synthesised start labelled with `process.yaml`'s `entry`,
@@ -587,7 +448,7 @@ Annotations are not drawn; each becomes a note on the step it describes. Every n
 `Rationale`: label, status, detail, the open question, the evidence as quote plus the
 statement it came from and its turn, alternatives, notes, and the titles of linked topics.
 
-## C11. Close-out
+## 1L. Close-out
 
 `session/closeout.py`. On accept, for the main flow and each subprocess with steps:
 
@@ -597,6 +458,64 @@ statement it came from and its turn, alternatives, notes, and the titles of link
 | `skeleton.json` | Main flow: the subprocesses that have steps, each in the lane of whoever hands off to it. Subprocess flows: `{"subprocesses": []}` |
 | `outputs/graph.json` | The master graph, or the slice |
 | `outputs/validation.json` | `validate`'s findings plus the ledger's for that scope |
+
+### The flow folder in detail
+
+Nobody writes these two files by hand; close-out composes them. They are documented because
+they are stage 2's whole input besides the graph, and because the example folders under
+`processes/` are hand-made instances of them.
+
+**`metadata.yaml`**
+
+| Field | Purpose |
+| --- | --- |
+| `process_name` | Machine name. **Every BPMN id in stage 2 is built from this** |
+| `display_name` | Shown in prompts, page titles, and the diagram's pool |
+| `actors` | Name → description. **Declaration order is lane order**, top to bottom. The lanes the flow uses |
+| `default_actor` | Where a step lands when nobody is named. Must be one of `actors`, enforced by a model validator |
+| `glossary` | Shorthand → meaning. Flagged to the model as "not actors" |
+
+`actors` is not a fence: a node in a lane the file never lists is drawn after the listed
+ones (see stage 2, job 1).
+
+**`skeleton.json`**
+
+The subprocesses that exist are declared once, in `process.yaml`, because they are **agnostic
+across descriptions**: two people describing the same enrollment process will both hand off
+to off-label review, whatever words they use. A flow's skeleton is the subset of them that
+actually has steps.
+
+| Field | Purpose |
+| --- | --- |
+| `name` | Matched against `Node.subprocess` |
+| `label` | What the collapsed box is called |
+| `actor` | The lane the box is drawn in. **Declared, not derived** — the lane that owns a subprocess is frequently not the lane performing most of its steps, and the box has no node of its own to take a lane from |
+
+**There is no ordering field.** Declaration order in the file is presentation order: it sets
+the sequence subprocesses are reported in by the validator.
+It is not enforced — real descriptions run subprocesses in any order — and it places nothing,
+because stage 2 draws each box where the first of its steps appeared.
+
+**This list is what collapses, not a table of contents.** The running narrative belongs to no
+subprocess and is drawn step by step. Listing a main-flow phase here would make it vanish
+into a box.
+
+**The test of that rule is the second example.** `processes/coverage_determination` describes four
+named phases — PAP, shipment, prior authorization and appeals — and declares only the first
+two. The rule that decides it is not "is this a phase?" but **does the source continue past
+it?** Collapsing a box drops the edges leaving it and prunes whatever they alone led to. PAP
+and shipment qualify because the document stops at them. Prior authorization and appeals do
+not: both send a status back and the text runs on for another twelve lines, so collapsing
+either would delete the appeal arc, the retry loop, the affordability checks — and PAP and
+shipment along with them, since the only routes there run through prior authorization. It
+would still validate, because a collapsed box is a legitimate end of a path. That is what
+makes this the easiest field in the project to get quietly wrong.
+
+The collapse pays for itself here. PAP is reached from four points in that document and
+shipment from three; stage 2 re-points every entering edge at the box and de-duplicates, so
+those seven arrows converge on two boxes instead of seven scattered end events.
+
+### Drawing
 
 Then, per flow, the calls `pipelines/stage2.py` and `pipelines/stage3.py` make: `translate`,
 `render`, the layouter, `decisions.widen`, `colors.apply`, `page.build`. Everything is drawn
@@ -611,13 +530,15 @@ no mapping there.
 final main diagram does not show a subprocess flowing on to the next step, where the live
 view does. Each subprocess's own diagram shows where it returns to.
 
-## C12. The HTTP surface and the page
+## 1M. The HTTP surface and the page
 
-Start-and-poll, as `/runs` is. Every endpoint that starts work answers `202`.
+Start-and-poll: a turn takes longer than a host will hold a request open. Every endpoint that
+starts work answers `202`.
 
 | Endpoint | Behaviour |
 | --- | --- |
-| `GET /session-processes` | The processes in `domain_knowledge/`. Separate from `/processes`, which lists `processes/` |
+| `GET /health` | Liveness |
+| `GET /processes` | The processes in `domain_knowledge/`, for the picker |
 | `POST /sessions` | `{process_id, description}` → `{session_id}`, and queues turn 1. `422` empty, `413` over `PFG_MAX_SOURCE_CHARS`, `404` unknown process |
 | `GET /sessions/{id}` | Phase, focus, turn, status and its sentence, transcript, pending questions, lanes, coverage, views with rationale, open items, outputs |
 | `POST /sessions/{id}/messages` | `{text, quick_reply, question_id, item_key}`. `409` if a turn is running or the session is complete |
@@ -632,16 +553,17 @@ session is a `409`. A quick reply is sent as words as well as a flag, so the tra
 naturally and the interpreter treats a pressed button and a typed "not sure" alike.
 
 The page is `frontend/`: Vite, React, TypeScript, `@xyflow/react` and `elkjs`, built to
-`frontend/dist/` and mounted at `/app` when present. Three regions — chat, flow, side panel.
+`frontend/dist/` with a relative base and mounted at `/` when present, last, so the API keeps
+its own paths. Three regions — chat, flow, side panel.
 The flow is laid out by elk, layered, left to right, and re-laid out only when its shape
 changes. It polls every 1.5 seconds while a turn is running and not otherwise. The status
 line, the quick replies and every error sentence arrive from the service; the page prints
 them.
 
-## C13. What gets logged
+## 1N. What gets logged
 
 `utils/logs.py`. Configured by entry points only — `api/app.py` (the module uvicorn is
-pointed at), `session/cli.py`, and each `pipelines/*.py` `main` — never by importing a
+pointed at), `session/cli.py`, and the two `pipelines/*.py` `main`s — never by importing a
 library module.
 
 | Output | Answers | Content |
@@ -652,8 +574,8 @@ library module.
 Both files are opened in write mode by `configure_logging`, so each start overwrites them.
 
 **Every model call is traced, by construction.** `extractors/model.py::_TracedAgent` wraps
-the one Strands agent each adapter holds, and both the one-shot `StrandsModelCall` and the
-conversation's `StrandsConversation` call a model only through it. It times the call,
+the one Strands agent each conversation holds, and `StrandsConversation` calls a model only
+through it. It times the call,
 translates the SDK's exceptions, reads the token delta off the agent's running total, and
 calls `record_call` whether the call succeeded or not.
 
@@ -1068,7 +990,7 @@ Inlining removes the question. It costs about 730 KB a page, most of it the mode
 which is why the page is generated rather than committed — and it is affordable because the
 icon font is already a base64 data URI inside `bpmn-embedded.css`.
 
-**`payload()` is the one shape both deliveries use:**
+**`payload()` is what a page is told:**
 
 | Key | Contents |
 | --- | --- |
@@ -1079,18 +1001,17 @@ icon font is already a base64 data URI inside `bpmn-embedded.css`.
 | `flagged` | The BPMN ids to mark, de-duplicated, in the order the panel names them |
 
 **The panel is built in Python, not the browser.** The script never decides what the page
-says — it inserts finished HTML. Escaping therefore has one home whichever way the payload
-travels, and the page's tests can assert what it says by reading it, with no browser
-involved.
+says — the panel is finished HTML in the markup. Escaping therefore has one home, and the
+page's tests can assert what it says by reading it, with no browser involved.
 
 | Mechanism | Detail |
 | --- | --- |
-| Sentinels | Seven `<!--PFG:NAME-->` markers, filled by plain `str.replace`. Never `str.format` or `string.Template` — the file is full of CSS braces |
+| Sentinels | Five `<!--PFG:NAME-->` markers, filled by plain `str.replace`. Never `str.format` or `string.Template` — the file is full of CSS braces |
 | Text escaping | `html.escape` for text and attributes |
 | Payload escaping | `json.dumps`, **plus `<` escaped**. Inside a `<script>` the HTML parser is looking for one thing, a closing tag, so a diagram label reading `</script>` would end the block early and spill the document onto the page as text |
 | Id translation | Findings carry IR ids; the page needs BPMN ids. `node_element_id` is **imported** from `bpmn.semantics`, never reimplemented — a slug rule in two places would eventually disagree, and the failure would be a highlight silently landing on nothing |
 | Unclickable findings | A finding with no `node_ids` — a subprocess the source never described — gets no `data-elements` and is not clickable |
-| The offline page | Leaves `title` and `questions` out of the inlined payload, because they are already in the markup. Only what the viewer cannot read off the page travels as data, so the page reads correctly with no script run at all |
+| What is inlined | `title` and `questions` are left out of the inlined payload, because they are already in the markup. Only what the viewer cannot read off the page travels as data, so the page reads correctly with no script run at all |
 
 ## 3C. What the finished page does
 
@@ -1153,7 +1074,7 @@ and the export hazard never arises — no chance of the modeler writing back a g
 | Why not one blanket veto | `canExecute` fires `commandStack.<command>.canExecute` and then the generic `commandStack.canExecute`, but a specific rule answering first cancels the bubble, so the generic is not reliably reached. A blanket veto would also catch the layout and resize work importing does for itself |
 | Double-click rename opens without consulting a rule | `element.dblclick` is intercepted at the same priority, so the edit box never appears rather than appearing and silently declining to save |
 | The palette and context pad are always in the DOM | Hidden by CSS while editing is off — the same id/class technique used to restyle annotations and collapsed boxes. Hidden rather than removed, because bpmn-js owns that DOM and puts it back |
-| Reset | Re-imports the payload the page already holds and never mutates. It reuses `show()`, which the hosted flow already calls a second time when a new run finishes |
+| Reset | Re-imports the payload the page already holds and never mutates. It reuses `show()`, the same function that drew it the first time |
 
 **Accepted, not solved:** the questions panel is never recomputed, so once anyone edits it
 describes a diagram that no longer exists — a deleted box leaves a card pointing at nothing,
@@ -1162,56 +1083,3 @@ because nothing ever checked it. Nothing breaks (`mark()` and `select()` both te
 `registry.get(id)` first, so dead cards go inert), and the notice on screen says so. Also
 accepted: resizing a decision breaks the question-inside-the-diamond geometry, because
 `bpmn/decisions.py` centres that label at exactly 50% inset and nothing re-centres it.
-
-The template is shared, so the hosted page is editable on the same terms.
-
-## 3E. The hosted delivery
-
-```
-GitHub Pages (static)                        Render (Docker: Python + Node)
-┌────────────────────────┐  POST /runs       ┌──────────────────────────────┐
-│ site/index.html        │ ────────────────► │ api/app.py    the endpoints  │
-│  the same page shell,  │                   │ api/runs.py   runs in flight │
-│  built with no diagram │  GET /runs/{id}   │ api/pipeline.py              │
-│  in it yet             │ ◄──────────────── │   stages 1-3, nothing stored │
-└────────────────────────┘   {status, …}     └──────────────────────────────┘
-```
-
-Stages 1 and 2 cannot run in a browser: one needs an API key, the other shells out to Node.
-So the page is static and the pipeline is a service it calls.
-
-**It re-implements no stage.** `api/pipeline.py` composes the same functions the CLI
-orchestrators call, in memory. There is no second copy of a stage and there must never be
-one — the demo exists to show what the pipeline does, so the moment it does something
-slightly different it stops being a demo of anything.
-
-| Endpoint | Behaviour |
-| --- | --- |
-| `GET /health` | Liveness, and the wake-up call the page makes on load |
-| `GET /processes` | The processes that can be run, for the picker |
-| `POST /runs` | Returns `202` and a run id. `422` if the description is empty, `413` if it exceeds `PFG_MAX_SOURCE_CHARS`, `404` if the process does not exist |
-| `GET /runs/{id}` | Status, a human sentence, and the payload once it is done |
-
-**Why start-and-poll.** A run takes a minute or two, longer than a host will hold a
-connection open. Polling is also what lets the page report *which stage* is running instead
-of spinning at nothing. Statuses run `queued` → `extracting` → `laying_out` → `rendering` →
-`done` or `failed`, and each maps to a sentence chosen in Python and merely printed by the
-browser.
-
-| Decision | Detail |
-| --- | --- |
-| Runs in memory | Not durable, on purpose. A restart losing a run costs one press of Generate; a database to avoid that would be the largest thing in the repository. Fifty are kept, oldest forgotten first |
-| A single worker | Two runs queue rather than competing for the same layouter subprocess and the same rate limit |
-| Nothing written | No hosted run touches `processes/<name>/outputs/`. What someone types belongs to them, not to the repository |
-| What is read | Only `metadata.yaml` and `skeleton.json` — the process context. **`inputs/` is not read**; the pasted text takes its place |
-| Injected dependencies | The model and the layouter are constructor arguments, the same seam the CLI stages use, so the whole service is tested with no key, no network and no Node |
-| Settings at run time | Loaded when a run begins, not at import, so a misconfigured instance answers `/health` and explains itself on the first run rather than crash-looping at boot |
-| Same payload | The API returns exactly what stage 3 inlines, so from the moment it has data the hosted page and `diagram.html` are the same page |
-
-**The endpoint is deliberately unguarded**: no rate limit, no passcode, and every run spends
-a model call. That holds only while the URL is not shared. `PFG_MAX_SOURCE_CHARS` is about an
-accidental paste, not an attacker.
-
-The image carries Python and Node together, because a run is both stages. It also builds a
-same-origin copy of the page and serves it at `/` — last, so it claims only the paths the API
-did not — which costs nothing, needs no CORS, and is the answer if Pages is ever unavailable.

@@ -4,12 +4,6 @@ The real template is used -- it is project source, and a test against a stub
 shell would not notice a sentinel renamed on one side only. The viewer's files
 are stubbed, so none of this needs ``npm ci``.
 
-One shell serves two pages, so both are exercised here: the offline
-``diagram.html`` stage 3 writes, and the hosted page that starts on a form. The
-offline assertions are the older ones and are deliberately unchanged -- if the
-shell grew a landing view at the cost of the page stage 3 produces, they are
-what would say so.
-
 Nothing here opens a browser. These prove the page *says* the right things; that
 it *renders* is checked by loading it in one, which is a manual step and is
 recorded as such rather than faked here.
@@ -22,7 +16,7 @@ import pytest
 from bpmn.semantics import node_element_id
 from render import page as builder
 from render.assets import ViewerAssets, load_template
-from render.page import APP_TITLE, EMPTY_STATE, build, build_app
+from render.page import EMPTY_STATE, build
 from render.page import payload as run_payload
 from validators.report import Finding, FindingCode
 
@@ -74,8 +68,6 @@ def test_the_template_declares_every_sentinel_the_builder_fills(template: str) -
         builder.VIEWER_JS,
         builder.QUESTIONS,
         builder.DATA,
-        builder.VIEW,
-        builder.PROCESSES,
     )
 
     assert all(sentinel in template for sentinel in sentinels)
@@ -223,17 +215,12 @@ def test_the_same_input_builds_the_same_page(template: str, viewer_assets: Viewe
     assert page(template, viewer_assets, *findings) == page(template, viewer_assets, *findings)
 
 
-def test_the_offline_page_opens_on_the_diagram(template: str, viewer_assets: ViewerAssets) -> None:
-    """Stage 3's page has its result in it already; it must never flash the form."""
-    assert 'data-view="diagram"' in page(template, viewer_assets)
+def test_the_page_fetches_nothing(template: str, viewer_assets: ViewerAssets) -> None:
+    """One self-contained file, opened from wherever the reader keeps it: no server to ask."""
+    rendered = page(template, viewer_assets)
 
-
-# ---- edit mode ---------------------------------------------------------------
-#
-# Session-only, so there is nothing on disk for a test to inspect afterwards.
-# What can be asserted from here is that the page *offers* editing and *starts*
-# with it off; whether a box can actually be dragged is settled by opening the
-# page, like everything else interactive.
+    assert "fetch(" not in rendered
+    assert "<form" not in rendered
 
 
 def test_the_page_offers_edit_and_reset(template: str, viewer_assets: ViewerAssets) -> None:
@@ -268,14 +255,6 @@ def test_the_page_says_edits_are_not_saved(template: str, viewer_assets: ViewerA
 def test_the_page_warns_that_the_questions_describe_the_original(template: str, viewer_assets: ViewerAssets) -> None:
     """Findings are never recomputed, so an edited diagram outruns its own panel."""
     assert "The open questions still describe the original." in page(template, viewer_assets)
-
-
-def test_the_hosted_page_offers_editing_too(template: str, viewer_assets: ViewerAssets) -> None:
-    """One shell serves both deliveries, so this is a property of the shell, not of stage 3."""
-    rendered = build_app(viewer_assets, template, [("enrollment", "Intake & Enrollment")], "")
-
-    assert 'data-action="edit"' in rendered
-    assert 'data-editing="off"' in rendered
 
 
 def test_a_floating_label_is_given_a_halo(template: str, viewer_assets: ViewerAssets) -> None:
@@ -326,7 +305,7 @@ def test_the_payload_carries_what_a_page_needs() -> None:
 
 
 def test_the_payload_carries_the_panel_as_finished_html() -> None:
-    """The hosted page inserts this verbatim, so the escaping has to happen here."""
+    """The panel is inlined verbatim, so the escaping has to happen here."""
     data = run_payload(DIAGRAM, [clarification("x", "who signs <this> off?")], "Enrollment")
 
     assert "&lt;this&gt;" in str(data["questions"])
@@ -341,65 +320,3 @@ def test_the_offline_page_and_the_payload_agree(template: str, viewer_assets: Vi
 
     assert str(data["questions"]) in rendered
     assert payload(rendered)["flagged"] == data["flagged"]
-
-
-# ---- the hosted page ---------------------------------------------------------
-
-
-def app(template: str, assets: ViewerAssets, *, api_base: str = "https://pfg.example.com") -> str:
-    """Build the hosted page, defaulting what the test under way does not care about."""
-    return build_app(assets, template, [("enrollment", "Intake & Enrollment")], api_base)
-
-
-def test_the_hosted_page_opens_on_the_form(template: str, viewer_assets: ViewerAssets) -> None:
-    rendered = app(template, viewer_assets)
-
-    assert 'data-view="landing"' in rendered
-    assert "<!--PFG:" not in rendered, "a sentinel was left unsubstituted"
-
-
-def test_the_hosted_page_carries_no_diagram(template: str, viewer_assets: ViewerAssets) -> None:
-    """It has nothing to draw until the API has run something."""
-    data = payload(app(template, viewer_assets))
-
-    assert "diagram" not in data
-    assert data["api"] == "https://pfg.example.com"
-
-
-def test_the_hosted_page_offers_every_process(template: str, viewer_assets: ViewerAssets) -> None:
-    rendered = build_app(
-        viewer_assets,
-        template,
-        [("enrollment", "Intake & Enrollment"), ("copay", "Copay Support")],
-        "",
-    )
-
-    assert '<option value="enrollment">Intake &amp; Enrollment</option>' in rendered
-    assert '<option value="copay">Copay Support</option>' in rendered
-
-
-def test_the_hosted_page_is_titled_before_a_run(template: str, viewer_assets: ViewerAssets) -> None:
-    """No process has been picked yet, so the header cannot name one."""
-    rendered = app(template, viewer_assets)
-
-    assert f"<title>{APP_TITLE}</title>" in rendered
-    assert f"<h1>{APP_TITLE}</h1>" in rendered
-
-
-def test_a_same_origin_deployment_needs_no_host(template: str, viewer_assets: ViewerAssets) -> None:
-    """Served by the API itself, the page's requests are relative."""
-    assert payload(app(template, viewer_assets, api_base=""))["api"] == ""
-
-
-def test_a_trailing_slash_would_double_up(template: str, viewer_assets: ViewerAssets) -> None:
-    """The page appends '/runs', so the base must not end in one."""
-    assert (
-        payload(app(template, viewer_assets, api_base="https://pfg.example.com/"))["api"] == "https://pfg.example.com"
-    )
-
-
-def test_a_hostile_process_name_cannot_break_the_picker(template: str, viewer_assets: ViewerAssets) -> None:
-    rendered = build_app(viewer_assets, template, [('" onmouseover="alert(1)', "<b>bold</b>")], "")
-
-    assert 'onmouseover="alert(1)' not in rendered
-    assert "<b>bold</b>" not in rendered

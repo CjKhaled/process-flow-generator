@@ -9,8 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from ir.process_config import OUTPUTS_DIRNAME, SKELETON_FILENAME
-from pipelines.stage1 import GRAPH_FILENAME, REPORT_FILENAME
+from ir.process_config import GRAPH_FILENAME, OUTPUTS_DIRNAME, REPORT_FILENAME, SKELETON_FILENAME
 from pipelines.stage2 import DIAGRAM_FILENAME
 from pipelines.stage3 import PAGE_FILENAME, main, run
 from render.assets import AssetError, ViewerAssets

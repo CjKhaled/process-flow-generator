@@ -5,8 +5,8 @@ lay it out -> write ``processes/<name>/outputs/diagram.bpmn``. Deterministic. No
 model, no network, no credentials; the only thing outside Python is the pinned
 `bpmn-auto-layout` CLI, which owns every coordinate in the result.
 
-Stage 1 guarantees that anything in ``outputs/`` passed the structural tier, so
-this stage assumes a well-formed graph rather than re-validating one. It does not
+Close-out only writes a graph that passed the structural tier, so this stage
+assumes a well-formed graph rather than re-validating one. It does not
 check lane names against ``metadata.yaml`` either: a lane the config never
 declared is drawn after the declared ones and logged, since refusing a whole
 diagram over a name the source used helps nobody.
@@ -23,13 +23,8 @@ from pydantic import ValidationError
 from bpmn import colors, decisions, document, semantics
 from bpmn.autolayout import Layouter, LayoutError, subprocess_layouter
 from ir.models import ProcessGraph
-from ir.process_config import (
-    OUTPUTS_DIRNAME,
-    SKELETON_FILENAME,
-    load_process_config,
-)
+from ir.process_config import GRAPH_FILENAME, OUTPUTS_DIRNAME, SKELETON_FILENAME, load_process_config
 from ir.skeleton import load_skeleton
-from pipelines.stage1 import GRAPH_FILENAME
 from utils.logs import configure_logging
 from utils.settings import load_stage2_settings
 
@@ -68,7 +63,7 @@ def run(
 
     graph_path = process_dir / OUTPUTS_DIRNAME / GRAPH_FILENAME
     if not graph_path.is_file():
-        raise FileNotFoundError(f"no graph at {graph_path}; run stage 1 for '{process_name}' first")
+        raise FileNotFoundError(f"no graph at {graph_path}; stage 2 draws a flow folder that a finished session wrote")
 
     graph = ProcessGraph.model_validate(json.loads(graph_path.read_text(encoding="utf-8")))
     config = load_process_config(process_dir)

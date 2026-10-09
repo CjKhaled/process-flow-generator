@@ -1,7 +1,7 @@
-# The hosted demo's service. Python and Node in one image, because a run is both
-# stages: the extractor is Python and the layouter is a pinned Node CLI that
-# stage 2 shells out to. An image without Node would start, answer /health, and
-# fail every run at the point it tried to draw something.
+# The service. Python and Node in one image, because finishing a session needs
+# both: the conversation is Python and the layouter is a pinned Node CLI that
+# stage 2 shells out to. An image without Node would start, answer /health, hold
+# a whole conversation, and fail at the point it tried to draw the result.
 FROM python:3.12-slim
 
 # Node from the official image rather than a distro package: the layouter is
@@ -26,14 +26,16 @@ RUN npm ci --prefix js
 COPY js/src ./js/src
 RUN npm run build --prefix js
 
+# The page. A separate Node project from js/, built before the rest of the source
+# for the same reason: a Python change should not rebuild it.
+COPY frontend/package.json frontend/package-lock.json ./frontend/
+RUN npm ci --prefix frontend
+COPY frontend ./frontend
+RUN npm run build --prefix frontend
+
 COPY . .
 
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1
-
-# A same-origin copy of the page, served at /. GitHub Pages hosts the copy that
-# people are given the link to; this one costs nothing to build, needs no CORS,
-# and is the answer when Pages is unavailable or misconfigured.
-RUN python -m pipelines.site --api-base ""
 
 # Render supplies the port. The default matches its own so `docker run` locally
 # behaves the same way.

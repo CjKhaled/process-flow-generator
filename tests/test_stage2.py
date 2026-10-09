@@ -18,7 +18,7 @@ from bpmn.autolayout import Layouter, LayoutError
 from bpmn.decisions import BPMNDI_NS, DC_NS, DIAMOND
 from bpmn.document import BPMN_NS
 from ir.models import NodeOrigin, NodeStatus, NodeType, ProcessGraph
-from pipelines.stage1 import GRAPH_FILENAME
+from ir.process_config import GRAPH_FILENAME
 from pipelines.stage2 import DIAGRAM_FILENAME, main, run
 from tests.builders import branch, edge, graph, node, ref
 from tests.conftest import ENROLLMENT_DIR, decision_layouter, echo_layouter
@@ -116,10 +116,10 @@ def test_a_missing_process_folder_is_reported(tmp_path: Path, layouter: Layouter
         run("nonexistent", tmp_path, layout=layouter)
 
 
-def test_a_missing_stage_one_graph_says_to_run_stage_one(processes_root: Path, layouter: Layouter) -> None:
+def test_a_missing_graph_says_where_it_looked(processes_root: Path, layouter: Layouter) -> None:
     (processes_root / "enrollment" / "outputs" / GRAPH_FILENAME).unlink()
 
-    with pytest.raises(FileNotFoundError, match="run stage 1"):
+    with pytest.raises(FileNotFoundError, match="no graph at"):
         run("enrollment", processes_root, layout=layouter)
 
 

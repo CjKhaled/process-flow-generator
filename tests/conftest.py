@@ -29,7 +29,7 @@ COVERAGE_DETERMINATION_DIR = PROCESSES_ROOT / "coverage_determination"
 DOMAIN_DIR = REPO_ROOT / "domain_knowledge"
 DOMAIN_PROCESS = "enrollment_and_intake"
 ENROLLMENT_DESCRIPTION = REPO_ROOT / "tests" / "fixtures" / "enrollment_description.md"
-"""A real written description of enrollment, kept with the suite so no test depends on ``inputs/``."""
+"""A real written description of enrollment: what a user would paste to begin a session."""
 
 
 def has_node() -> bool:

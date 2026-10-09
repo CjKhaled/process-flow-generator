@@ -2,7 +2,7 @@
   "name": "pfg-frontend",
   "version": "1.0.0",
   "private": true,
-  "description": "The conversational stage 1's page: chat, live flow and rationale. Built to dist/ and served by the API at /app.",
+  "description": "The page: chat, live flow and rationale. Built to dist/ and served by the API at /.",
   "type": "module",
   "license": "MIT",
   "scripts": {

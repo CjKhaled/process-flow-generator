@@ -68,8 +68,6 @@ def client(
         layout=echo_layouter,
         assets=viewer_assets,
         domain_dir=DOMAIN_DIR,
-        processes_root=tmp_path / "no-processes",
-        site_dir=tmp_path / "no-site",
         frontend_dir=tmp_path / "no-frontend",
     )
     with TestClient(app) as running:
@@ -111,14 +109,17 @@ def send(client: TestClient, session_id: str, **body: object) -> dict[str, Any]:
 
 
 def test_the_processes_a_conversation_can_be_about_are_listed(client: TestClient) -> None:
-    assert client.get("/session-processes").json() == [{"id": DOMAIN_PROCESS, "display_name": "Intake & Enrollment"}]
+    assert client.get("/processes").json() == [{"id": DOMAIN_PROCESS, "display_name": "Intake & Enrollment"}]
 
 
-def test_the_one_shot_endpoints_are_still_there(client: TestClient) -> None:
-    """The conversation is added beside the existing service, not in place of it."""
+def test_health_answers_without_touching_anything(client: TestClient) -> None:
     assert client.get("/health").json() == {"status": "ok"}
-    assert client.get("/processes").json() == []
-    assert client.get("/runs/nosuchrun").status_code == 404
+
+
+def test_the_one_shot_endpoints_are_gone(client: TestClient) -> None:
+    """There is one way in now. A client still posting a run should be told so, not left waiting."""
+    assert client.post("/runs", json={"process": "enrollment", "source": "x"}).status_code == 404
+    assert client.get("/runs/anything").status_code == 404
 
 
 def test_starting_a_session_answers_at_once_and_the_first_turn_arrives_by_polling(client: TestClient) -> None:
@@ -257,8 +258,6 @@ def test_a_second_message_while_a_turn_is_running_is_refused(
         layout=echo_layouter,
         assets=viewer_assets,
         domain_dir=DOMAIN_DIR,
-        processes_root=tmp_path / "p",
-        site_dir=tmp_path / "s",
         frontend_dir=tmp_path / "f",
     )
     with TestClient(app) as client:
@@ -338,8 +337,6 @@ def test_a_service_with_no_key_starts_and_explains_itself_on_the_first_turn(
     app = create_app(
         session_store=store,
         domain_dir=DOMAIN_DIR,
-        processes_root=tmp_path / "p",
-        site_dir=tmp_path / "s",
         frontend_dir=tmp_path / "f",
     )
     with TestClient(app) as client:
@@ -467,23 +464,26 @@ def test_a_session_with_no_flow_cannot_be_accepted(client: TestClient, fake: Fak
     assert client.post(f"/sessions/{session_id}/accept").status_code == 409
 
 
-def test_the_built_page_is_served_at_app_and_leaves_the_api_and_the_old_page_alone(
+def test_the_built_page_is_served_at_the_root_and_the_api_keeps_its_own_paths(
     store: FileSessionStore, tmp_path: Path
 ) -> None:
-    frontend, site = tmp_path / "frontend", tmp_path / "site"
-    for folder, text in ((frontend, "<h1>the conversation</h1>"), (site, "<h1>the one-shot page</h1>")):
-        folder.mkdir()
-        (folder / "index.html").write_text(text, encoding="utf-8")
+    frontend = tmp_path / "frontend"
+    (frontend / "assets").mkdir(parents=True)
+    (frontend / "index.html").write_text("<h1>the conversation</h1>", encoding="utf-8")
+    (frontend / "assets" / "app.js").write_text("console.log('page')", encoding="utf-8")
     app = create_app(
-        conversations=FakeConversations(),
-        session_store=store,
-        domain_dir=DOMAIN_DIR,
-        processes_root=tmp_path / "p",
-        site_dir=site,
-        frontend_dir=frontend,
+        conversations=FakeConversations(), session_store=store, domain_dir=DOMAIN_DIR, frontend_dir=frontend
     )
 
     with TestClient(app) as client:
-        assert client.get("/app/").text == "<h1>the conversation</h1>"
-        assert client.get("/").text == "<h1>the one-shot page</h1>"
-        assert client.get("/session-processes").status_code == 200
+        assert client.get("/").text == "<h1>the conversation</h1>"
+        assert client.get("/assets/app.js").text == "console.log('page')"
+        assert client.get("/health").json() == {"status": "ok"}
+        assert client.get("/processes").json()[0]["id"] == DOMAIN_PROCESS
+        assert client.get("/sessions/nosuchsession").status_code == 404, "an API 404, not the page"
+
+
+def test_the_service_runs_without_a_built_page(client: TestClient) -> None:
+    """How the tests and a ``vite dev`` session both use it: the API alone."""
+    assert client.get("/").status_code == 404
+    assert client.get("/health").status_code == 200

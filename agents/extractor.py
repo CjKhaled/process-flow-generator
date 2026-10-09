@@ -2,21 +2,19 @@
 
 The only agent that writes the graph, and the one kept furthest from the
 knowledge base. Its system prompt is built from the patch rules, the extraction
-conventions the one-shot extractor already uses -- reused verbatim -- and the
-session's vocabulary. It is never shown a knowledge file or the checklist.
+conventions in :mod:`extractors.prompt`, and the session's vocabulary. It is never shown a knowledge file or the checklist.
 
-The loop is :func:`extractors.process.extract`'s, unchanged in spirit:
+The loop:
 
 * one structured call, gated by the deterministic validators;
 * a **structural** defect -- from the patch itself, from ``validate``, or from
   ``validate_session`` -- is fed back in the same conversation and earns a retry;
-* a **resolution** finding never does. An open question is this stage's output.
+* a **resolution** finding never does. An open question is this stage's output,
+  and "fixing" one would mean inventing what the user did not say.
 
-What differs is the ending. The one-shot loop raises when its budget runs out,
-because it has nothing to fall back on. A conversation always has the previous
-turn's graph, which is valid, so exhausting the budget is an outcome and not an
-error: the graph is kept as it was and the caller is told the statements still
-need applying.
+Running out of attempts is an outcome, not an error. A conversation always has
+the previous turn's graph, which is valid, so the graph is kept as it was and the
+caller is told the statements still need applying.
 
 The conversation is held across repair attempts within a turn and never across
 turns. Each repair is a whole corrected patch against the *original* graph, not a
@@ -49,6 +47,9 @@ from validators.session_checks import check_removal_reasons, validate_session
 logger = logging.getLogger(__name__)
 
 STEP = "extractor"
+
+DEFAULT_MAX_ATTEMPTS = 3
+"""The attempt budget when no settings are in hand: a caller that injected its own model."""
 
 _SESSION_NOISE = frozenset({FindingCode.MISSING_REQUIRED_SUBPROCESS})
 """Resolution findings ``validate`` raises that mean nothing mid-conversation.
