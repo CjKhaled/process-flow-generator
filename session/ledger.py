@@ -136,18 +136,32 @@ def mark_asked(ledger: Sequence[LedgerEntry], questions: Iterable[AskedQuestion]
     ]
 
 
-def apply_facts(
+def apply_applicability(
     ledger: Sequence[LedgerEntry], domain: DomainKnowledge, facts: dict[ProgramFact, bool | None]
 ) -> list[LedgerEntry]:
-    """Switch topics off, or back on, according to the program facts.
+    """Switch topics off, or back on, according to what is now known.
 
-    Back on matters: a user who corrects "no nurse program" to "actually there is
-    one" must get those topics back, untouched.
+    Two things take a topic out of play. A **program fact** the user has denied:
+    no nurse program, so nothing about nurse enrollment. And a **subprocess the
+    user has said does not exist**: when every topic that hands off to a
+    subprocess is ``confirmed_absent``, the topics inside it have nothing to be
+    about. An unknown fact, or a hand-off nobody has spoken to, never filters.
+
+    Back on matters as much as off: a user who corrects "no nurse program" to
+    "actually there is one" must get those topics back, untouched.
     """
+    status_of = {entry.topic_id: entry.status for entry in ledger}
+    closed_off = {
+        sub.id
+        for sub in domain.process.subprocesses
+        if (gates := [topic.id for topic in domain.checklist.topics if sub.id in topic.leads_to])
+        and all(status_of.get(gate) is TopicStatus.CONFIRMED_ABSENT for gate in gates)
+    }
+
     moved = []
     for entry in ledger:
         topic = domain.topic(entry.topic_id)
-        applies = topic is None or topic.applies(facts)
+        applies = (topic is None or topic.applies(facts)) and entry.scope not in closed_off
         if not applies and entry.status is not TopicStatus.NOT_APPLICABLE:
             moved.append(entry.model_copy(update={"status": TopicStatus.NOT_APPLICABLE, "asked_from": None}))
         elif applies and entry.status is TopicStatus.NOT_APPLICABLE:
@@ -212,6 +226,56 @@ def ledger_findings(
         elif entry.status in OPEN_STATUSES and entry.priority in required:
             findings.append(Finding.of(FindingCode.OPEN_TOPIC, f"'{title}' was not covered"))
     return tuple(findings)
+
+
+@dataclass(frozen=True)
+class OpenItem:
+    """One thing still open at close-out: a topic, or a step whose outcome nobody stated."""
+
+    key: str
+    scope: str
+    kind: str
+    """``topic`` or ``step``."""
+    text: str
+    topic_id: str | None = None
+    node_id: str | None = None
+
+
+def open_items(session: Session, domain: DomainKnowledge) -> tuple[OpenItem, ...]:
+    """Everything the user has neither settled nor accepted, in scope order.
+
+    The same rule :func:`ledger_findings` uses decides which topics count, so
+    what the close-out view lists is what the final report will carry.
+    """
+    accepted = set(session.accepted_open_items)
+    required = set(domain.process.completion.scopes.required_priorities)
+    items = []
+    for scope in domain.process.scopes:
+        for node in session.graph.nodes:
+            if (
+                node.status is NodeStatus.NEEDS_CLARIFICATION
+                and (node.subprocess or MAIN_SCOPE) == scope
+                and node_key(node.id) not in accepted
+            ):
+                text = f"{node.label}: {node.detail}" if node.detail else node.label
+                items.append(OpenItem(key=node_key(node.id), scope=scope, kind="step", text=text, node_id=node.id))
+        for entry in session.ledger:
+            if entry.scope != scope or topic_key(entry.topic_id) in accepted:
+                continue
+            topic = domain.topic(entry.topic_id)
+            title = topic.title if topic else entry.topic_id
+            if entry.status is TopicStatus.DEFERRED:
+                text = f"{title} (to check later)"
+            elif entry.status is TopicStatus.NEEDS_CLARIFICATION:
+                text = f"{title} (needs clarifying{': ' + entry.note if entry.note else ''})"
+            elif entry.status in OPEN_STATUSES and entry.priority in required:
+                text = f"{title} (not covered)"
+            else:
+                continue
+            items.append(
+                OpenItem(key=topic_key(entry.topic_id), scope=scope, kind="topic", text=text, topic_id=entry.topic_id)
+            )
+    return tuple(items)
 
 
 def rule_terminals(graph: ProcessGraph, scope: str) -> tuple[str, ...]:

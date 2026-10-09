@@ -10,7 +10,7 @@ from ir.process_config import ProcessConfig
 from ir.skeleton import Skeleton
 from validators.report import ValidationReport
 
-_CONVENTIONS = """\
+CONVENTIONS = """\
 ## How to build the graph
 
 The graph is flat. Never nest one graph inside another.
@@ -106,6 +106,11 @@ same node, set `order` to the sequence you want them read in, starting at 0.
 """
 
 
+# Public because the conversation's patch extractor reuses this block verbatim: the rules
+# that make a graph born valid are the same whether it arrives whole or as a patch, and a
+# second copy of them would drift.
+
+
 def build_system_prompt(config: ProcessConfig, skeleton: Skeleton) -> str:
     """Build the system prompt: the extraction conventions plus this process's vocabulary.
 
@@ -124,7 +129,7 @@ def build_system_prompt(config: ProcessConfig, skeleton: Skeleton) -> str:
             f"Return the graph through the supplied schema. Capture what the source says, "
             f"and mark what it leaves open rather than filling the gap yourself."
         ),
-        _CONVENTIONS,
+        CONVENTIONS,
         _subprocess_section(skeleton),
     ]
     if config.actors:

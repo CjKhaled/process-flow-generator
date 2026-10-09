@@ -77,3 +77,101 @@ edge joins the two nodes it is taken to be the one meant.
 the diagram out by node order, so a step learned on turn nine would otherwise sit at the end of
 the graph. `apply_patch` places each added node just after the step that leads to it. Existing
 nodes never move.
+
+## Not verified
+
+**No turn has been run against a real model.** The key in `.env` is rejected by the API
+(`401 invalid x-api-key`), so the two real-model checks in the build plan — `session.cli start`
+on the enrollment description, and a ten-turn CLI session — could not be made. Everything
+else is exercised: the whole turn pipeline runs end to end in `tests/test_session_loop.py`
+with the three agents scripted, and close-out runs against the real layouter and the real
+viewer bundle in `tests/test_closeout_integration.py`. What that leaves unproven is the part
+only a model can show: whether the three prompts produce patches that pass the evidence check
+first time, lanes the way the brief expects them, and questions in the right voice. *Do this
+first with a working key:*
+`uv run python -m session.cli start --process enrollment_and_intake --input tests/fixtures/enrollment_description.md`
+
+## The agents
+
+**The navigator's knowledge is cached through a message, not the system prompt.** Strands'
+`AnthropicModel` (1.51) sends the system prompt as a plain string, so a cache point placed in it
+is dropped; one inside a message is turned into `cache_control`. `StrandsConversationFactory`
+therefore sends `cached_context` as the opening exchange of the conversation, ending in a cache
+point. The role and style rules stay in the system prompt; the knowledge files and the checklist
+are the cached block.
+
+**The navigator has no `get_node` tool.** The brief made it optional, conditional on tools and
+structured output working reliably together. That was not worth establishing for an MVP: the
+navigator's graph summary already carries each open step's detail, which is what the tool would
+have been asked for.
+
+**The interpreter gets one repair turn.** The brief says an interpreter failure rejects the
+turn. A response that merely missed a required field is cheap to fix and expensive to bounce
+back to a person, so a schema failure earns one repair turn in the same conversation; a second
+failure rejects the turn.
+
+**An answer's statements are checked against the message.** After turn 1 the interpreter splits
+the message itself. Statement text is what quotes are verified against, so a statement whose
+`raw_text` is not found in the user's message is replaced by the whole message rather than
+trusted.
+
+**Restatement faithfulness is a prompt rule, not a check.** A quote may be matched against a
+statement's restatement, and the restatement is written by the interpreter. Code cannot tell a
+faithful restatement from one that adds a fact, so this is the one place a model's wording can
+reach the evidence check unverified. The page shows a statement's own text beside any quote, so
+a reader can see the difference. *Revisit: require that every quote taken from a restatement
+also be supported by the raw answer plus the question text.*
+
+**The extractor is not called when nothing was described.** A quick reply ("Not sure yet", "Not
+part of our process") and a message the interpreter reads as being about the session itself
+describe no process. Calling the extractor on them would spend a model call to be told nothing
+changed. Statements queued from a failed turn, and corrections, always earn a call.
+
+**A screening answer settles its screening topic.** When the interpreter reports a program
+fact but no status for the topic that sets it, code marks that topic `present` (fact true) or
+`confirmed_absent` (fact false), so the same question is not asked again.
+
+**A subprocess the user says does not exist takes its topics with it.** When every topic that
+hands off to a subprocess is `confirmed_absent`, the topics inside it become `not_applicable`,
+exactly as a denied program fact would make them. The brief only describes facts doing this.
+Without it, a program with no off-label review would be asked seven questions about one.
+
+**A subprocess's topics rank last until the conversation reaches it.** "High-priority gaps in
+other scopes" sit at rank 6, but only for a subprocess that has steps in the flow or whose
+hand-off topic the user has spoken to. Before that they sit at rank 7.
+
+**`propose_close` is accepted only when nothing at rank 6 or above can still be asked.**
+Otherwise a navigator could end a session with high-priority topics untouched.
+
+**A refused request aborts the turn whichever agent hit it.** The brief's failure table gives
+the navigator a fallback, and separately says `ModelUnavailableError` aborts the turn. The
+second wins: a fallback reply after a refused request would save a turn whose patch came from
+a model that is no longer reachable, and the next turn would fail anyway.
+
+**Mid-conversation, `missing_required_subprocess` is dropped.** `validate` raises it for every
+subprocess with no node, which early in a session is all four, every turn. The ledger already
+tracks what has not been reached.
+
+## Slicing and close-out
+
+**The final main BPMN ends each path at its subprocess box.** Stage 2's fold drops edges
+leaving a collapsed box and prunes what only they led to; that is existing behaviour and was
+not changed. The live view keeps those edges, as the brief asks, so the two differ: in the page
+a subprocess box flows on to the next step, in the final main diagram it does not. Each
+subprocess's own diagram shows where it returns to.
+
+**A slice's exit into an outside terminal carries that terminal's open question.** Where a
+subprocess path runs into a terminal on the main flow, the synthesised exit copies the label,
+and also the status and detail, so a `needs_clarification` outcome is still marked in the
+subprocess's own diagram.
+
+**A start node is never part of a slice**, whatever its tag, and a subprocess nothing leads
+into yet is entered at its first step in graph order.
+
+**Close-out reports accepted items.** Accepting an open item at close-out does not remove it
+from `validation.json`: it is still open, and the final page lists it. Acceptance only stops
+the conversation asking.
+
+**Subprocess flows declare the default lane even when nothing sits in it.** `ProcessConfig`
+requires `default_actor` to be a declared actor. Stage 2 draws no lane for an actor nothing is
+attributed to, so this costs a line of `metadata.yaml` and nothing in the diagram.

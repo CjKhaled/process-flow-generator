@@ -53,7 +53,6 @@ class Settings(BaseSettings):
         ),
     )
 
-
     interpreter_model_id: str | None = Field(
         default=None,
         alias="PFG_INTERPRETER_MODEL_ID",
