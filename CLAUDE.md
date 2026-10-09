@@ -13,6 +13,7 @@ This file holds only what is true across all stages and processes.
 - `extractors/` — the LLM step: source text + process config → `ProcessGraph`. The only non-deterministic part.
   - `prompt.py` — all prompt text; pure string building, no I/O. Holds the cross-field conventions the schema cannot express.
   - `model.py` — the **sole** Strands/Anthropic boundary in the project. The agent is held across calls so a repair turn continues the same conversation.
+    Both adapters build their client through `_client_args`, which adds the `anthropic-workspace-id` header when `ANTHROPIC_WORKSPACE_ID` is set -- a key not scoped to a workspace is refused without it.
   - `process.py` — the bounded retry loop. Depends on a `ModelCall` protocol, not the SDK, so it is exercised with no network.
   - `errors.py` — the retry taxonomy: a schema defect is repairable and earns a retry, an API rejection aborts immediately.
   - `conversation.py` — `ModelCall` made general, for the conversation's agents: `ConversationFactory.open(role, system_prompt, cached_context)` and `StructuredConversation.send(prompt, output)`. SDK-free like `process.py`; `model.py` implements it and is still the only file that imports Strands. `cached_context` goes in as the conversation's opening exchange ending in a cache point, **not** the system prompt -- Strands' Anthropic provider flattens the system prompt to a string and drops a cache point placed there.

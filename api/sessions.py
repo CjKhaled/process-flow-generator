@@ -288,8 +288,12 @@ def create_session_router(
     @router.get("/sessions/{session_id}")
     def state(session_id: str) -> dict[str, object]:
         """Everything the page shows: transcript, questions, coverage, views."""
+        # Asked before the session is read, and the order matters. A turn that ends between
+        # the two reads would otherwise be seen as "status says in flight, nobody running",
+        # which is how a restart looks. This way round the worst case is one extra poll.
+        running = runner.is_running(session_id)
         session = load(session_id)
-        return _state(session, domain_for(session.process_id), store, running=runner.is_running(session_id))
+        return _state(session, domain_for(session.process_id), store, running=running)
 
     @router.post("/sessions/{session_id}/messages", status_code=202)
     def message(session_id: str, request: MessageRequest) -> dict[str, str]:

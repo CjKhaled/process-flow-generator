@@ -28,6 +28,15 @@ class Settings(BaseSettings):
         alias="ANTHROPIC_API_KEY",
         description="Anthropic API key. Required; there is no default.",
     )
+    anthropic_workspace_id: str | None = Field(
+        default=None,
+        alias="ANTHROPIC_WORKSPACE_ID",
+        description=(
+            "The workspace to bill and scope requests to, e.g. 'wrkspc_...'. Needed only with "
+            "an API key that is not scoped to a workspace, which the API otherwise refuses "
+            "with a 400. A key created inside a workspace leaves this unset."
+        ),
+    )
     model_id: str = Field(
         default="claude-opus-4-8",
         alias="PFG_MODEL_ID",

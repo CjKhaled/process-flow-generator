@@ -70,12 +70,29 @@ def build_model_call(settings: Settings, config: ProcessConfig, skeleton: Skelet
         A model call wrapping an agent primed with the extraction system prompt.
     """
     model = AnthropicModel(
-        client_args={"api_key": settings.anthropic_api_key.get_secret_value()},
+        client_args=_client_args(settings),
         model_id=config.model_id or settings.model_id,
         max_tokens=settings.max_tokens,
         # No temperature/top_p/top_k: the current Claude models reject them.
     )
     return StrandsModelCall(Agent(model=model, system_prompt=build_system_prompt(config, skeleton)))
+
+
+WORKSPACE_HEADER = "anthropic-workspace-id"
+
+
+def _client_args(settings: Settings) -> dict[str, Any]:
+    """What the Anthropic client is built with: the key, and the workspace if one is named.
+
+    One function for both adapters, so the one-shot path and the conversation
+    cannot come to authenticate differently. The workspace travels as a default
+    header because that is where the API reads it: a key that is not scoped to a
+    workspace is refused on every request that does not say which one to use.
+    """
+    args: dict[str, Any] = {"api_key": settings.anthropic_api_key.get_secret_value()}
+    if settings.anthropic_workspace_id:
+        args["default_headers"] = {WORKSPACE_HEADER: settings.anthropic_workspace_id}
+    return args
 
 
 @contextmanager
@@ -145,7 +162,7 @@ class StrandsConversationFactory:
         from cache after the first.
         """
         model = AnthropicModel(
-            client_args={"api_key": self._settings.anthropic_api_key.get_secret_value()},
+            client_args=_client_args(self._settings),
             model_id=self._settings.model_for(role),
             max_tokens=self._settings.max_tokens,
             # No temperature/top_p/top_k: the current Claude models reject them.

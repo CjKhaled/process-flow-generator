@@ -437,6 +437,7 @@ Tests needing the real layouter are marked `requires_node` and skip when Node or
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `ANTHROPIC_API_KEY` | — | Required; no default. |
+| `ANTHROPIC_WORKSPACE_ID` | — | Only for an API key that is not scoped to a workspace: the workspace to use, sent as a header on every request. |
 | `PFG_MODEL_ID` | `claude-opus-4-8` | Model used unless a process overrides it. |
 | `PFG_MAX_TOKENS` | `32000` | Output cap per call. A cap, not a reservation. Too low truncates the graph mid-generation. |
 | `PFG_MAX_EXTRACTION_ATTEMPTS` | `3` | How many times to ask, including the first attempt. |

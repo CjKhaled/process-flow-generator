@@ -212,3 +212,11 @@ that adds a step does not throw away where the reader had panned to.
 browser, and that was kept. A full scripted session — start, live flow, rationale, a
 subprocess tab, an answer, close-out, downloads — was run through the built page in a
 headless browser against the real service with scripted agents, with no console errors.
+
+## Credentials
+
+**`ANTHROPIC_WORKSPACE_ID` is optional and sent as a header.** An API key that is not scoped
+to a workspace is refused with a `400` unless each request carries `anthropic-workspace-id`.
+The setting is named without the `PFG_` prefix because, like the key beside it, it is the
+provider's own variable and not this project's. Both the one-shot path and the conversation
+build their client through one function, so they cannot come to authenticate differently.
