@@ -150,6 +150,20 @@ export interface SessionSummary {
   flows: number;
 }
 
+/** One page of the knowledge view. The HTML is built and escaped by the service. */
+export interface KnowledgeSection {
+  id: string;
+  group: string;
+  title: string;
+  html: string;
+}
+
+export interface Knowledge {
+  process_id: string;
+  process_name: string;
+  sections: KnowledgeSection[];
+}
+
 export interface ProcessOption {
   id: string;
   display_name: string;

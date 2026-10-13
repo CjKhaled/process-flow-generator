@@ -610,6 +610,27 @@ def test_the_list_of_sessions_is_behind_the_password_too(locked: TestClient) -> 
     assert locked.get("/sessions", auth=KEY).json() == []
 
 
+# ── the knowledge view ───────────────────────────────────────────────────────
+
+
+def test_the_knowledge_for_a_process_is_served_as_pages_to_read(client: TestClient) -> None:
+    body = client.get(f"/knowledge/{DOMAIN_PROCESS}").json()
+
+    assert body["process_name"] == "Intake & Enrollment"
+    assert [section["title"] for section in body["sections"]][:2] == ["The process", "What gets asked"]
+    assert all({"id", "group", "title", "html"} == set(section) for section in body["sections"])
+    assert "<h1>" in body["sections"][0]["html"]
+
+
+def test_knowledge_for_a_process_that_does_not_exist_is_not_found(client: TestClient) -> None:
+    assert client.get("/knowledge/onboarding").status_code == 404
+
+
+def test_the_knowledge_is_behind_the_password_too(locked: TestClient) -> None:
+    assert locked.get(f"/knowledge/{DOMAIN_PROCESS}").status_code == 401
+    assert locked.get(f"/knowledge/{DOMAIN_PROCESS}", auth=KEY).status_code == 200
+
+
 # ── the shared password ──────────────────────────────────────────────────────
 
 

@@ -4,6 +4,7 @@ import { ApiError, getSession, setFocus } from "./api";
 import { Chat } from "./components/Chat";
 import { DiagramsView } from "./components/DiagramsView";
 import { FlowCanvas } from "./components/FlowCanvas";
+import { KnowledgeView } from "./components/KnowledgeView";
 import { SidePanel } from "./components/SidePanel";
 import { StartScreen } from "./components/StartScreen";
 import type { SessionState } from "./types";
@@ -23,6 +24,7 @@ export function App() {
   const [selected, setSelected] = useState<string | null>(null);
   const [screen, setScreen] = useState<"requirements" | "diagrams">("requirements");
   const lastPhase = useRef<string | null>(null);
+  const [knowledgeFor, setKnowledgeFor] = useState<string | null>(null);
   const timer = useRef<number | undefined>(undefined);
 
   const refresh = useCallback(async (id: string) => {
@@ -85,9 +87,14 @@ export function App() {
     }
   }, [state, tab]);
 
+  if (!sessionId && knowledgeFor) {
+    return <KnowledgeView processId={knowledgeFor} onBack={() => setKnowledgeFor(null)} />;
+  }
+
   if (!sessionId) {
     return (
       <StartScreen
+        onViewKnowledge={setKnowledgeFor}
         onStarted={(id) => {
           window.location.hash = id;
           setSessionId(id);

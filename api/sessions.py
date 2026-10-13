@@ -41,6 +41,7 @@ from extractors.conversation import ConversationFactory
 from extractors.model import StrandsConversationFactory
 from ir.process_config import OUTPUTS_DIRNAME
 from knowledge.loader import DomainKnowledge, list_domain_processes, load_domain
+from knowledge.render import knowledge_sections
 from render.assets import AssetError, ViewerAssets
 from session.closeout import DOWNLOADS, PAGE_FILENAME, NothingToDraw, finalise, list_outputs
 from session.focus import valid_scope
@@ -295,6 +296,27 @@ def create_session_router(
     def processes() -> list[dict[str, str]]:
         """The processes a conversation can be held about, for the picker."""
         return [{"id": name, "display_name": display} for name, display in list_domain_processes(domain_dir)]
+
+    @router.get("/knowledge/{process_id}")
+    def knowledge(process_id: str) -> dict[str, object]:
+        """Everything the conversation knows about a process, as pages to read.
+
+        The whole knowledge base, rendered: prose as prose, and the definition,
+        checklist, roles and glossary written out in words. A person reading it
+        is how it gets corrected.
+        """
+        try:
+            domain = domain_for(process_id)
+        except (FileNotFoundError, ValueError):
+            raise HTTPException(status_code=404, detail=f"There is no '{process_id}' process.") from None
+        return {
+            "process_id": process_id,
+            "process_name": domain.process.display_name,
+            "sections": [
+                {"id": section.id, "group": section.group, "title": section.title, "html": section.html}
+                for section in knowledge_sections(domain)
+            ],
+        }
 
     @router.post("/sessions", status_code=202)
     def start(request: StartRequest) -> dict[str, str]:

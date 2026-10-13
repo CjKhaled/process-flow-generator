@@ -1,4 +1,4 @@
-import type { ProcessOption, SessionState, SessionSummary } from "./types";
+import type { Knowledge, ProcessOption, SessionState, SessionSummary } from "./types";
 
 // Empty means same origin, which is how the built page is served. Set VITE_API_BASE to point
 // a development build at a service running somewhere else.
@@ -31,6 +31,8 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
 }
 
 export const listProcesses = () => request<ProcessOption[]>("/processes");
+
+export const getKnowledge = (processId: string) => request<Knowledge>(`/knowledge/${processId}`);
 
 export const listSessions = () => request<SessionSummary[]>("/sessions");
 

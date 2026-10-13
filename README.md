@@ -318,7 +318,13 @@ page doesn't wait for an answer: it sends yours, gets an acknowledgement back, a
 every second or so. That's also what lets it tell you *which* step is running rather than
 just spinning.
 
-The start screen lists earlier sessions under the form, most recently worked on first, so
+**View knowledge**, on the start screen, opens everything the tool knows about the chosen
+process as pages to read: what the process covers, every topic it may ask about, the kinds of
+role a lane can be, the glossary, and the background notes on how these programs usually run.
+It is all written out in words, so a subject-matter expert can read it and say where it is
+wrong.
+
+The start screen also lists earlier sessions under the form, most recently worked on first, so
 one can be picked up without keeping its link.
 
 Inside a session the page has two views. **Requirements** is where the conversation happens, in three parts:
@@ -518,7 +524,8 @@ and 3 by themselves and for their tests.
   topic files.
 - `knowledge/` — reads it. `schemas.py` is the shape of every file; `loader.py` loads one
   process's worth; `compose.py` decides what each agent is told, which is where "knowledge
-  drives questions, never content" is enforced.
+  drives questions, never content" is enforced; `render.py` turns the whole of it into pages
+  a person can read.
 - `agents/` — the three AI steps: `interpreter.py`, `extractor.py`,
   `navigator.py`, and their system prompts as markdown in `prompts/`.
 - `session/` — the conversation around them, all deterministic. `models.py` is the session

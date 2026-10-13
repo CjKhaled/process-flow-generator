@@ -394,3 +394,23 @@ knowing before sharing it.
 an older version stops loading the moment a field is renamed. Every committed seed is loaded
 and served in the suite so that shows up as a failing test and not as a session missing from
 the deployed list.
+
+## The knowledge view
+
+**The whole knowledge base is readable from the start screen.** "View knowledge" shows every
+file for the chosen process as prose. Nothing is held back from a person, including the
+notes on how other programs usually run: the access rules exist to keep that material away
+from the agent that draws the flow, not away from the expert who can correct it.
+
+**YAML is written out in words, not shown.** The process definition, checklist, personas and
+glossary are rendered as sentences and lists by `knowledge/render.py`. Topic ids, persona
+ids and program-fact names are left out, and a fact condition reads "only asked when the
+program has nurse or educator support". Topic ids do still appear where a markdown file
+mentions them in its own text.
+
+**`markdown` is a new dependency.** The knowledge files use headings, lists and tables, and
+rendering them properly by hand would have been a markdown parser of our own. It is a small,
+pure-Python package and is used in one function.
+
+**The view is read-only.** There is no editing of knowledge from the page; the files are
+still changed in the repository.

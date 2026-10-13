@@ -71,6 +71,16 @@ unique topic ids, scopes that exist, `leads_to` targets that exist, every subpro
 by some topic, exactly one screening topic per program fact, every persona referenced
 defined, every markdown path mentioned in a body resolving.
 
+**Reading it.** `knowledge/render.py::knowledge_sections` turns the same loaded knowledge
+into pages for a person: each markdown file rendered to HTML (tables included), and the four
+YAML files written out in words — the process definition, the checklist grouped by flow with
+each topic's question, priority and conditions, the personas, and the glossary grouped by
+category. Internal ids and field names are not shown. It is the whole knowledge base with
+nothing held back, which does not conflict with the table above: that table is about which
+*agent* reads which file, so that nothing about other programs reaches the graph, and a
+person reading it changes nothing a session draws. The HTML is built and escaped in Python;
+the page's knowledge view only lays it out.
+
 **The four program facts** — `product.has_rems`, `program.has_nurse_program`,
 `program.patient_self_enrollment`, `product.pediatric_population` — switch topics off. A fact
 is unknown until the user states it, and an unknown fact never filters.
@@ -547,6 +557,7 @@ starts work answers `202`.
 | --- | --- |
 | `GET /health` | Liveness |
 | `GET /processes` | The processes in `domain_knowledge/`, for the picker |
+| `GET /knowledge/{process}` | The whole knowledge base for a process as readable pages: `{process_name, sections: [{id, group, title, html}]}` |
 | `GET /sessions` | Every session that got past its first turn, most recently updated first: id, process, the first line of its description, turn, phase and its label, flows finished |
 | `POST /sessions` | `{process_id, description}` → `{session_id}`, and queues turn 1. `422` empty, `413` over `PFG_MAX_SOURCE_CHARS`, `404` unknown process |
 | `GET /sessions/{id}` | Phase, focus, turn, status and its sentence, transcript, pending questions, lanes, coverage, views with rationale, open items, outputs |

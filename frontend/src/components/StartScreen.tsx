@@ -5,9 +5,10 @@ import type { ProcessOption, SessionSummary } from "../types";
 
 interface Props {
   onStarted: (sessionId: string) => void;
+  onViewKnowledge: (processId: string) => void;
 }
 
-export function StartScreen({ onStarted }: Props) {
+export function StartScreen({ onStarted, onViewKnowledge }: Props) {
   const [processes, setProcesses] = useState<ProcessOption[]>([]);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [processId, setProcessId] = useState("");
@@ -74,9 +75,14 @@ export function StartScreen({ onStarted }: Props) {
       />
 
       {error && <p className="error">{error}</p>}
-      <button className="accent" disabled={busy || !processId || !description.trim()} onClick={() => void start()}>
-        {busy ? "Starting…" : "Start"}
-      </button>
+      <div className="start-actions">
+        <button className="accent" disabled={busy || !processId || !description.trim()} onClick={() => void start()}>
+          {busy ? "Starting…" : "Start"}
+        </button>
+        <button disabled={!processId} onClick={() => onViewKnowledge(processId)}>
+          View knowledge
+        </button>
+      </div>
 
       {sessions.length > 0 && (
         <section className="previous">
