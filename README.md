@@ -248,7 +248,7 @@ The result is a single self-contained page. The diagram viewer, its styling, the
 the questions are all baked into the one file, so nothing is loaded from anywhere when you
 open it. That's deliberate: the page gets opened from whatever folder someone happens to
 point at, and any link to a neighbouring file breaks the moment they choose a different one.
-The cost is about 730 KB a page, which is why it's generated rather than kept in the repo.
+The cost is about 800 KB a page, which is why it's generated rather than kept in the repo.
 
 This is where the open questions finally become visible. Every box that has one is outlined
 in orange, and the questions are listed beside the diagram rather than left in a file
@@ -449,6 +449,13 @@ docker run --rm -p 10000:10000 --env-file .env -e PFG_ACCESS_PASSWORD=choose-one
 
 `.dockerignore` keeps `.env`, `sessions/` and `logs/` out of the image, so building it
 locally does not bake your key or anyone's conversations into it.
+
+### AWS (planned)
+
+Render is what runs today. The plan for AWS — the same image on ECS Fargate behind an
+Application Load Balancer and AWS WAF, sessions and traces in S3, secrets in Secrets
+Manager — is in [docs/aws-deployment.md](docs/aws-deployment.md), with an architecture
+diagram and the code changes it needs. None of it is built yet.
 
 ## Configuration
 

@@ -414,3 +414,23 @@ pure-Python package and is used in one function.
 
 **The view is read-only.** There is no editing of knowledge from the page; the files are
 still changed in the repository.
+
+## The AWS plan
+
+Planned, not built; the detail is in `aws-deployment.md`.
+
+**ECS Fargate, one task, stopped before its replacement starts.** Which sessions have a turn
+running is held in memory, so two tasks could each accept a turn on the same session.
+Desired count one, minimum healthy 0 %, maximum 100 % — the rule Render already runs under.
+Lambda was ruled out: a first turn runs for minutes and calls a Node subprocess.
+
+**S3 instead of a database.** The `SessionStore` protocol's operations map onto S3
+directly, and conditional writes (`If-None-Match`, `If-Match`) give the guarantee
+write-then-rename gives the file store. No query needs more than one session or a list of ids.
+
+**The container keeps serving the page.** S3 and CloudFront would split one origin into two,
+bring back cross-origin setup and put the page outside the password.
+
+**No Cognito.** A WAF address allow-list in front of the load balancer, plus the existing
+shared password, is the door — consistent with the password being a door and not accounts.
+

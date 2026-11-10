@@ -578,6 +578,11 @@ the downloads are one origin, so one prompt covers all of them. Unset, the servi
 and logs a warning at startup. CORS allows no other origin unless `PFG_ALLOWED_ORIGIN` names
 one.
 
+**Hosting.** The service runs on Render as one container (`render.yaml`, `Dockerfile`). A
+planned AWS deployment — ECS Fargate, S3 in place of the local session store, WAF in front —
+is described in `docs/aws-deployment.md`, including the `SessionStore` and close-out changes
+it needs.
+
 Turns run on a small worker pool and are serialised per session: a second message to a busy
 session is a `409`. A quick reply is sent as words as well as a flag, so the transcript reads
 naturally and the interpreter treats a pressed button and a typed "not sure" alike.
@@ -962,7 +967,7 @@ renderer, palette and read-only gate, and those are ES modules registered throug
 `additionalModules` — which is how bpmn-io's own examples extend bpmn-js, and it needs a
 build. The prebuilt files are sealed: they reach nothing but the single global they expose.
 
-The bundle is about 563 KB, which is most of why a page is nearer 730 KB than 350 KB.
+The bundle is about 575 KB, which is most of why a page is nearer 800 KB than 350 KB.
 
 **The stylesheets are not bundled.** They are read straight from `node_modules` and
 concatenated in order — `diagram-js.css` (the canvas), `bpmn-js.css` (BPMN's own rules),
@@ -1032,7 +1037,7 @@ is a context-pad entry only — so this is a new entry rather than a survivor of
 all inlined; nothing is fetched when the page opens. Not a preference for big files: the page
 is opened with Live Server or over `file://` from whatever folder the reader happens to point
 at, and any relative `../../node_modules` path is broken by a different choice of root.
-Inlining removes the question. It costs about 730 KB a page, most of it the modeler bundle,
+Inlining removes the question. It costs about 800 KB a page, most of it the modeler bundle,
 which is why the page is generated rather than committed — and it is affordable because the
 icon font is already a base64 data URI inside `bpmn-embedded.css`.
 
